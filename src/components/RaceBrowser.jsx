@@ -7,9 +7,11 @@ import RaceList from './RaceList.jsx'
 import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 import { useSignups, heatColor, daysUntil } from './useSignups'
 import { fmt } from '../util'
+import { useT } from '../i18n'
 
 // Browse all races. Coaches add/remove races for the team; athletes add/remove races in their own plan.
 export default function RaceBrowser({ profile, team, isCoach }) {
+  const t = useT()
   const races = useRaces()
   const [f, setF] = useState(initialFilter)
   const [view, setView] = useState('norden')
@@ -49,22 +51,22 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   const home = profile.home_city || DEFAULT_HOME
   const FromHome = ({ r }) => {
     const km = kmFromHome(r, home)
-    return km == null ? null : <span className="muted">{nok(km)} km fra hjem</span>
+    return km == null ? null : <span className="muted">{nok(km)} {t('fromHome')}</span>
   }
 
   // "87 påmeldte · +12 siste 7 d · frist 12. jan (4 d)" — deadline turns amber under a week.
   const Signups = ({ r }) => {
     const sg = byRace[r.id]
-    if (!sg) return <div className="signup none">Ingen tall ennå</div>
+    if (!sg) return <div className="signup none">{t('noNumbers')}</div>
     const dd = daysUntil(r.signup_deadline)
     const soon = dd != null && dd >= 0 && dd <= 7
     return (
       <div className="signup">
         <span className="bar"><i style={{ width: `${Math.round(100 * (sg.participants || 0) / max)}%`, background: heatColor(sg.participants, max) }} /></span>
-        <span>{sg.participants} påmeldte{r.max_attendees ? ` av ${r.max_attendees}` : ''}</span>
-        {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} siste 7 d</span>}
+        <span>{sg.participants} {t('signed')}{r.max_attendees ? ` ${t('ofCap')} ${r.max_attendees}` : ''}</span>
+        {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} {t('week')}</span>}
         {r.signup_deadline && <span className={soon ? 'soon' : ''}>
-          frist {fmt({ start_date: r.signup_deadline, end_date: r.signup_deadline })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} d)` : ''}
+          {t('deadline')} {fmt({ start_date: r.signup_deadline, end_date: r.signup_deadline })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} ${t('dShort')})` : ''}
         </span>}
       </div>
     )
@@ -73,9 +75,9 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   return (
     <>
       <Filters f={f} setF={setF} view={view} setView={setView} extra={
-        <div className="group"><span>Påmeldte</span>
-          <button className={`chip ${heat ? 'on' : ''}`} onClick={() => setHeat(h => !h)}>Heatmap</button>
-          <span className="muted src">{has ? `iSonen · oppdatert ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : 'ingen data ennå'}</span>
+        <div className="group"><span>{t('signups')}</span>
+          <button className={`chip ${heat ? 'on' : ''}`} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
+          <span className="muted src">{has ? `${t('srcLive')} ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : t('srcNone')}</span>
         </div>
       } />
       <div className="split">
@@ -85,7 +87,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
           renderExtra={isCoach ? r => (
             <div className="row">
               {canEditTeam && <button className={`btn small ${teamRaces.has(r.id) ? '' : 'primary'}`} onClick={() => toggleTeam(r)}>
-                {teamRaces.has(r.id) ? 'Fjern fra laget' : 'Legg til for laget'}
+                {teamRaces.has(r.id) ? t('removeTeam') : t('addTeam')}
               </button>}
               <FromHome r={r} />
               <Signups r={r} />
@@ -93,9 +95,9 @@ export default function RaceBrowser({ profile, team, isCoach }) {
           ) : r => (
             <div className="row">
               <button className={`btn small ${mine.has(r.id) ? '' : 'primary'}`} onClick={() => toggleMine(r)}>
-                {mine.has(r.id) ? 'Fjern fra min plan' : 'Legg til i min plan'}
+                {mine.has(r.id) ? t('removeMine') : t('addMine')}
               </button>
-              {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>På lagets plan</span>}
+              {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>{t('onTeamPlan')}</span>}
               <FromHome r={r} />
               <Signups r={r} />
             </div>

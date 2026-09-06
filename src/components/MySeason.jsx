@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
-import { STATUS, STATUS_COLOR } from '../util'
+import { STATUS_COLOR } from '../util'
+import { useT } from '../i18n'
 
 // Athlete season. With a team: the coach's plan, where the athlete answers wish / unavailable.
 // Without a team (solo): the athlete's own picks from athlete_races, with full control of status.
 export default function MySeason({ profile, team }) {
+  const t = useT()
   const solo = !team
   const [rows, setRows] = useState([])
   const [mine, setMine] = useState([])
@@ -52,12 +54,12 @@ export default function MySeason({ profile, team }) {
   return (
     <>
       <div className="controls"><span className="muted">
-        <b>{going.length}</b> renn i min plan{solo ? ` · ${rows.length} valgt` : ` · ${rows.length} renn i lagets plan`}
+        <b>{going.length}</b> {t('inMyPlan')}{solo ? ` · ${rows.length} ${t('chosen')}` : ` · ${rows.length} ${t('teamPlanN')}`}
       </span></div>
       <div className="split">
         <RaceMap races={rows} focus={focus} />
         {rows.length === 0 ? <div className="list"><div className="empty">
-          {solo ? 'Du har ikke lagt til noen renn ennå. Gå til «Alle renn» og legg dem til i planen din.' : 'Treneren har ikke lagt inn renn for laget ennå.'}
+          {solo ? t('soloEmpty') : t('teamEmpty')}
         </div></div> :
           <RaceList races={rows} onSelect={setFocus} active={focus} renderExtra={r => {
             const s = get(r.id), tr = r.tr
@@ -67,19 +69,19 @@ export default function MySeason({ profile, team }) {
               <div>
                 {tr && (tr.coach_note || tr.entry_deadline || tr.travel_info) && <div className="muted">{tr.entry_deadline && <>Frist {tr.entry_deadline} · </>}{tr.coach_note}{tr.travel_info && <> · {tr.travel_info}</>}</div>}
                 <div className="row" style={{ marginTop: 4 }}>
-                  {s && <span className="status-pill" style={{ background: STATUS_COLOR[s.status] }}>{STATUS[s.status]}</span>}
+                  {s && <span className="status-pill" style={{ background: STATUS_COLOR[s.status] }}>{t('st_' + s.status)}</span>}
                   <div className="status-btns">
-                    {ownChoice.map(k => <button key={k} className={s?.status === k ? 'on' : ''} style={s?.status === k ? { background: STATUS_COLOR[k] } : {}} onClick={() => setStatus(r.id, k)}>{STATUS[k]}</button>)}
-                    <button onClick={() => setNoteFor(noteFor === r.id ? null : r.id)}>{s?.athlete_note ? 'Endre notat' : 'Notat'}</button>
-                    {solo && <button onClick={() => removeRace(r.id)}>Fjern fra min plan</button>}
+                    {ownChoice.map(k => <button key={k} className={s?.status === k ? 'on' : ''} style={s?.status === k ? { background: STATUS_COLOR[k] } : {}} onClick={() => setStatus(r.id, k)}>{t('st_' + k)}</button>)}
+                    <button onClick={() => setNoteFor(noteFor === r.id ? null : r.id)}>{s?.athlete_note ? t('editNote') : t('note')}</button>
+                    {solo && <button onClick={() => removeRace(r.id)}>{t('removeMine')}</button>}
                   </div>
                 </div>
                 {s?.athlete_note && noteFor !== r.id && <div className="muted">«{s.athlete_note}»</div>}
-                {s?.coach_note && <div className="muted">Trener: {s.coach_note}</div>}
+                {s?.coach_note && <div className="muted">{t('coachSays')} {s.coach_note}</div>}
                 {noteFor === r.id && (
                   <form onSubmit={e => { e.preventDefault(); saveNote(r.id, new FormData(e.target).get('n')) }}>
                     <textarea name="n" defaultValue={s?.athlete_note || ''} placeholder="f.eks. reiser med familien, kan ikke fredag" />
-                    <div className="row" style={{ marginTop: 6 }}><button className="btn small primary">Lagre</button><button type="button" className="btn small" onClick={() => setNoteFor(null)}>Avbryt</button></div>
+                    <div className="row" style={{ marginTop: 6 }}><button className="btn small primary">{t('save')}</button><button type="button" className="btn small" onClick={() => setNoteFor(null)}>{t('cancel')}</button></div>
                   </form>
                 )}
               </div>

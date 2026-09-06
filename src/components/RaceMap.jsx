@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { color, fmt, days, fisUrl } from '../util'
 import { heatColor } from './useSignups'
+import { useT } from '../i18n'
 
 export default function RaceMap({ races, focus, view = 'norden', routes, home, heat, signups, maxSignups = 1 }) {
+  const t = useT()
   const el = useRef(null), map = useRef(null), layer = useRef(null), markers = useRef({}), routeLayer = useRef(null)
 
   useEffect(() => {
@@ -43,12 +45,12 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home, h
       m.bindTooltip(v.place, { direction: 'top', offset: [0, -8] })
       m.bindPopup(`<b>${v.place}</b> (${v.country})` + v.r.map(r => {
         const sg = signups?.[r.id]
-        const n = sg ? ` · <b>${sg.participants} påmeldte</b>` : ''
+        const n = sg ? ` · <b>${sg.participants} ${t('signed')}</b>` : ''
         return `<div>${fmt(r)} · ${r.category} · ${r.events}${n}${fisUrl(r) ? ` · <a href="${fisUrl(r)}" target="_blank" rel="noopener">FIS ↗</a>` : ''}</div>`
       }).join(''))
       markers.current[v.place + v.country] = m
     })
-  }, [races, heat, signups, maxSignups])
+  }, [races, heat, signups, maxSignups, t.lang])
 
   // Season planner: dashed route per trip, plus a house pin on the home base.
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home, h
     <div className="mapwrap">
       <div ref={el} className="map" />
       {heat && (
-        <div className="legend"><span>få</span><span className="g" /><span>mange påmeldte</span></div>
+        <div className="legend"><span>{t('few')}</span><span className="g" /><span>{t('many')}</span></div>
       )}
     </div>
   )

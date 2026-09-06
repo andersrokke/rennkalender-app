@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
-import { STATUS, STATUS_COLOR, overlaps } from '../util'
+import { STATUS_COLOR, overlaps } from '../util'
+import { useT } from '../i18n'
 
 // Team season: races the coach has selected, with per-race athlete overview and notes.
 export default function CoachSeason({ team }) {
+  const t = useT()
   const [rows, setRows] = useState([])
   const [athletes, setAthletes] = useState([])
   const [statuses, setStatuses] = useState([])
@@ -34,7 +36,7 @@ export default function CoachSeason({ team }) {
   return (
     <div className="split">
       <RaceMap races={rows} focus={focus} />
-      {rows.length === 0 ? <div className="list"><div className="empty">Ingen renn valgt ennå. Gå til «Alle renn» og trykk «Legg til for laget».</div></div> :
+      {rows.length === 0 ? <div className="list"><div className="empty">{t('coachEmpty')}</div></div> :
         <RaceList races={rows} onSelect={setFocus} active={focus} renderExtra={r => {
           const st = stat(r.id), going = st.filter(x => ['planned', 'entered'].includes(x.s?.status)).length
           const cl = clashes(r)
@@ -43,7 +45,7 @@ export default function CoachSeason({ team }) {
             <div>
               <div className="row" style={{ fontSize: 13 }}>
                 <span><b>{going}</b>/{athletes.length} løpere</span>
-                {st.filter(x => x.s).map(x => <span key={x.a.id} className="status-pill" style={{ background: STATUS_COLOR[x.s.status] }}>{x.a.full_name?.split(' ')[0]} · {STATUS[x.s.status]}</span>)}
+                {st.filter(x => x.s).map(x => <span key={x.a.id} className="status-pill" style={{ background: STATUS_COLOR[x.s.status] }}>{x.a.full_name?.split(' ')[0]} · {t('st_' + x.s.status)}</span>)}
                 {cl.length > 0 && <span className="tag warn">Overlapper: {cl.join(', ')}</span>}
               </div>
               {(tr.coach_note || tr.entry_deadline || tr.travel_info) && editing !== tr.id && (

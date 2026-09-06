@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import RaceMap from './RaceMap.jsx'
 import { fmt } from '../util'
+import { useT } from '../i18n'
 import {
   HOMES, DEFAULT_HOME, DEFAULT_PLAN, TRIP_COLORS,
   homeLL, buildTrips, tripTotals, nok
@@ -10,6 +11,7 @@ import {
 // Season planner: races the athlete has in athlete_races (planned / entered)
 // chained into trips, with distance, nights and cost.
 export default function Planner({ profile, onChange }) {
+  const t = useT()
   const [rows, setRows] = useState([])
   const [home, setHome] = useState(profile.home_city || DEFAULT_HOME)
   const [plan, setPlan] = useState({ ...DEFAULT_PLAN, ...(profile.plan_settings || {}) })
@@ -39,67 +41,67 @@ export default function Planner({ profile, onChange }) {
 
   const trips = useMemo(() => buildTrips(rows, home, plan), [rows, home, plan])
   const tot = tripTotals(trips)
-  const routes = trips.map((t, i) => ({ points: t.points, color: TRIP_COLORS[i % TRIP_COLORS.length] }))
-  const noVenue = rows.length - trips.reduce((a, t) => a + t.races.length, 0)
+  const routes = trips.map((trip, i) => ({ points: trip.points, color: TRIP_COLORS[i % TRIP_COLORS.length] }))
+  const noVenue = rows.length - trips.reduce((a, trip) => a + trip.races.length, 0)
 
   const Kpi = ({ v, label }) => <div className="kpi"><b>{v}</b><span>{label}</span></div>
 
   return (
     <>
       <div className="controls">
-        <div className="group"><span>Hjemsted</span>
+        <div className="group"><span>{t('home')}</span>
           <select style={{ width: 'auto' }} value={home} onChange={e => saveHome(e.target.value)}>
             {Object.entries(HOMES).map(([k, v]) => <option key={k} value={k}>{v[2]}</option>)}
           </select>
         </div>
-        <div className="group"><span>{rows.length} renn i planen · {trips.length} reiser</span></div>
+        <div className="group"><span>{rows.length} {t('inPlan')} · {trips.length} {t('tripsN')}</span></div>
       </div>
       <div className="split">
         <RaceMap races={rows} focus={focus} routes={routes} home={homeLL(home)} />
         <div className="list">
           {trips.length === 0 ? (
-            <div className="empty">Planen er tom. Legg til renn under «Alle renn», så regner jeg ut reise, netter og kostnad.</div>
+            <div className="empty">{t('planEmpty')}</div>
           ) : (
             <>
               <div className="trip total">
-                <div className="route">Hele sesongen · {trips.length} reiser · {rows.length} renn</div>
+                <div className="route">{t('wholeSeason')} · {trips.length} {t('tripsN')} · {rows.length} {t('racesN')}</div>
                 <div className="kpis">
-                  <Kpi v={nok(tot.km)} label={`km (${nok(tot.km / 10)} mil)`} />
-                  <Kpi v={Math.round(tot.hours)} label="t i bil" />
-                  <Kpi v={tot.nights} label="netter" />
-                  <Kpi v={nok(tot.cost)} label="kr" />
+                  <Kpi v={nok(tot.km)} label={`${t('km')} (${nok(tot.km / 10)} ${t('mil')})`} />
+                  <Kpi v={Math.round(tot.hours)} label={t('hours')} />
+                  <Kpi v={tot.nights} label={t('nights')} />
+                  <Kpi v={nok(tot.cost)} label={t('cost')} />
                 </div>
-                <div className="legs-sum">kjøring {nok(tot.drive)} · opphold {nok(tot.stay)} · startkontingent {nok(tot.fees)} · {tot.days} dager borte</div>
+                <div className="legs-sum">{t('drive')} {nok(tot.drive)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} · {tot.days} {t('daysAway')}</div>
               </div>
-              {trips.map((t, i) => (
+              {trips.map((trip, i) => (
                 <div className="trip" key={i} style={{ borderLeftColor: TRIP_COLORS[i % TRIP_COLORS.length] }}>
-                  <div className="route">Reise {i + 1}: Hjem<i>→</i>{t.races.map(r => r.place).join(' → ')}<i>→</i>Hjem</div>
-                  <div className="when">{fmt({ start_date: t.races[0].start_date, end_date: t.races[t.races.length - 1].end_date })}</div>
+                  <div className="route">{t('trip')} {i + 1}: {t('homeShort')}<i>→</i>{trip.races.map(r => r.place).join(' → ')}<i>→</i>{t('homeShort')}</div>
+                  <div className="when">{fmt({ start_date: trip.races[0].start_date, end_date: trip.races[trip.races.length - 1].end_date })}</div>
                   <div className="kpis">
-                    <Kpi v={nok(t.km)} label="km" /><Kpi v={t.hours} label="t i bil" />
-                    <Kpi v={t.nights} label="netter" /><Kpi v={nok(t.cost.total)} label="kr" />
+                    <Kpi v={nok(trip.km)} label={t('km')} /><Kpi v={trip.hours} label={t('hours')} />
+                    <Kpi v={trip.nights} label={t('nights')} /><Kpi v={nok(trip.cost.total)} label={t('cost')} />
                   </div>
                   <div className="legs">
-                    {t.legs.map((l, j) => <div key={j}><span>{l.from} → {l.to}</span><span>{nok(l.km)} km</span></div>)}
+                    {trip.legs.map((l, j) => <div key={j}><span>{l.from} → {l.to}</span><span>{nok(l.km)} {t('km')}</span></div>)}
                   </div>
-                  {t.races.map(r => (
+                  {trip.races.map(r => (
                     <div className="plan-race" key={r.id}>
                       <span><b>{r.place}</b> · {fmt(r)} · {r.events}</span>
-                      <button className="btn small" title="Fjern fra min plan" onClick={() => removeRace(r.id)}>×</button>
+                      <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>
                     </div>
                   ))}
                 </div>
               ))}
             </>
           )}
-          {noVenue > 0 && <div className="muted" style={{ padding: '0 20px 12px' }}>{noVenue} renn i planen mangler sted på kartet og er ikke regnet med.</div>}
+          {noVenue > 0 && <div className="muted" style={{ padding: '0 20px 12px' }}>{noVenue} {t('noVenue')}</div>}
           <div className="settings">
-            <div><label>kr per km</label><input type="number" step="0.5" value={plan.kmRate} onChange={e => savePlan('kmRate', e.target.value)} /></div>
-            <div><label>kr per natt</label><input type="number" step="50" value={plan.hotel} onChange={e => savePlan('hotel', e.target.value)} /></div>
-            <div><label>kr per renndag</label><input type="number" step="50" value={plan.entry} onChange={e => savePlan('entry', e.target.value)} /></div>
-            <div><label>maks dager mellom renn for å reise videre</label><input type="number" min="0" max="10" value={plan.maxGap} onChange={e => savePlan('maxGap', e.target.value)} /></div>
+            <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={plan.kmRate} onChange={e => savePlan('kmRate', e.target.value)} /></div>
+            <div><label>{t('hotel')}</label><input type="number" step="50" value={plan.hotel} onChange={e => savePlan('hotel', e.target.value)} /></div>
+            <div><label>{t('entry')}</label><input type="number" step="50" value={plan.entry} onChange={e => savePlan('entry', e.target.value)} /></div>
+            <div><label>{t('maxGap')}</label><input type="number" min="0" max="10" value={plan.maxGap} onChange={e => savePlan('maxGap', e.target.value)} /></div>
           </div>
-          <div className="hint">Kjørelengde er estimert (luftlinje × 1,3). Ligger to renn nær hverandre i tid, reiser du videre i stedet for hjem.</div>
+          <div className="hint">{t('hint')}</div>
         </div>
       </div>
     </>

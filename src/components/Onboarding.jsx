@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
+import { useT } from '../i18n'
 
 export default function Onboarding({ profile, onDone }) {
+  const t = useT()
   const [mode, setMode] = useState(null)
   const [name, setName] = useState(profile.full_name || '')
   const [teamName, setTeamName] = useState('')
@@ -15,10 +17,10 @@ export default function Onboarding({ profile, onDone }) {
 
   const athleteFields = (
     <div className="row">
-      <div style={{ flex: 1 }}><label>Kjønn</label>
-        <select value={gender} onChange={e => setGender(e.target.value)}><option value="">–</option><option value="W">Kvinne</option><option value="M">Mann</option></select></div>
-      <div style={{ flex: 1 }}><label>Fødselsår</label><input type="number" value={year} onChange={e => setYear(e.target.value)} placeholder="2009" /></div>
-      <div style={{ flex: 1 }}><label>FIS-kode</label><input value={fis} onChange={e => setFis(e.target.value)} /></div>
+      <div style={{ flex: 1 }}><label>{t('gender')}</label>
+        <select value={gender} onChange={e => setGender(e.target.value)}><option value="">–</option><option value="W">{t('woman')}</option><option value="M">{t('man')}</option></select></div>
+      <div style={{ flex: 1 }}><label>{t('birthYear')}</label><input type="number" value={year} onChange={e => setYear(e.target.value)} placeholder="2009" /></div>
+      <div style={{ flex: 1 }}><label>{t('fisCode')}</label><input value={fis} onChange={e => setFis(e.target.value)} /></div>
     </div>
   )
 
@@ -54,38 +56,38 @@ export default function Onboarding({ profile, onDone }) {
   return (
     <div className="page">
       <div className="card">
-        <h2>Velkommen{name ? `, ${name}` : ''}</h2>
-        <p className="muted">Er du trener eller løper?</p>
+        <h2>{t('welcome')}{name ? `, ${name}` : ''}</h2>
+        <p className="muted">{t('coachOrAthlete')}</p>
         <div className="row">
-          <button className={'chip ' + (mode === 'coach' ? 'on' : '')} onClick={() => setMode('coach')}>Jeg er trener – opprett lag</button>
-          <button className={'chip ' + (mode === 'athlete' ? 'on' : '')} onClick={() => setMode('athlete')}>Jeg er løper – bli med i et lag</button>
-          <button className={'chip ' + (mode === 'solo' ? 'on' : '')} onClick={() => setMode('solo')}>Jeg er løper – bruk kalenderen på egen hånd</button>
+          <button className={'chip ' + (mode === 'coach' ? 'on' : '')} onClick={() => setMode('coach')}>{t('optCoach')}</button>
+          <button className={'chip ' + (mode === 'athlete' ? 'on' : '')} onClick={() => setMode('athlete')}>{t('optAthlete')}</button>
+          <button className={'chip ' + (mode === 'solo' ? 'on' : '')} onClick={() => setMode('solo')}>{t('optSolo')}</button>
         </div>
 
         {mode === 'coach' && (
           <form onSubmit={createTeam}>
-            <label>Ditt navn</label><input required value={name} onChange={e => setName(e.target.value)} />
-            <label>Lagnavn</label><input required value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="f.eks. IRS FIS-gruppe" />
-            <label>Klubb (valgfritt)</label><input value={club} onChange={e => setClub(e.target.value)} />
-            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>Opprett lag</button></div>
+            <label>{t('yourName')}</label><input required value={name} onChange={e => setName(e.target.value)} />
+            <label>{t('teamName')}</label><input required value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="f.eks. IRS FIS-gruppe" />
+            <label>{t('club')}</label><input value={club} onChange={e => setClub(e.target.value)} />
+            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>{t('createTeam')}</button></div>
           </form>
         )}
 
         {mode === 'athlete' && (
           <form onSubmit={join}>
-            <label>Ditt navn</label><input required value={name} onChange={e => setName(e.target.value)} />
-            <label>Invitasjonskode fra treneren</label><input required value={code} onChange={e => setCode(e.target.value)} placeholder="12 tegn" />
+            <label>{t('yourName')}</label><input required value={name} onChange={e => setName(e.target.value)} />
+            <label>{t('inviteFromCoach')}</label><input required value={code} onChange={e => setCode(e.target.value)} placeholder="12 tegn" />
             {athleteFields}
-            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>Bli med</button></div>
+            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>{t('join')}</button></div>
           </form>
         )}
 
         {mode === 'solo' && (
           <form onSubmit={solo}>
-            <p className="muted">Du planlegger sesongen selv. Du kan bli med i et lag senere under «Profil».</p>
-            <label>Ditt navn</label><input required value={name} onChange={e => setName(e.target.value)} />
+            <p className="muted">{t('soloIntro')}</p>
+            <label>{t('yourName')}</label><input required value={name} onChange={e => setName(e.target.value)} />
             {athleteFields}
-            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>Kom i gang</button></div>
+            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>{t('start')}</button></div>
           </form>
         )}
         {err && <div className="error">{err}</div>}

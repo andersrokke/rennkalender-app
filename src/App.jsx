@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
+import { LangContext, I18N } from './i18n'
+import { applyTheme, applyLang } from './theme'
 import { supabase } from './supabase'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
@@ -33,27 +35,45 @@ export default function App() {
 
   useEffect(() => { if (session?.user) loadProfile(session.user.id); else setProfile(null) }, [session, loadProfile])
 
-  const reload = () => loadProfile(session.user.id)
+  const lang = profile?.lang === 'en' ? 'en' : 'no'
+  const theme = profile?.theme === 'dark' ? 'dark' : 'light'
+  useEffect(() => { applyTheme(theme); applyLang(lang) }, [theme, lang])
 
-  if (session === undefined) return <div className="page muted">Laster …</div>
+  const reload = () => loadProfile(session.user.id)
+  const setPref = async patch => {
+    setProfile(p => ({ ...p, ...patch }))
+    await supabase.from('profiles').update(patch).eq('id', profile.id)
+  }
+
+  if (session === undefined) return <div className="page muted">{I18N.no.loading}</div>
   if (!session) return <Auth />
-  if (!profile) return <div className="page muted">Henter profil …</div>
-  if (!profile.onboarded) return <Onboarding profile={profile} onDone={reload} />
+  if (!profile) return <div className="page muted">{I18N.no.loadingProfile}</div>
+  if (!profile.onboarded) return (
+    <LangContext.Provider value={lang}><Onboarding profile={profile} onDone={reload} /></LangContext.Provider>
+  )
 
   const isCoach = profile.role === 'coach' || team?.owner_id === profile.id
+  const d = I18N[lang]
   const tabs = isCoach
-    ? [['season', 'Lagets sesong'], ['athletes', 'Løpere'], ['races', 'Alle renn'], ['plan', 'Min plan'], ['settings', 'Lag og profil']]
-    : [['mine', 'Min sesong'], ['races', 'Alle renn'], ['plan', 'Min plan'], ['settings', 'Profil']]
+    ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['settings', d.settingsTabCoach]]
+    : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
+  const Seg = ({ opts, value, onPick }) => (
+    <div className="seg">{opts.map(([v, l]) =>
+      <button key={v} className={value === v ? 'on' : ''} onClick={() => onPick(v)}>{l}</button>)}</div>
+  )
+
   return (
-    <>
+    <LangContext.Provider value={lang}>
       <header className="topbar">
-        <h1>Rennkalender 2026/27{team && <small>{team.name}</small>}</h1>
+        <h1>{d.appTitle}{team && <small>{team.name}</small>}</h1>
         <nav>{tabs.map(([k, l]) => <button key={k} className={active === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</nav>
         <div className="spacer" />
-        <span className="who">{profile.full_name} · {isCoach ? 'trener' : profile.role === 'parent' ? 'forelder' : 'løper'}</span>
-        <button className="btn small" onClick={() => supabase.auth.signOut()}>Logg ut</button>
+        <Seg opts={[['no', 'NO'], ['en', 'EN']]} value={lang} onPick={v => setPref({ lang: v })} />
+        <Seg opts={[['light', '☀'], ['dark', '☾']]} value={theme} onPick={v => setPref({ theme: v })} />
+        <span className="who">{profile.full_name} · {isCoach ? d.coach : profile.role === 'parent' ? d.parent : d.athlete}</span>
+        <button className="btn small" onClick={() => supabase.auth.signOut()}>{d.signOut}</button>
       </header>
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
@@ -61,6 +81,6 @@ export default function App() {
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} />}
       {active === 'plan' && <Planner profile={profile} onChange={reload} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
-    </>
+    </LangContext.Provider>
   )
 }
