@@ -8,6 +8,7 @@ import Athletes from './components/Athletes.jsx'
 import MySeason from './components/MySeason.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
+import Planner from './components/Planner.jsx'
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -41,8 +42,8 @@ export default function App() {
 
   const isCoach = profile.role === 'coach' || team?.owner_id === profile.id
   const tabs = isCoach
-    ? [['season', 'Lagets sesong'], ['athletes', 'Løpere'], ['races', 'Alle renn'], ['settings', 'Lag og profil']]
-    : [['mine', 'Min sesong'], ['races', 'Alle renn'], ['settings', 'Profil']]
+    ? [['season', 'Lagets sesong'], ['athletes', 'Løpere'], ['races', 'Alle renn'], ['plan', 'Min plan'], ['settings', 'Lag og profil']]
+    : [['mine', 'Min sesong'], ['races', 'Alle renn'], ['plan', 'Min plan'], ['settings', 'Profil']]
   const active = tab || tabs[0][0]
 
   return (
@@ -58,6 +59,7 @@ export default function App() {
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} />}
+      {active === 'plan' && <Planner profile={profile} onChange={reload} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
     </>
   )

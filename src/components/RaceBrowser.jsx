@@ -4,6 +4,7 @@ import { useRaces } from './useRaces'
 import Filters, { initialFilter, applyFilter } from './Filters.jsx'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
+import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 
 // Browse all races. Coaches add/remove races for the team; athletes add/remove races in their own plan.
 export default function RaceBrowser({ profile, team, isCoach }) {
@@ -41,6 +42,11 @@ export default function RaceBrowser({ profile, team, isCoach }) {
 
   // A coach without a team can browse, but has no team plan to add races to.
   const canEditTeam = isCoach && !!team
+  const home = profile.home_city || DEFAULT_HOME
+  const FromHome = ({ r }) => {
+    const km = kmFromHome(r, home)
+    return km == null ? null : <span className="muted">{nok(km)} km fra hjem</span>
+  }
   const rows = applyFilter(races, f)
   return (
     <>
@@ -49,16 +55,20 @@ export default function RaceBrowser({ profile, team, isCoach }) {
         <RaceMap races={rows} focus={focus} view={view} />
         <RaceList races={rows} onSelect={setFocus} active={focus}
           selectedIds={new Set((isCoach ? teamRaces : mine).keys())}
-          renderExtra={isCoach ? (canEditTeam ? r => (
-            <button className={`btn small ${teamRaces.has(r.id) ? '' : 'primary'}`} onClick={() => toggleTeam(r)}>
-              {teamRaces.has(r.id) ? 'Fjern fra laget' : 'Legg til for laget'}
-            </button>
-          ) : null) : r => (
+          renderExtra={isCoach ? r => (
+            <div className="row">
+              {canEditTeam && <button className={`btn small ${teamRaces.has(r.id) ? '' : 'primary'}`} onClick={() => toggleTeam(r)}>
+                {teamRaces.has(r.id) ? 'Fjern fra laget' : 'Legg til for laget'}
+              </button>}
+              <FromHome r={r} />
+            </div>
+          ) : r => (
             <div className="row">
               <button className={`btn small ${mine.has(r.id) ? '' : 'primary'}`} onClick={() => toggleMine(r)}>
                 {mine.has(r.id) ? 'Fjern fra min plan' : 'Legg til i min plan'}
               </button>
               {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>På lagets plan</span>}
+              <FromHome r={r} />
             </div>
           )}
         />

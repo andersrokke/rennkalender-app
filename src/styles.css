@@ -82,3 +82,22 @@ th{font-size:12px;color:var(--mute);font-weight:600}
   .race{grid-template-columns:80px 1fr;}
   .ev{grid-column:2;text-align:left}
 }
+
+/* --- Season planner --- */
+.trip{padding:14px 20px;border-bottom:1px solid var(--line);border-left:4px solid var(--line)}
+.trip.total{border-left-color:var(--slate);background:var(--ice)}
+.trip .route{font-weight:700;font-size:15px}
+.trip .route i{font-style:normal;color:var(--mute);margin:0 6px}
+.trip .when{font-size:13px;color:var(--mute);margin-top:2px}
+.kpis{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 8px}
+.kpi{display:flex;flex-direction:column}
+.kpi b{font-size:18px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:12px;color:var(--mute)}
+.legs{font-size:13px;color:var(--mute)}
+.legs div{display:flex;justify-content:space-between;gap:12px;padding:1px 0}
+.legs-sum{font-size:12px;color:var(--mute);margin-top:6px}
+.plan-race{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:4px 0;border-top:1px solid var(--line);margin-top:6px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 14px;padding:14px 20px;border-top:1px solid var(--line)}
+.settings label{margin-top:0}
+.hint{padding:0 20px 20px;font-size:12px;color:var(--mute)}
+.home-pin-dot{width:26px;height:26px;border-radius:50%;background:#FFB547;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(255,181,71,.25)}

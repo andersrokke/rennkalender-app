@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { color, fmt, days, fisUrl } from '../util'
 
-export default function RaceMap({ races, focus, view = 'norden' }) {
-  const el = useRef(null), map = useRef(null), layer = useRef(null), markers = useRef({})
+export default function RaceMap({ races, focus, view = 'norden', routes, home }) {
+  const el = useRef(null), map = useRef(null), layer = useRef(null), markers = useRef({}), routeLayer = useRef(null)
 
   useEffect(() => {
     if (map.current) return
@@ -13,6 +13,7 @@ export default function RaceMap({ races, focus, view = 'norden' }) {
       attribution: '&copy; OpenStreetMap-bidragsytere', maxZoom: 19
     }).addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
+    routeLayer.current = L.layerGroup().addTo(map.current)
   }, [])
 
   useEffect(() => {
@@ -41,6 +42,24 @@ export default function RaceMap({ races, focus, view = 'norden' }) {
       markers.current[v.place + v.country] = m
     })
   }, [races])
+
+  // Season planner: dashed route per trip, plus a house pin on the home base.
+  useEffect(() => {
+    if (!routeLayer.current) return
+    routeLayer.current.clearLayers()
+    if (home) {
+      L.marker(home, {
+        interactive: false,
+        icon: L.divIcon({
+          className: 'home-pin', iconSize: [26, 26], iconAnchor: [13, 13],
+          html: '<div class="home-pin-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1a1200"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg></div>'
+        })
+      }).addTo(routeLayer.current)
+    }
+    ;(routes || []).forEach(t => {
+      L.polyline(t.points, { color: t.color, weight: 2.5, opacity: .85, dashArray: '6 6' }).addTo(routeLayer.current)
+    })
+  }, [routes, home])
 
   useEffect(() => {
     if (!focus) return
