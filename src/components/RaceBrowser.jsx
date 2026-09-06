@@ -5,6 +5,8 @@ import Filters, { initialFilter, applyFilter } from './Filters.jsx'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
+import { useSignups, heatColor, daysUntil } from './useSignups'
+import { fmt } from '../util'
 
 // Browse all races. Coaches add/remove races for the team; athletes add/remove races in their own plan.
 export default function RaceBrowser({ profile, team, isCoach }) {
@@ -14,6 +16,8 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   const [focus, setFocus] = useState(null)
   const [teamRaces, setTeamRaces] = useState(new Map())
   const [mine, setMine] = useState(new Map())
+  const [heat, setHeat] = useState(false)
+  const { byRace, countedAt, max, has } = useSignups()
 
   const load = async () => {
     const [tr, ar] = await Promise.all([
@@ -47,12 +51,35 @@ export default function RaceBrowser({ profile, team, isCoach }) {
     const km = kmFromHome(r, home)
     return km == null ? null : <span className="muted">{nok(km)} km fra hjem</span>
   }
+
+  // "87 påmeldte · +12 siste 7 d · frist 12. jan (4 d)" — deadline turns amber under a week.
+  const Signups = ({ r }) => {
+    const sg = byRace[r.id]
+    if (!sg) return <div className="signup none">Ingen tall ennå</div>
+    const dd = daysUntil(r.signup_deadline)
+    const soon = dd != null && dd >= 0 && dd <= 7
+    return (
+      <div className="signup">
+        <span className="bar"><i style={{ width: `${Math.round(100 * (sg.participants || 0) / max)}%`, background: heatColor(sg.participants, max) }} /></span>
+        <span>{sg.participants} påmeldte{r.max_attendees ? ` av ${r.max_attendees}` : ''}</span>
+        {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} siste 7 d</span>}
+        {r.signup_deadline && <span className={soon ? 'soon' : ''}>
+          frist {fmt({ start_date: r.signup_deadline, end_date: r.signup_deadline })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} d)` : ''}
+        </span>}
+      </div>
+    )
+  }
   const rows = applyFilter(races, f)
   return (
     <>
-      <Filters f={f} setF={setF} view={view} setView={setView} />
+      <Filters f={f} setF={setF} view={view} setView={setView} extra={
+        <div className="group"><span>Påmeldte</span>
+          <button className={`chip ${heat ? 'on' : ''}`} onClick={() => setHeat(h => !h)}>Heatmap</button>
+          <span className="muted src">{has ? `iSonen · oppdatert ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : 'ingen data ennå'}</span>
+        </div>
+      } />
       <div className="split">
-        <RaceMap races={rows} focus={focus} view={view} />
+        <RaceMap races={rows} focus={focus} view={view} heat={heat} signups={byRace} maxSignups={max} />
         <RaceList races={rows} onSelect={setFocus} active={focus}
           selectedIds={new Set((isCoach ? teamRaces : mine).keys())}
           renderExtra={isCoach ? r => (
@@ -61,6 +88,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
                 {teamRaces.has(r.id) ? 'Fjern fra laget' : 'Legg til for laget'}
               </button>}
               <FromHome r={r} />
+              <Signups r={r} />
             </div>
           ) : r => (
             <div className="row">
@@ -69,6 +97,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
               </button>
               {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>På lagets plan</span>}
               <FromHome r={r} />
+              <Signups r={r} />
             </div>
           )}
         />

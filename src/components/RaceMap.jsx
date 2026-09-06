@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { color, fmt, days, fisUrl } from '../util'
+import { heatColor } from './useSignups'
 
-export default function RaceMap({ races, focus, view = 'norden', routes, home }) {
+export default function RaceMap({ races, focus, view = 'norden', routes, home, heat, signups, maxSignups = 1 }) {
   const el = useRef(null), map = useRef(null), layer = useRef(null), markers = useRef({}), routeLayer = useRef(null)
 
   useEffect(() => {
@@ -33,15 +34,21 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home })
     })
     Object.values(byV).forEach(v => {
       const nd = v.r.reduce((s, r) => s + days(r), 0)
+      // In heatmap mode a venue takes the colour of its busiest race.
+      const peak = Math.max(0, ...v.r.map(r => signups?.[r.id]?.participants || 0))
+      const fill = heat ? heatColor(peak, maxSignups) : color(v.country)
       const m = L.circleMarker([v.venue.lat, v.venue.lng], {
-        radius: 6 + Math.sqrt(nd) * 2.2, color: '#fff', weight: 2, fillColor: color(v.country), fillOpacity: .88
+        radius: 6 + Math.sqrt(nd) * 2.2, color: '#fff', weight: 2, fillColor: fill, fillOpacity: .88
       }).addTo(layer.current)
       m.bindTooltip(v.place, { direction: 'top', offset: [0, -8] })
-      m.bindPopup(`<b>${v.place}</b> (${v.country})` + v.r.map(r =>
-        `<div>${fmt(r)} · ${r.category} · ${r.events}${fisUrl(r) ? ` · <a href="${fisUrl(r)}" target="_blank" rel="noopener">FIS ↗</a>` : ''}</div>`).join(''))
+      m.bindPopup(`<b>${v.place}</b> (${v.country})` + v.r.map(r => {
+        const sg = signups?.[r.id]
+        const n = sg ? ` · <b>${sg.participants} påmeldte</b>` : ''
+        return `<div>${fmt(r)} · ${r.category} · ${r.events}${n}${fisUrl(r) ? ` · <a href="${fisUrl(r)}" target="_blank" rel="noopener">FIS ↗</a>` : ''}</div>`
+      }).join(''))
       markers.current[v.place + v.country] = m
     })
-  }, [races])
+  }, [races, heat, signups, maxSignups])
 
   // Season planner: dashed route per trip, plus a house pin on the home base.
   useEffect(() => {
@@ -67,5 +74,12 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home })
     if (m) { map.current.flyTo(m.getLatLng(), 8, { duration: .8 }); m.openPopup() }
   }, [focus])
 
-  return <div ref={el} className="map" />
+  return (
+    <div className="mapwrap">
+      <div ref={el} className="map" />
+      {heat && (
+        <div className="legend"><span>få</span><span className="g" /><span>mange påmeldte</span></div>
+      )}
+    </div>
+  )
 }
