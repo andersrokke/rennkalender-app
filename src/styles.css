@@ -349,8 +349,10 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 @media (max-width:860px){ .ob-lang{top:-4px} }
 
 /* Hero-teksten skal ikke tvinges smal — engelsk har korte ord */
-/* 38ch her måles i blokkas egen 15px-font (~317px) og ble derfor smalere enn
-   overskriftas egen 14ch (~412px). Lar h1 og avsnittene styre bredden selv. */
+/* NB: 38ch måles i blokkas egen 15px-font = 317 px, altså smalere enn
+   overskriftas egen 14ch (~412 px i 54px-fonten). Med min(38ch,100%) her slo
+   h1-regelen aldri inn, og engelsk brakk over fire linjer. Blokka står derfor
+   på 100 %, og h1 og avsnittene styrer bredden med sine egne ch-verdier. */
 .hero-copy{max-width:100%}
 .hero-copy h1{
   font-size:clamp(30px, 3.2vw + 12px, 54px);
