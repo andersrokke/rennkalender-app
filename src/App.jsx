@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { LangContext, I18N } from './i18n'
+import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
 import { supabase } from './supabase'
 import Auth from './components/Auth.jsx'
@@ -41,7 +41,11 @@ export default function App() {
 
   useEffect(() => { if (session?.user) loadProfile(session.user.id); else setProfile(null) }, [session, loadProfile])
 
-  const lang = profile?.lang === 'en' ? 'en' : 'no'
+  // The login and onboarding screens store the choice in localStorage under
+  // 'rk-lang'; the profile wins once it is set. The app's own dictionary only
+  // has no/en, so 'sv' reads as Norwegian in here until it gains Swedish.
+  const pref = profile?.lang || detectLang()
+  const lang = pref === 'en' ? 'en' : 'no'
   const theme = profile?.theme === 'dark' ? 'dark' : 'light'
   useEffect(() => { applyTheme(theme); applyLang(lang) }, [theme, lang])
   useEffect(() => { document.documentElement.dataset.pane = pane }, [pane])
@@ -61,6 +65,7 @@ export default function App() {
 
   const reload = () => loadProfile(session.user.id)
   const setPref = async patch => {
+    if (patch.lang) saveLang(patch.lang)
     setProfile(p => ({ ...p, ...patch }))
     await supabase.from('profiles').update(patch).eq('id', profile.id)
   }

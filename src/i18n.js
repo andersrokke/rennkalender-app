@@ -186,3 +186,99 @@ export const useT = () => {
   const dict = I18N[lang] || I18N.no
   return Object.assign(k => dict[k] ?? I18N.no[k] ?? k, { lang })
 }
+
+/* ---------------------------------------------------------------
+   Login and onboarding dictionary (NO / SV / EN).
+   Kept alongside the app's own I18N/useT above for now; the two
+   share the localStorage key 'rk-lang' so the language chosen
+   before signing in carries into the app.
+   --------------------------------------------------------------- */
+export const LANGS = [['no', 'NO'], ['sv', 'SV'], ['en', 'EN']]
+
+const S = {
+  no: {
+    brand: 'Rennkalender', signIn: 'Logg inn', signInLead: 'Ingen passord å huske – du får en lenke på e-post.',
+    email: 'E-post', sendLink: 'Send innloggingslenke', sending: 'Sender …',
+    checkInbox: 'Sjekk innboksen', sentTo: 'Vi har sendt en innloggingslenke til', tapIt: 'Trykk på den, så er du inne.',
+    spam: 'Finner du den ikke, sjekk søppelpost.', otherEmail: 'Bruk en annen e-post',
+    firstTime: 'Første gang? Lenken oppretter kontoen din.', rateLimit: 'For mange forsøk – prøv igjen om litt.',
+    heroTitle1: 'Planlegg hele', heroTitle2: 'alpinsesongen',
+    heroLead: '120 renn i Norge, Sverige, Finland og Europacupen. Se reisevei, kostnad, påmeldte og startnummer – og hvor du ligger an.',
+    p1: 'Reise og kostnad', p1b: 'regnet ut fra hjemstedet ditt',
+    p2: 'Startnummer', p2b: 'ut fra hvem som er påmeldt',
+    p3: 'FIS-punkter', p3b: 'og utvikling gjennom sesongen',
+    races: 'renn', venues: 'steder', countries: 'land',
+    roleAthlete: '🎿 Løper', roleCoach: '📋 Trener', roleParent: '👨‍👩‍👧 Forelder',
+    welcome: 'Velkommen', welcomeName: (n) => `Velkommen, ${n}`, howUse: 'Hvordan vil du bruke Rennkalender?',
+    cCoach: 'Trener', cCoachLead: 'Opprett et lag og planlegg sesongen med løperne dine.',
+    cTeam: 'Løper i et lag', cTeamLead: 'Har du fått en kode av treneren? Bli med her.',
+    cSolo: 'Løper', cSoloLead: 'Planlegg din egen sesong – reise, kostnad og startnummer.',
+    cParent: 'Forelder', cParentLead: 'Følg barnet ditt gjennom sesongen.',
+    name: 'Navn', namePh: 'Fornavn Etternavn',
+    teamName: 'Lagnavn', teamPh: 'f.eks. IRS FIS-gruppe',
+    codeTeam: 'Kode fra treneren', codeParent: 'Kode fra barnet ditt', codePh: 'lim inn koden',
+    parentHint: 'Løperen finner koden under «Profil». Du får lesetilgang – du kan ikke endre noe.',
+    goCoach: 'Opprett lag', goTeam: 'Bli med', goSolo: 'Kom i gang', goParent: 'Koble til',
+    saving: 'Lagrer …', later: 'Resten fyller du ut i profilen når du vil.',
+  },
+  sv: {
+    brand: 'Tävlingskalender', signIn: 'Logga in', signInLead: 'Inga lösenord – du får en länk via e-post.',
+    email: 'E-post', sendLink: 'Skicka inloggningslänk', sending: 'Skickar …',
+    checkInbox: 'Kolla inkorgen', sentTo: 'Vi har skickat en inloggningslänk till', tapIt: 'Tryck på den så är du inne.',
+    spam: 'Hittar du den inte, kolla skräpposten.', otherEmail: 'Använd en annan e-post',
+    firstTime: 'Första gången? Länken skapar ditt konto.', rateLimit: 'För många försök – försök igen om en stund.',
+    heroTitle1: 'Planera hela', heroTitle2: 'alpinsäsongen',
+    heroLead: '120 tävlingar i Norge, Sverige, Finland och Europacupen. Se resväg, kostnad, anmälda och startnummer – och var du ligger till.',
+    p1: 'Resa och kostnad', p1b: 'uträknat från din hemort',
+    p2: 'Startnummer', p2b: 'utifrån vilka som är anmälda',
+    p3: 'FIS-punkter', p3b: 'och utveckling under säsongen',
+    races: 'tävlingar', venues: 'orter', countries: 'länder',
+    roleAthlete: '🎿 Åkare', roleCoach: '📋 Tränare', roleParent: '👨‍👩‍👧 Förälder',
+    welcome: 'Välkommen', welcomeName: (n) => `Välkommen, ${n}`, howUse: 'Hur vill du använda kalendern?',
+    cCoach: 'Tränare', cCoachLead: 'Skapa ett lag och planera säsongen med dina åkare.',
+    cTeam: 'Åkare i ett lag', cTeamLead: 'Har du fått en kod av tränaren? Gå med här.',
+    cSolo: 'Åkare', cSoloLead: 'Planera din egen säsong – resa, kostnad och startnummer.',
+    cParent: 'Förälder', cParentLead: 'Följ ditt barn genom säsongen.',
+    name: 'Namn', namePh: 'Förnamn Efternamn',
+    teamName: 'Lagnamn', teamPh: 't.ex. Åre SK FIS-grupp',
+    codeTeam: 'Kod från tränaren', codeParent: 'Kod från ditt barn', codePh: 'klistra in koden',
+    parentHint: 'Åkaren hittar koden under ”Profil”. Du får läsbehörighet – du kan inte ändra något.',
+    goCoach: 'Skapa lag', goTeam: 'Gå med', goSolo: 'Kom igång', goParent: 'Anslut',
+    saving: 'Sparar …', later: 'Resten fyller du i under profilen när du vill.',
+  },
+  en: {
+    brand: 'Race Calendar', signIn: 'Sign in', signInLead: 'No passwords – we send you a link by email.',
+    email: 'Email', sendLink: 'Send sign-in link', sending: 'Sending …',
+    checkInbox: 'Check your inbox', sentTo: 'We sent a sign-in link to', tapIt: 'Tap it and you are in.',
+    spam: "Can't find it? Check your spam folder.", otherEmail: 'Use a different email',
+    firstTime: 'First time? The link creates your account.', rateLimit: 'Too many attempts – try again shortly.',
+    heroTitle1: 'Plan the whole', heroTitle2: 'alpine season',
+    heroLead: '120 races across Norway, Sweden, Finland and the Europa Cup. See travel, cost, entries and start numbers – and where you stand.',
+    p1: 'Travel and cost', p1b: 'calculated from your home base',
+    p2: 'Start numbers', p2b: 'based on who has entered',
+    p3: 'FIS points', p3b: 'and progress through the season',
+    races: 'races', venues: 'venues', countries: 'countries',
+    roleAthlete: '🎿 Athlete', roleCoach: '📋 Coach', roleParent: '👨‍👩‍👧 Parent',
+    welcome: 'Welcome', welcomeName: (n) => `Welcome, ${n}`, howUse: 'How will you use the calendar?',
+    cCoach: 'Coach', cCoachLead: 'Create a team and plan the season with your athletes.',
+    cTeam: 'Athlete in a team', cTeamLead: 'Got a code from your coach? Join here.',
+    cSolo: 'Athlete', cSoloLead: 'Plan your own season – travel, cost and start numbers.',
+    cParent: 'Parent', cParentLead: 'Follow your child through the season.',
+    name: 'Name', namePh: 'First name Last name',
+    teamName: 'Team name', teamPh: 'e.g. IRS FIS group',
+    codeTeam: 'Code from your coach', codeParent: "Code from your child", codePh: 'paste the code',
+    parentHint: 'The athlete finds the code under “Profile”. You get read-only access.',
+    goCoach: 'Create team', goTeam: 'Join', goSolo: 'Get started', goParent: 'Connect',
+    saving: 'Saving …', later: 'You can fill in the rest in your profile later.',
+  },
+}
+
+export function detectLang() {
+  try { const s = localStorage.getItem('rk-lang'); if (s && S[s]) return s } catch { /* */ }
+  const n = (navigator.language || 'en').toLowerCase()
+  if (n.startsWith('nb') || n.startsWith('nn') || n.startsWith('no')) return 'no'
+  if (n.startsWith('sv')) return 'sv'
+  return 'en'
+}
+export function setLang(l) { try { localStorage.setItem('rk-lang', l) } catch { /* */ } }
+export const t = (lang) => S[lang] || S.no

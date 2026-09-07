@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
+import { detectLang, t } from '../i18n'
+import LangSwitch from './LangSwitch.jsx'
 
 /* Illustrated hero: dawn sky, mountains, piste with slalom gates and a skier's track */
 const Hero = () => (
@@ -56,6 +58,8 @@ const Hero = () => (
 )
 
 export default function Auth() {
+  const [lang, setLang] = useState(detectLang())
+  const L = t(lang)
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState(null)
@@ -65,7 +69,7 @@ export default function Auth() {
     e.preventDefault(); setBusy(true); setErr(null)
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
     setBusy(false)
-    if (error) setErr(error.message.includes('rate limit') ? 'For mange forsøk – prøv igjen om litt.' : error.message)
+    if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : error.message)
     else setSent(true)
   }
 
@@ -74,19 +78,19 @@ export default function Auth() {
       <section className="auth-hero">
         <Hero />
         <div className="hero-copy">
-          <div className="brand"><span className="dot" />Rennkalender</div>
-          <h1>Planlegg hele<br /><em>alpinsesongen</em></h1>
-          <p>120 renn i Norge, Sverige, Finland og Europacupen. Se reisevei, kostnad, påmeldte og startnummer – og hvor du ligger an.</p>
+          <div className="hero-top"><div className="brand"><span className="dot" />{L.brand}</div><LangSwitch lang={lang} onChange={setLang} dark /></div>
+          <h1>{L.heroTitle1}<br /><em>{L.heroTitle2}</em></h1>
+          <p>{L.heroLead}</p>
           <ul className="hero-points">
-            <li><b>Reise og kostnad</b> regnet ut fra hjemstedet ditt</li>
-            <li><b>Startnummer</b> ut fra hvem som er påmeldt</li>
-            <li><b>FIS-punkter</b> og utvikling gjennom sesongen</li>
+            <li><b>{L.p1}</b> {L.p1b}</li>
+            <li><b>{L.p2}</b> {L.p2b}</li>
+            <li><b>{L.p3}</b> {L.p3b}</li>
           </ul>
         </div>
         <div className="hero-stats">
-          <div><b>120</b><span>renn</span></div>
-          <div><b>81</b><span>steder</span></div>
-          <div><b>11</b><span>land</span></div>
+          <div><b>120</b><span>{L.races}</span></div>
+          <div><b>81</b><span>{L.venues}</span></div>
+          <div><b>11</b><span>{L.countries}</span></div>
         </div>
       </section>
 
@@ -95,24 +99,24 @@ export default function Auth() {
           {sent ? (
             <div className="sent">
               <div className="icon">✓</div>
-              <h2>Sjekk innboksen</h2>
-              <p>Vi har sendt en innloggingslenke til <b>{email}</b>. Trykk på den, så er du inne.</p>
-              <p className="fine">Finner du den ikke, sjekk søppelpost.</p>
-              <button className="btn link" onClick={() => setSent(false)}>Bruk en annen e-post</button>
+              <h2>{L.checkInbox}</h2>
+              <p>{L.sentTo} <b>{email}</b>. {L.tapIt}</p>
+              <p className="fine">{L.spam}</p>
+              <button className="btn link" onClick={() => setSent(false)}>{L.otherEmail}</button>
             </div>
           ) : (
             <form onSubmit={send}>
-              <h2>Logg inn</h2>
-              <p>Ingen passord å huske – du får en lenke på e-post.</p>
-              <label>E-post</label>
-              <input type="email" required autoFocus inputMode="email" autoComplete="email"
+              <h2>{L.signIn}</h2>
+              <p>{L.signInLead}</p>
+              <label>{L.email}</label>
+              <input type="email" required inputMode="email" autoComplete="email"
                 value={email} onChange={e => setEmail(e.target.value)} placeholder="navn@example.com" />
-              <button className="btn primary" disabled={busy}>{busy ? 'Sender …' : 'Send innloggingslenke'}</button>
+              <button className="btn primary" disabled={busy}>{busy ? L.sending : L.sendLink}</button>
               {err && <div className="error">{err}</div>}
               <div className="roles">
-                <span>🎿 Løper</span><span>📋 Trener</span><span>👨‍👩‍👧 Forelder</span>
+                <span>{L.roleAthlete}</span><span>{L.roleCoach}</span><span>{L.roleParent}</span>
               </div>
-              <div className="fine">Første gang? Lenken oppretter kontoen din.</div>
+              <div className="fine">{L.firstTime}</div>
             </form>
           )}
         </div>
