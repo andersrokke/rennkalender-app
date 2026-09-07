@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useT } from '../i18n'
-import { chipState, hasAnswered, quickFilters } from './useTeamAssign'
+import { chipState, hasAnswered, isGoing, quickFilters } from './useTeamAssign'
 
 const initials = n => (n || '').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
@@ -41,13 +41,17 @@ export default function AssignRow({ raceId, rows, onApply, compact = false }) {
     setBusy(false)
   }
 
-  const unanswered = rows.filter(r => sel.has(r.athlete_id) && !hasAnswered(r)).length
+  // The counter is about who is going to the race, whether the coach put them
+  // there or they signed themselves up — not about who has been assigned.
+  const going = rows.filter(isGoing).length
+  // Only athletes the coach has actually asked can be waiting to answer.
+  const unanswered = rows.filter(r => r.assigned && !hasAnswered(r)).length
   const filters = quickFilters(rows, t)
 
   return (
     <div className="assign">
       <div className="assign-head">
-        <span className="assign-count"><b>{sel.size}</b> {t('ofN')} {rows.length} {t('athletesWord')}</span>
+        <span className="assign-count"><b>{going}</b> {t('ofN')} {rows.length} {t('athletesWord')}</span>
         {unanswered > 0 && <span className="tag warn">{unanswered} {t('notAnswered')}</span>}
       </div>
 
@@ -57,9 +61,10 @@ export default function AssignRow({ raceId, rows, onApply, compact = false }) {
           const on = sel.has(r.athlete_id)
           return (
             <button key={r.athlete_id} type="button" disabled={locked(r)}
-              className={`achip ${st} ${on ? 'on' : ''}`}
-              title={`${r.full_name}${r.status ? ' · ' + t('st_' + r.status) : ' · ' + t('noAnswer')}`}
+              className={`achip ${st}${on ? ' assigned' : ''}`}
+              title={`${r.full_name} · ${r.status ? t('st_' + r.status) : t('noAnswer')}${on ? ' · ' + t('assignedBadge') : ''}`}
               onClick={() => toggle(r)}>
+              {on && <span className="dot" aria-hidden="true" />}
               {compact ? initials(r.full_name) : r.full_name.split(' ')[0]}
             </button>
           )

@@ -33,18 +33,18 @@ export function useTeamAssign(teamId) {
   return { rows, byRace, byAthlete, loading, apply, reload: load }
 }
 
-// How a chip should read. An assigned race the athlete has not answered still
-// sits at 'planned' with assigned = true — that is the coach's proposal, not
-// the athlete's word, so it stays neutral and counts as unanswered.
+// A chip is coloured by the athlete's own status, never by whether the coach
+// has assigned the race. Assignment is a separate marker on the chip.
 export function chipState(r) {
-  if (!r) return 'none'
-  if (r.status === 'unavailable') return 'unavailable'
-  if (r.status === 'entered') return 'entered'
-  if (r.status === 'wish') return 'wish'
-  if (r.status === 'planned') return r.assigned ? 'assigned' : 'planned'
-  return 'none'
+  if (!r || r.status == null) return 'none'
+  return r.status          // wish | planned | entered | unavailable
 }
-export const hasAnswered = r => !!r && r.status != null && chipState(r) !== 'assigned'
+// The coach's proposal alone is not an answer: a row created by assign_race
+// sits at 'planned' with assigned = true until the athlete says something.
+export const hasAnswered = r => !!r && r.status != null && !(r.assigned && r.status === 'planned')
+// Who is actually going, however that came about.
+export const GOING = ['planned', 'entered', 'wish']
+export const isGoing = r => !!r && GOING.includes(r.status)
 
 // Quick filters, built from the data the RPC returns. Only offered when they
 // actually match somebody.
