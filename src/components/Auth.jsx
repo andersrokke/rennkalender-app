@@ -64,6 +64,8 @@ export default function Auth() {
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [password, setPassword] = useState('')
+  const [pwMode, setPwMode] = useState(false)
   const [code, setCode] = useState('')
   const [codeErr, setCodeErr] = useState(null)
   const [verifying, setVerifying] = useState(false)
@@ -87,10 +89,23 @@ export default function Auth() {
     if (error) setCodeErr(error.message.includes('rate limit') ? L.rateLimit : L.codeBad)
   }
 
+  // Test route only: shown in dev, or for the @test.rennkalender accounts used
+  // to exercise the four onboarding roles. Never offered to real users in
+  // production, who sign in with a link or a code.
+  async function signInWithPassword(e) {
+    e.preventDefault(); setBusy(true); setErr(null)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    setBusy(false)
+    if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : L.pwFailed)
+  }
+
   async function resend() {
     setCode(''); setCodeErr(null)
     await send()
   }
+
+  const showPassword = import.meta.env.DEV ||
+    email.trim().toLowerCase().endsWith('@test.rennkalender')
 
   return (
     <div className="auth-wrap">
@@ -145,6 +160,18 @@ export default function Auth() {
               <input type="email" required inputMode="email" autoComplete="email"
                 value={email} onChange={e => setEmail(e.target.value)} placeholder="navn@example.com" />
               <button className="btn primary" disabled={busy}>{busy ? L.sending : L.sendLink}</button>
+              {showPassword && (pwMode ? (
+                <div className="pw">
+                  <label>{L.password}</label>
+                  <input type="password" value={password} autoComplete="current-password"
+                    onChange={e => { setPassword(e.target.value); setErr(null) }} />
+                  <button type="button" className="btn small primary" disabled={busy || !password}
+                    onClick={signInWithPassword}>{L.pwSignIn}</button>
+                  <span className="fine">{L.pwHint}</span>
+                </div>
+              ) : (
+                <button type="button" className="btn link pw-link" onClick={() => setPwMode(true)}>{L.pwLink}</button>
+              ))}
               {err && <div className="error">{err}</div>}
               <div className="roles">
                 <span>{L.roleAthlete}</span><span>{L.roleCoach}</span><span>{L.roleParent}</span>
