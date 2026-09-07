@@ -12,6 +12,7 @@ import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Planner from './components/Planner.jsx'
 import Development from './components/Development.jsx'
+import Children from './components/Children.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
@@ -73,14 +74,19 @@ export default function App() {
 
   const isCoach = profile.role === 'coach' || team?.owner_id === profile.id
   const d = I18N[lang]
-  const tabs = isCoach
-    ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTabCoach]]
-    : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTab]]
+  // A guardian has no season of their own, so they get the children view,
+  // the race calendar (read-only) and their profile.
+  const isParent = profile.role === 'parent' && !isCoach
+  const tabs = isParent
+    ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab]]
+    : isCoach
+      ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTabCoach]]
+      : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
     if (k === 'filter') return setSheet(true)
-    if (k === 'plan') { setTab('plan'); setPane('list'); }
+    if (k === 'plan') { setTab(isParent ? 'children' : 'plan'); setPane('list'); }
     else if (k === 'list') { if (active === 'plan') setTab(isCoach ? 'races' : 'mine'); setPane('list') }
     else setPane('map')
     scrollTo({ top: 0 })
@@ -107,7 +113,8 @@ export default function App() {
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'mine' && <MySeason profile={profile} team={team} />}
-      {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} />}
+      {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
+      {active === 'children' && <Children profile={profile} />}
       {active === 'plan' && <Planner profile={profile} onChange={reload} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}

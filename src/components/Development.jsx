@@ -12,7 +12,7 @@ const n1 = v => v == null ? '–' : Number(v).toLocaleString('nb-NO', { maximumF
 
 // "Min utvikling": FIS points per discipline per list, counting results and a
 // season summary. A coach sees every athlete on the team in the same chart.
-export default function Development({ profile, team, isCoach }) {
+export default function Development({ profile, team, isCoach, readOnly = false }) {
   const t = useT()
   const [people, setPeople] = useState([])
   const [disc, setDisc] = useState('GS')
@@ -65,7 +65,7 @@ export default function Development({ profile, team, isCoach }) {
       <div className="card">
         <h2>{t('devTitle')}</h2>
         <p className="muted">{t('devSub')}</p>
-        {profile.fis_code && (
+        {profile.fis_code && !readOnly && (
           <div className="fis-head">
             <button className="btn link" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
               {fisBusy ? t('fisFetching') : t('fisRefresh')}
@@ -73,6 +73,9 @@ export default function Development({ profile, team, isCoach }) {
             {lastFetched && <span>{t('fisLastUpdated')} {new Date(lastFetched).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>}
             {fisBusy && <span className="spinner" />}
           </div>
+        )}
+        {profile.fis_code && readOnly && lastFetched && (
+          <div className="fis-head"><span>{t('fisLastUpdated')} {new Date(lastFetched).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</span></div>
         )}
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {isCoach && (
@@ -84,7 +87,7 @@ export default function Development({ profile, team, isCoach }) {
           : rows.length === 0 ? (
             <div className="empty-fis">
               <p className="muted">{profile.fis_code ? t('fisEmpty') : t('devNoPoints')}</p>
-              {profile.fis_code && <button className="btn primary" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
+              {profile.fis_code && !readOnly && <button className="btn primary" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
                 {fisBusy ? t('fisFetching') : t('fisFetch')}
               </button>}
             </div>

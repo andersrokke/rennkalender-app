@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import { fetchFromFis, fetchFromFisInBackground, fisSummary } from '../fis'
@@ -16,6 +16,25 @@ export default function Settings({ profile, team, isCoach, onChange }) {
   const [msg, setMsg] = useState(null)
   const [fisBusy, setFisBusy] = useState(false)
   const [fisMsg, setFisMsg] = useState(null)
+  const [guardians, setGuardians] = useState([])
+  const [copied, setCopied] = useState(false)
+
+  const isAthlete = !isCoach && profile.role !== 'parent'
+  useEffect(() => {
+    if (!isAthlete) return
+    supabase.rpc('my_guardians').then(({ data }) => setGuardians(data || []))
+  }, [isAthlete, profile.id])
+
+  async function removeGuardian(g) {
+    if (!confirm(`${t('remove')} ${g.full_name}?`)) return
+    await supabase.rpc('revoke_guardian', { parent: g.parent_id })
+    const { data } = await supabase.rpc('my_guardians')
+    setGuardians(data || [])
+  }
+  async function copyCode() {
+    try { await navigator.clipboard.writeText(profile.link_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+    catch { /* clipboard blocked; the code is on screen anyway */ }
+  }
 
   async function saveProfile(e) {
     e.preventDefault()
@@ -88,11 +107,28 @@ export default function Settings({ profile, team, isCoach, onChange }) {
           {joinErr && <div className="error">{joinErr}</div>}
         </div>
       )}
+      {isAthlete && (
+        <div className="card">
+          <h2>{t('linkedTitle')}</h2>
+          <p className="muted">{t('linkedShare')}</p>
+          <div className="row">
+            <span className="link-code">{profile.link_code || '–'}</span>
+            {profile.link_code && <button type="button" className="btn small" onClick={copyCode}>{copied ? t('copied') : t('linkedShare')}</button>}
+          </div>
+          <h3>{t('linkedWho')}</h3>
+          {guardians.length === 0 ? <p className="muted">{t('linkedNone')}</p> : guardians.map(g => (
+            <div className="guardian-row" key={g.parent_id}>
+              <span>{g.full_name}{g.since ? ` · ${t('linkedSince')} ${new Date(g.since).toLocaleDateString('nb-NO')}` : ''}</span>
+              <button className="btn small danger" onClick={() => removeGuardian(g)}>{t('remove')}</button>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="card">
         <h2>{t('myProfile')}</h2>
         <form onSubmit={saveProfile}>
           <label>{t('name')}</label><input value={name} onChange={e => setName(e.target.value)} />
-          {!isCoach && <div className="row">
+          {isAthlete && <div className="row">
             <div style={{ flex: 1 }}><label>{t('gender')}</label><select value={gender} onChange={e => setGender(e.target.value)}><option value="">–</option><option value="W">{t('woman')}</option><option value="M">{t('man')}</option></select></div>
             <div style={{ flex: 1 }}><label>{t('birthYear')}</label><input type="number" value={year} onChange={e => setYear(e.target.value)} /></div>
             <div style={{ flex: 1 }}><label>{t('fisCode')}</label>

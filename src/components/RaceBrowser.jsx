@@ -15,7 +15,7 @@ import { useT } from '../i18n'
 import { setSheet } from '../theme'
 
 // Browse all races. Coaches add/remove races for the team; athletes add/remove races in their own plan.
-export default function RaceBrowser({ profile, team, isCoach }) {
+export default function RaceBrowser({ profile, team, isCoach, readOnly = false }) {
   const t = useT()
   const races = useRaces()
   const [f, setF] = useState(initialFilter)
@@ -65,7 +65,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   }
 
   // A coach without a team can browse, but has no team plan to add races to.
-  const canEditTeam = isCoach && !!team
+  const canEditTeam = isCoach && !!team && !readOnly
   const home = profile.home_city || DEFAULT_HOME
   const FromHome = ({ r }) => {
     const km = kmFromHome(r, home)
@@ -117,9 +117,9 @@ export default function RaceBrowser({ profile, team, isCoach }) {
             </div>
           ) : r => (
             <div className="row">
-              <button className={`btn small ${mine.has(r.id) ? '' : 'primary'}`} onClick={() => toggleMine(r)}>
+              {!readOnly && <button className={`btn small ${mine.has(r.id) ? '' : 'primary'}`} onClick={() => toggleMine(r)}>
                 {mine.has(r.id) ? t('removeMine') : t('addMine')}
-              </button>
+              </button>}
               {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>{t('onTeamPlan')}</span>}
               <FromHome r={r} />
               <Signups r={r} />

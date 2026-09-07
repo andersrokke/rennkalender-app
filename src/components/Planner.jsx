@@ -10,7 +10,7 @@ import {
 
 // Season planner: races the athlete has in athlete_races (planned / entered)
 // chained into trips, with distance, nights and cost.
-export default function Planner({ profile, onChange }) {
+export default function Planner({ profile, onChange, readOnly = false }) {
   const t = useT()
   const [rows, setRows] = useState([])
   const [home, setHome] = useState(profile.home_city || DEFAULT_HOME)
@@ -61,9 +61,11 @@ export default function Planner({ profile, onChange }) {
     <>
       <div className="controls">
         <div className="group"><span>{t('home')}</span>
-          <select style={{ width: 'auto' }} value={home} onChange={e => saveHome(e.target.value)}>
-            {Object.entries(HOMES).map(([k, v]) => <option key={k} value={k}>{v[2]}</option>)}
-          </select>
+          {readOnly
+            ? <span>{(HOMES[home] || [])[2] || home}</span>
+            : <select style={{ width: 'auto' }} value={home} onChange={e => saveHome(e.target.value)}>
+                {Object.entries(HOMES).map(([k, v]) => <option key={k} value={k}>{v[2]}</option>)}
+              </select>}
         </div>
         <div className="group"><span>{rows.length} {t('inPlan')} · {trips.length} {t('tripsN')}</span></div>
       </div>
@@ -99,12 +101,12 @@ export default function Planner({ profile, onChange }) {
                   {trip.races.map((r, k) => (
                     <div className="plan-race" key={r.id}>
                       <span><b>{r.place}</b> · {fmt(r)} · {r.events}
-                        {k > 0 && <button className="btn small link split" onClick={() => splitHere(r.id)}>{t('splitBtn')}</button>}
+                        {!readOnly && k > 0 && <button className="btn small link split" onClick={() => splitHere(r.id)}>{t('splitBtn')}</button>}
                       </span>
-                      <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>
+                      {!readOnly && <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>}
                     </div>
                   ))}
-                  {i > 0 && <div style={{ marginTop: 8 }}>
+                  {!readOnly && i > 0 && <div style={{ marginTop: 8 }}>
                     <button className="btn small link" onClick={() => joinPrev(trip.races[0].id)}>{t('joinBtn')}</button>
                   </div>}
                 </div>
@@ -112,13 +114,13 @@ export default function Planner({ profile, onChange }) {
             </>
           )}
           {noVenue > 0 && <div className="muted" style={{ padding: '0 20px 12px' }}>{noVenue} {t('noVenue')}</div>}
-          <div className="settings">
+          {!readOnly && <div className="settings">
             <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={plan.kmRate} onChange={e => savePlan('kmRate', e.target.value)} /></div>
             <div><label>{t('hotel')}</label><input type="number" step="50" value={plan.hotel} onChange={e => savePlan('hotel', e.target.value)} /></div>
             <div><label>{t('entry')}</label><input type="number" step="50" value={plan.entry} onChange={e => savePlan('entry', e.target.value)} /></div>
             <div><label>{t('liftS')}</label><input type="number" step="50" value={plan.lift} onChange={e => savePlan('lift', e.target.value)} /></div>
             <div><label>{t('maxGap')}</label><input type="number" min="0" max="10" value={plan.maxGap} onChange={e => savePlan('maxGap', e.target.value)} /></div>
-          </div>
+          </div>}
           <div className="hint">{t('hint')}</div>
         </div>
       </div>

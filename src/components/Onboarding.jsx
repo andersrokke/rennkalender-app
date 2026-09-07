@@ -10,6 +10,7 @@ export default function Onboarding({ profile, onDone }) {
   const [teamName, setTeamName] = useState('')
   const [club, setClub] = useState('')
   const [code, setCode] = useState('')
+  const [linkCode, setLinkCode] = useState('')
   const [gender, setGender] = useState('')
   const [year, setYear] = useState('')
   const [fis, setFis] = useState('')
@@ -59,6 +60,15 @@ export default function Onboarding({ profile, onDone }) {
     onDone()
   }
 
+  async function parent(e) {
+    e.preventDefault(); setBusy(true); setErr(null)
+    await supabase.from('profiles').update({ full_name: name }).eq('id', profile.id)
+    const { error } = await supabase.rpc('link_guardian', { code: linkCode.trim().toLowerCase() })
+    setBusy(false)
+    // link_guardian raises 'Ugyldig kode' rather than returning an empty row.
+    if (error) setErr(error.message); else onDone()
+  }
+
   return (
     <div className="page">
       <div className="card">
@@ -68,6 +78,7 @@ export default function Onboarding({ profile, onDone }) {
           <button className={'chip ' + (mode === 'coach' ? 'on' : '')} onClick={() => setMode('coach')}>{t('optCoach')}</button>
           <button className={'chip ' + (mode === 'athlete' ? 'on' : '')} onClick={() => setMode('athlete')}>{t('optAthlete')}</button>
           <button className={'chip ' + (mode === 'solo' ? 'on' : '')} onClick={() => setMode('solo')}>{t('optSolo')}</button>
+          <button className={'chip ' + (mode === 'parent' ? 'on' : '')} onClick={() => setMode('parent')}>{t('optParent')}</button>
         </div>
 
         {mode === 'coach' && (
@@ -94,6 +105,14 @@ export default function Onboarding({ profile, onDone }) {
             <label>{t('yourName')}</label><input required value={name} onChange={e => setName(e.target.value)} />
             {athleteFields}
             <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>{t('start')}</button></div>
+          </form>
+        )}
+        {mode === 'parent' && (
+          <form onSubmit={parent}>
+            <p className="muted">{t('parentIntro')}</p>
+            <label>{t('yourName')}</label><input required value={name} onChange={e => setName(e.target.value)} />
+            <label>{t('linkCode')}</label><input required value={linkCode} onChange={e => setLinkCode(e.target.value)} placeholder="8 tegn" />
+            <div style={{ marginTop: 14 }}><button className="btn primary" disabled={busy}>{t('linkBtn')}</button></div>
           </form>
         )}
         {err && <div className="error">{err}</div>}
