@@ -202,3 +202,10 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .btn.link.split{margin-left:8px;font-size:12px}
 .plan-race{align-items:flex-start}
 .chip[disabled]{opacity:.45;cursor:default}
+
+/* --- Predicted start numbers --- */
+.starts{display:flex;flex-direction:column;gap:2px;margin-top:4px;width:100%}
+.startno{font-size:12px;color:var(--mute)}
+.startno b{color:var(--slate)}
+.startno.draw{color:var(--fin);font-weight:600}
+.startno.draw b{color:var(--fin)}

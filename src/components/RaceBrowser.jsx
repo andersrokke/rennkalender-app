@@ -6,6 +6,8 @@ import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 import { useSignups, heatColor, daysUntil } from './useSignups'
+import { useStartNumbers } from './useStartNumbers'
+import StartNumbers from './StartNumbers.jsx'
 import { fmt } from '../util'
 import { useT } from '../i18n'
 import { setSheet } from '../theme'
@@ -21,6 +23,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   const [mine, setMine] = useState(new Map())
   const [heat, setHeat] = useState(false)
   const { byRace, countedAt, max, has } = useSignups()
+  const startNos = useStartNumbers(profile.fis_code)
 
   const load = async () => {
     const [tr, ar] = await Promise.all([
@@ -92,6 +95,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
               </button>}
               <FromHome r={r} />
               <Signups r={r} />
+              <StartNumbers race={r} byKey={startNos} />
             </div>
           ) : r => (
             <div className="row">
@@ -101,6 +105,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
               {teamRaces.has(r.id) && <span className="tag" style={{ marginLeft: 0, background: '#EEF6EE', color: '#1E5631' }}>{t('onTeamPlan')}</span>}
               <FromHome r={r} />
               <Signups r={r} />
+              <StartNumbers race={r} byKey={startNos} />
             </div>
           )}
         />
