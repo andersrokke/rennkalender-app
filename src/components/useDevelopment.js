@@ -113,9 +113,15 @@ export function countingResults(results, code, seasonStart, official = {}) {
     const raw = best.reduce((a, r) => a + r.pts, 0) / best.length
     const missing = Math.max(0, need - best.length)
     const calculated = round2(raw * Math.pow(1.2, missing))
+    // Lower points are better. Art. 4.2.2.3: the base list points stay the
+    // athlete's official value, so the calculation only matters once it beats
+    // them — that difference is the number worth chasing.
+    const bl = off ? Number(off.points) : null
+    const improvesBy = bl != null && calculated < bl ? round2(bl - calculated) : null
     out[d] = {
       need, count: scored.length, best, official: off,
-      baseListStands: false, raw, missing, penaltyPct: missing * 20, calculated
+      baseListStands: false, raw, missing, penaltyPct: missing * 20,
+      calculated, improvesBy, beatsBaseList: improvesBy != null
     }
   })
   return out

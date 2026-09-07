@@ -143,6 +143,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
                           {t('calcPerRules')}: <b>{n1(c.calculated)}</b>
                           {' — '}{c.need === 3 ? t('avgOfThree') : t('avgOfTwo')}
                           {c.best.length < c.need && ` (${c.best.length} ${t('ofN')} ${c.need} ${t('resultsWord')}, +${c.penaltyPct} %)`}
+                          {c.official && (c.beatsBaseList
+                            ? <span className="improves"> · {t('wouldImprove')} {n1(c.improvesBy)}</span>
+                            : <span> · {t('blStands')}</span>)}
                         </div>
                       )}
                       {c.best.map((r, i) => (

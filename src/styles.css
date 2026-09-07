@@ -394,3 +394,4 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .cup-compact .podium{color:var(--fin);font-weight:700}
 .fav-cups{width:100%;display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .fav-who{font-size:12px;font-weight:600;color:var(--slate);margin-right:6px}
+.count-note .improves{color:var(--fin);font-weight:600}
