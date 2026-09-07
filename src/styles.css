@@ -347,3 +347,32 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .ob-hero-text{position:relative}
 .ob-later{font-size:12.5px;color:var(--mute);margin:12px 0 0;text-align:center}
 @media (max-width:860px){ .ob-lang{top:-4px} }
+
+/* Hero-teksten skal ikke tvinges smal — engelsk har korte ord */
+/* 38ch her måles i blokkas egen 15px-font (~317px) og ble derfor smalere enn
+   overskriftas egen 14ch (~412px). Lar h1 og avsnittene styre bredden selv. */
+.hero-copy{max-width:100%}
+.hero-copy h1{
+  font-size:clamp(30px, 3.2vw + 12px, 54px);
+  line-height:1.04;
+  text-wrap:balance;
+  max-width:14ch;
+}
+.hero-copy p{max-width:40ch;font-size:15.5px}
+.hero-points{max-width:40ch}
+@media (max-width:900px){
+  .hero-copy{max-width:100%}
+  .hero-copy h1{font-size:clamp(26px, 6.4vw, 36px);max-width:none}
+  .hero-copy p{font-size:14.5px;max-width:44ch}
+}
+@media (max-width:520px){
+  .hero-copy h1{font-size:26px}
+  .auth-hero{padding:20px 18px 88px}
+}
+
+/* Kortet trekkes 70 px opp i heroen på mobil. Heroen er position:relative mens
+   panelet var static, så heroen malte over toppen av kortet og klippet
+   «Logg inn». Panelet må derfor også være posisjonert. */
+@media (max-width:900px){
+  .auth-panel{position:relative;z-index:1}
+}
