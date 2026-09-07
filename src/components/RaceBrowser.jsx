@@ -8,6 +8,7 @@ import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 import { useSignups, heatColor, daysUntil } from './useSignups'
 import { fmt } from '../util'
 import { useT } from '../i18n'
+import { setSheet } from '../theme'
 
 // Browse all races. Coaches add/remove races for the team; athletes add/remove races in their own plan.
 export default function RaceBrowser({ profile, team, isCoach }) {
@@ -74,7 +75,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   const rows = applyFilter(races, f)
   return (
     <>
-      <Filters f={f} setF={setF} view={view} setView={setView} extra={
+      <Filters f={f} setF={setF} view={view} setView={setView} onDone={() => setSheet(false)} extra={
         <div className="group"><span>{t('signups')}</span>
           <button className={`chip ${heat ? 'on' : ''}`} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
           <span className="muted src">{has ? `${t('srcLive')} ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : t('srcNone')}</span>

@@ -17,6 +17,10 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home, h
     }).addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
     routeLayer.current = L.layerGroup().addTo(map.current)
+    // The mobile tab bar hides and shows the map, so Leaflet has to re-measure.
+    const ro = new ResizeObserver(() => map.current?.invalidateSize())
+    ro.observe(el.current)
+    return () => ro.disconnect()
   }, [])
 
   useEffect(() => {

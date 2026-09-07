@@ -16,12 +16,13 @@ export function applyFilter(races, f) {
 
 const MONTHS = [['all', 'Alle'], ['2026-11', 'Nov'], ['2026-12', 'Des'], ['2027-01', 'Jan'], ['2027-02', 'Feb'], ['2027-03', 'Mar'], ['2027-04', 'Apr']]
 
-export default function Filters({ f, setF, view, setView, extra }) {
+export default function Filters({ f, setF, view, setView, extra, onDone }) {
   const t = useT()
   const toggle = (key, v) => setF(p => { const s = new Set(p[key]); s.has(v) ? s.delete(v) : s.add(v); return { ...p, [key]: s } })
   const Chip = ({ k, v, cls = '', label }) => <button className={`chip ${cls} ${f[k].has(v) ? 'on' : ''}`} onClick={() => toggle(k, v)}>{label}</button>
   return (
     <div className="controls">
+      <div className="sheet-head"><b>{t('filters')}</b><button onClick={onDone}>{t('done')}</button></div>
       <div className="group"><span>{t('country')}</span>
         <Chip k="country" v="NOR" cls="nor" label={t('norway')} /><Chip k="country" v="SWE" cls="swe" label={t('sweden')} />
         <Chip k="country" v="FIN" cls="fin" label={t('finland')} /><Chip k="country" v="EUR" cls="eur" label={t('ecLands')} />
