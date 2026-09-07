@@ -1,12 +1,15 @@
 import { useT } from '../i18n'
 import { cupName } from './useCupStandings'
+import { wholeNumber, dateTime } from '../format'
 
-const nf = n => n == null ? '' : Number(n).toLocaleString('nb-NO')
+
 
 // One block per cup: overall first, then the disciplines.
 // "Australia New Zealand Cup 2027 — sammenlagt nr. 3 av 51 · 182 p · GS nr. 1 · SL nr. 6"
 export default function CupStandings({ groups, compact = false }) {
   const t = useT()
+  // cup points are whole numbers and must not gain decimals
+  const nf = v => wholeNumber(v, t.lang)
   if (!groups?.length) return null      // hidden entirely without rows
 
   const parts = g => (
@@ -48,7 +51,7 @@ export default function CupStandings({ groups, compact = false }) {
         </div>
       ))}
       {updated && <div className="muted cup-updated">
-        {t('updatedAt')} {new Date(updated).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}
+        {t('updatedAt')} {dateTime(updated, t.lang)}
       </div>}
     </div>
   )

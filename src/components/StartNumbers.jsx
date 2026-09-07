@@ -1,12 +1,14 @@
 import { useT } from '../i18n'
+import { fisPoints } from '../format'
 import { raceDisciplines } from './useStartNumbers'
 
-const num = n => Number(n).toLocaleString('nb-NO', { maximumFractionDigits: 1 })
+
 
 // "GS: nr. 12 av 60 · trekkes 1–15" when inside the draw group,
 // otherwise "SL: nr. 23 av 60 · startnr. 23 · 4,1 p fra trekning".
 export default function StartNumbers({ race, byKey }) {
   const t = useT()
+  const num = v => fisPoints(v, t.lang)
   const rows = raceDisciplines(race)
     .map(d => [d, byKey[`${race.id}|${d}`]])
     .filter(([, v]) => v)

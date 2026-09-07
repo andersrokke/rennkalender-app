@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useT } from '../i18n'
 import { fmt } from '../util'
+import { fisPoints, dateTime } from '../format'
 import { fetchFromFis, fisSummary } from '../fis'
 import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
@@ -11,12 +12,13 @@ import {
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish
 } from './useDevelopment'
 
-const n1 = v => v == null ? '–' : Number(v).toLocaleString('nb-NO', { maximumFractionDigits: 2 })
+
 
 // "Min utvikling": FIS points per discipline per list, counting results and a
 // season summary. A coach sees every athlete on the team in the same chart.
 export default function Development({ profile, team, isCoach, readOnly = false }) {
   const t = useT()
+  const n1 = v => fisPoints(v, t.lang)
   const [people, setPeople] = useState([])
   const [disc, setDisc] = useState('GS')
   const [only, setOnly] = useState('all')   // coach: show every athlete, or one
@@ -77,12 +79,12 @@ export default function Development({ profile, team, isCoach, readOnly = false }
             <button className="btn link" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
               {fisBusy ? t('fisFetching') : t('fisRefresh')}
             </button>
-            {lastFetched && <span>{t('fisLastUpdated')} {new Date(lastFetched).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>}
+            {lastFetched && <span>{t('fisLastUpdated')} {dateTime(lastFetched, t.lang)}</span>}
             {fisBusy && <span className="spinner" />}
           </div>
         )}
         {profile.fis_code && readOnly && lastFetched && (
-          <div className="fis-head"><span>{t('fisLastUpdated')} {new Date(lastFetched).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</span></div>
+          <div className="fis-head"><span>{t('fisLastUpdated')} {dateTime(lastFetched, t.lang)}</span></div>
         )}
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {isCoach && (
@@ -113,8 +115,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--mute)' }} interval="preserveStartEnd" />
                 {/* lower FIS points are better, so the axis is reversed */}
-                <YAxis reversed tick={{ fontSize: 11, fill: 'var(--mute)' }} />
-                <Tooltip contentStyle={{ background: 'var(--snow)', border: '1px solid var(--line)', color: 'var(--slate)' }} />
+                <YAxis reversed tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={v => fisPoints(v, t.lang)} />
+                <Tooltip contentStyle={{ background: 'var(--snow)', border: '1px solid var(--line)', color: 'var(--slate)' }}
+                  formatter={v => fisPoints(v, t.lang)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 {series.map(s => (
                   <Line key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color}
