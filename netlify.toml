@@ -2,6 +2,11 @@
   command = "npm run build"
   publish = "dist"
 
+# Vite hasher og minifiserer allerede. Netlifys etterbehandling kan endre
+# ferdige filer, så den står av.
+[build.processing]
+  skip_processing = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
