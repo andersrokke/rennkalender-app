@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
+import { tabForNav, navForState } from './nav'
 import { supabase } from './supabase'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
@@ -91,12 +92,17 @@ export default function App() {
 
   const pickPane = k => {
     if (k === 'filter') return setSheet(true)
-    if (k === 'plan') { setTab(isParent ? 'children' : 'plan'); setPane('list'); }
-    else if (k === 'list') { if (active === 'plan') setTab(isCoach ? 'races' : 'mine'); setPane('list') }
-    else setPane('map')
+    if (k === 'map') setPane('map')
+    else {
+      // «Renn» means the race list, so it has to switch tab as well as pane —
+      // otherwise the label and the content disagree.
+      const next = tabForNav(k, { isParent })
+      if (next) setTab(next)
+      setPane('list')
+    }
     scrollTo({ top: 0 })
   }
-  const navActive = active === 'plan' ? 'plan' : pane
+  const navActive = navForState(active, pane, { isParent })
 
   const Seg = ({ opts, value, onPick }) => (
     <div className="seg">{opts.map(([v, l]) =>

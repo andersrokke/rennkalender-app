@@ -157,7 +157,13 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
   .topbar{padding:10px 14px 8px;gap:10px}
   .topbar h1{font-size:17px}
   .topbar h1 small{display:none}
-  .topbar nav{display:none}          /* replaced by the bottom tab bar */
+  /* The bottom bar only has four slots, so the full tab row stays reachable
+     here as a horizontally scrolling strip. Hiding it stranded «Min sesong»,
+     «Min utvikling» and «Profil» on mobile. */
+  .topbar nav{display:flex;order:3;width:100%;gap:4px;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .topbar nav::-webkit-scrollbar{display:none}
+  .topbar nav button{flex:0 0 auto;white-space:nowrap;font-size:13px;padding:6px 10px}
   .topbar .who{display:none}
   .seg button{padding:6px 10px}
   .page{padding:16px 14px}
