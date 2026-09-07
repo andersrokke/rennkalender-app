@@ -216,3 +216,11 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .count-disc{border-left:3px solid var(--line);padding-left:10px}
 .count-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px}
 .count-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute);padding:1px 0}
+
+/* --- Favourites --- */
+.fav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fav input{width:150px;font-size:13px;padding:6px 10px;border-radius:999px}
+.fav .chipx{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 6px 4px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--slate)}
+.fav .chipx button{border:0;background:transparent;color:var(--mute);font-size:14px;line-height:1;padding:0 2px}
+.fav-confirm{display:inline-flex;align-items:center;gap:8px;font-size:13px;background:var(--sel);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
+.friends{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--fin);font-weight:600;margin-top:4px;width:100%}

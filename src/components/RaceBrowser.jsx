@@ -8,6 +8,8 @@ import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 import { useSignups, heatColor, daysUntil } from './useSignups'
 import { useStartNumbers } from './useStartNumbers'
 import StartNumbers from './StartNumbers.jsx'
+import { useFriends } from './useFriends'
+import Favourites from './Favourites.jsx'
 import { fmt } from '../util'
 import { useT } from '../i18n'
 import { setSheet } from '../theme'
@@ -24,6 +26,18 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   const [heat, setHeat] = useState(false)
   const { byRace, countedAt, max, has } = useSignups()
   const startNos = useStartNumbers(profile.fis_code)
+  const { follows, byRace: friendsByRace, names: friendNames, lookup, follow, unfollow } = useFriends(profile.id)
+
+  // "👥 Jonas · påmeldt"
+  const Friends = ({ r }) => {
+    const list = friendsByRace[r.id]
+    if (!list?.length) return null
+    return (
+      <div className="friends">
+        {list.map(f => <span key={f.fis_code}>👥 {f.first_name || f.fis_code} · {t('friendsIn')}</span>)}
+      </div>
+    )
+  }
 
   const load = async () => {
     const [tr, ar] = await Promise.all([
@@ -79,10 +93,13 @@ export default function RaceBrowser({ profile, team, isCoach }) {
   return (
     <>
       <Filters f={f} setF={setF} view={view} setView={setView} onDone={() => setSheet(false)} extra={
+        <>
         <div className="group"><span>{t('signups')}</span>
           <button className={`chip ${heat && has ? 'on' : ''}`} disabled={!has} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
           <span className="muted src">{has ? `${t('srcLive')} ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : t('srcNone')}</span>
         </div>
+        <Favourites follows={follows} names={friendNames} lookup={lookup} follow={follow} unfollow={unfollow} />
+        </>
       } />
       <div className="split">
         <RaceMap races={rows} focus={focus} view={view} heat={heat && has} signups={byRace} maxSignups={max} />
@@ -96,6 +113,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
               <FromHome r={r} />
               <Signups r={r} />
               <StartNumbers race={r} byKey={startNos} />
+              <Friends r={r} />
             </div>
           ) : r => (
             <div className="row">
@@ -106,6 +124,7 @@ export default function RaceBrowser({ profile, team, isCoach }) {
               <FromHome r={r} />
               <Signups r={r} />
               <StartNumbers race={r} byKey={startNos} />
+              <Friends r={r} />
             </div>
           )}
         />
