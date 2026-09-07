@@ -475,3 +475,20 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .tripplan{border-top:8px solid var(--ice);padding:16px 0 0}
 .tripplan-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 20px 10px}
 .tripplan-head h3{margin:0;font-size:16px}
+
+/* --- Coach assigns races to athletes --- */
+.assign{margin-top:8px;padding:8px 0 2px;border-top:1px solid var(--line)}
+.assign-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:6px}
+.assign-count b{font-size:15px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.achip{border:1px solid var(--line);background:var(--snow);color:var(--mute);font:inherit;font-size:12px;
+  font-weight:600;padding:4px 10px;border-radius:999px;opacity:.55}
+.achip.on{opacity:1;border-color:var(--slate);color:var(--slate)}
+.achip.on.assigned{background:var(--panel-2);border-color:var(--line-2,var(--line))}
+.achip.on.wish{background:#E0A030;border-color:#E0A030;color:#fff}
+.achip.on.planned{background:#5C6B7A;border-color:#5C6B7A;color:#fff}
+.achip.on.entered{background:#2E8B57;border-color:#2E8B57;color:#fff}
+.achip.unavailable{background:#FBE9E9;border-color:var(--nor);color:var(--nor);opacity:1;cursor:not-allowed;text-decoration:line-through}
+.assign-picks{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:12px}
+.assign-save{display:flex;gap:8px;margin-top:8px}
+.tag.assigned{background:#EEF2FB;color:#1D5FD1;margin-left:0;font-weight:600}

@@ -4,6 +4,8 @@ import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import { STATUS_COLOR, overlaps } from '../util'
 import { useT } from '../i18n'
+import AssignRow from './AssignRow.jsx'
+import { useTeamAssign, hasAnswered } from './useTeamAssign'
 
 // Team season: races the coach has selected, with per-race athlete overview and notes.
 export default function CoachSeason({ team }) {
@@ -13,6 +15,7 @@ export default function CoachSeason({ team }) {
   const [statuses, setStatuses] = useState([])
   const [focus, setFocus] = useState(null)
   const [editing, setEditing] = useState(null)
+  const { byRace, apply, reload } = useTeamAssign(team.id)
 
   async function load() {
     const [{ data: tr }, { data: a }, { data: s }] = await Promise.all([
@@ -44,10 +47,10 @@ export default function CoachSeason({ team }) {
           return (
             <div>
               <div className="row" style={{ fontSize: 13 }}>
-                <span><b>{going}</b>/{athletes.length} løpere</span>
-                {st.filter(x => x.s).map(x => <span key={x.a.id} className="status-pill" style={{ background: STATUS_COLOR[x.s.status] }}>{x.a.full_name?.split(' ')[0]} · {t('st_' + x.s.status)}</span>)}
                 {cl.length > 0 && <span className="tag warn">Overlapper: {cl.join(', ')}</span>}
               </div>
+              <AssignRow raceId={r.id} rows={byRace[r.id] || []}
+                onApply={async (rid, add, rem) => { await apply(rid, add, rem); load() }} />
               {(tr.coach_note || tr.entry_deadline || tr.travel_info) && editing !== tr.id && (
                 <div className="muted" style={{ marginTop: 4 }}>
                   {tr.entry_deadline && <>Frist {tr.entry_deadline} · </>}{tr.coach_note}{tr.travel_info && <> · {tr.travel_info}</>}

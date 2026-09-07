@@ -90,7 +90,9 @@ export default function MySeason({ profile, team, readOnly = false }) {
               return (
                 <div>
                   <div className="race-badges">
-                    {row?.fromTeam && <span className="tag team">{t('teamPlanBadge')}</span>}
+                    {row?.mine?.assigned_by
+                      ? <span className="tag assigned">{t('assignedBadge')}</span>
+                      : row?.fromTeam && <span className="tag team">{t('teamPlanBadge')}</span>}
                     {status === 'entered' && <span className="tag entered">{t('st_entered')}</span>}
                   </div>
                   {tr && (tr.coach_note || tr.entry_deadline || tr.travel_info) &&
