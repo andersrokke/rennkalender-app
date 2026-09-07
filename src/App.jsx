@@ -11,6 +11,7 @@ import MySeason from './components/MySeason.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Planner from './components/Planner.jsx'
+import Development from './components/Development.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
@@ -73,8 +74,8 @@ export default function App() {
   const isCoach = profile.role === 'coach' || team?.owner_id === profile.id
   const d = I18N[lang]
   const tabs = isCoach
-    ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['settings', d.settingsTabCoach]]
-    : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['settings', d.settingsTab]]
+    ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTabCoach]]
+    : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
@@ -108,6 +109,7 @@ export default function App() {
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} />}
       {active === 'plan' && <Planner profile={profile} onChange={reload} />}
+      {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
       <div className="scrim" onClick={() => setSheet(false)} />
       <MobileNav active={navActive} onPick={pickPane} planCount={planCount} />
