@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useT } from '../i18n'
+import { fmt } from '../util'
 import { fetchFromFis, fisSummary } from '../fis'
 import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
@@ -171,13 +172,25 @@ export default function Development({ profile, team, isCoach, readOnly = false }
               </div>
             )}
             <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}</h3>
+            {/* counts only, so every number on this row means the same kind of thing */}
             <div className="kpis">
               <div className="kpi"><b>{sum.starts}</b><span>{t('startsL')}</span></div>
               <div className="kpi"><b>{sum.finished}</b><span>{t('finished')}</span></div>
               <div className="kpi"><b>{sum.dnf}</b><span>{t('dnf')}</span></div>
-              <div className="kpi"><b>{sum.best ? sum.best.position : '–'}</b><span>{t('bestPos')}</span></div>
-              <div className="kpi"><b>{n1(sum.bestPoints)}</b><span>{t('bestPoints')}</span></div>
+              <div className="kpi"><b>{sum.wins}</b><span>{t('winsN')}</span></div>
+              <div className="kpi"><b>{sum.podium}</b><span>{t('podiumN')}</span></div>
+              <div className="kpi"><b>{sum.top10}</b><span>{t('top10N')}</span></div>
             </div>
+            {sum.bestRace && (
+              <div className="season-best">
+                {t('bestRacePoints')}: <b>{n1(sum.bestPoints)}</b>
+                {' '}<span className="muted">({sum.bestRace.place}, {fmt({ start_date: sum.bestRace.race_date, end_date: sum.bestRace.race_date })})</span>
+              </div>
+            )}
+            {/* a placing is only worth stating when it is not a win — then the win count says it */}
+            {sum.bestPosition != null && sum.bestPosition !== 1 && (
+              <div className="season-best muted">{t('bestPlacing')}: {sum.bestPosition}</div>
+            )}
           </div>
         )
       })}

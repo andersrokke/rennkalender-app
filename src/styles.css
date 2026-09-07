@@ -563,3 +563,5 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .status-pill.st-entered{background:var(--st-entered);color:var(--st-entered-fg)}
 .status-pill.st-wish{background:var(--st-wish);color:var(--st-wish-fg)}
 .status-pill.st-unavailable{background:var(--st-unavailable);color:var(--st-unavailable-fg)}
+.season-best{margin-top:6px;font-size:13px}
+.season-best b{font-size:15px}

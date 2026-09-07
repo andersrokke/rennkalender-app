@@ -127,17 +127,29 @@ export function countingResults(results, code, seasonStart, official = {}) {
   return out
 }
 
+// Counts that can be compared with each other, plus the best points as a value
+// of its own. Mixing "1 win" and "best position 1" in the same row made a
+// placing look like a tally.
 export function seasonSummary(results, code, season) {
   const mine = results.filter(r => r.fis_code === code && (!season || inSeason(r.race_date, season)))
   const finished = mine.filter(r => isFinish(r.position))
+  const placed = n => finished.filter(r => +r.position <= n).length
   const best = finished.reduce((b, r) => (b == null || +r.position < +b.position ? r : b), null)
-  const scored = finished.filter(r => r.fis_points != null).map(r => Number(r.fis_points))
+  // lowest FIS points of the season, and the race that produced them
+  const bestRace = finished
+    .filter(r => r.fis_points != null)
+    .reduce((b, r) => (b == null || Number(r.fis_points) < Number(b.fis_points) ? r : b), null)
   return {
     starts: mine.length,
     finished: finished.length,
     dnf: mine.length - finished.length,
+    wins: finished.filter(r => r.position === '1' || +r.position === 1).length,
+    podium: placed(3),
+    top10: placed(10),
     best,
-    bestPoints: scored.length ? Math.min(...scored) : null
+    bestPosition: best ? +best.position : null,
+    bestRace,
+    bestPoints: bestRace ? Number(bestRace.fis_points) : null
   }
 }
 // A FIS season runs from July to June, so "2026/27" starts in July 2026.
