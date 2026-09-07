@@ -401,3 +401,33 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .auth .otp-lead{margin:0 0 8px;font-size:13px;color:var(--mute)}
 .auth .otp input{letter-spacing:.35em;font-size:20px;font-weight:700;text-align:center;padding:12px}
 .auth .otp .btn.link{display:block;margin:12px auto 0}
+
+/* --- Mobil: trygge soner og flytende PWA-kort --- */
+
+/* Installasjonshintet er et lite kort som legger seg over innholdet nederst,
+   ikke en stripe i dokumentflyten. «Ikke nå» huskes i localStorage. */
+.install{
+  position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));
+  z-index:1001;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 14px;border:1px solid var(--line);border-radius:14px;
+  background:var(--snow);box-shadow:0 12px 30px rgba(11,29,58,.18);
+  font-size:13px;color:var(--mute)
+}
+@media (min-width:821px){
+  /* ingen bunnmeny på desktop, så kortet legger seg nede til høyre */
+  .install{left:auto;right:20px;bottom:20px;max-width:380px}
+}
+
+@media (max-width:820px){
+  /* Safari kan skjule toppen når man ruller, og i standalone ligger innholdet
+     under statuslinja. Toppmenyen fester seg derfor øverst med egen bakgrunn
+     og holder seg klar av notchen. */
+  .topbar{
+    position:sticky;top:0;z-index:900;
+    padding-top:calc(10px + env(safe-area-inset-top));
+    background:var(--snow)
+  }
+  /* Bunnmenyen skal aldri ligge helt i kanten, heller ikke når enheten
+     rapporterer 0 i safe-area. */
+  .tabbar{padding-bottom:max(10px, env(safe-area-inset-bottom))}
+}
