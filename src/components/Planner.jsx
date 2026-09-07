@@ -4,8 +4,8 @@ import RaceMap from './RaceMap.jsx'
 import { fmt } from '../util'
 import { useT } from '../i18n'
 import {
-  HOMES, DEFAULT_HOME, DEFAULT_PLAN, TRIP_COLORS,
-  homeLL, buildTrips, tripTotals, nok
+  HOMES, DEFAULT_HOME, DEFAULT_PLAN, TRIP_COLORS, TRAVEL_MODES,
+  homeLL, buildTrips, tripTotals, nok, raceNights, raceStarts, raceMode
 } from '../travel'
 
 // Season planner: races the athlete has in athlete_races (planned / entered)
@@ -16,12 +16,25 @@ export default function Planner({ profile, onChange, readOnly = false }) {
   const [home, setHome] = useState(profile.home_city || DEFAULT_HOME)
   const [plan, setPlan] = useState({ ...DEFAULT_PLAN, ...(profile.plan_settings || {}) })
   const [focus, setFocus] = useState(null)
+  const [details, setDetails] = useState({})
 
   useEffect(() => {
     supabase.from('athlete_races').select('status, race:races(*, venue:venues(*))')
       .eq('athlete_id', profile.id).in('status', ['planned', 'entered'])
       .then(({ data }) => setRows((data || []).map(a => a.race).filter(Boolean)))
+    supabase.from('race_plan_details').select('*').eq('athlete_id', profile.id)
+      .then(({ data }) => setDetails(Object.fromEntries((data || []).map(d => [d.race_id, d]))))
   }, [profile.id])
+
+  // One row per race in race_plan_details; the athlete owns their own rows,
+  // coaches and guardians can only read them.
+  async function saveDetail(raceId, patch) {
+    const next = { ...(details[raceId] || { race_id: raceId, travel_mode: 'car' }), ...patch }
+    setDetails(d => ({ ...d, [raceId]: next }))
+    await supabase.from('race_plan_details').upsert(
+      { athlete_id: profile.id, race_id: raceId, ...patch, updated_at: new Date().toISOString() },
+      { onConflict: 'athlete_id,race_id' })
+  }
 
   async function saveHome(v) {
     setHome(v)
@@ -50,7 +63,7 @@ export default function Planner({ profile, onChange, readOnly = false }) {
     setRows(rs => rs.filter(r => r.id !== raceId))
   }
 
-  const trips = useMemo(() => buildTrips(rows, home, plan), [rows, home, plan])
+  const trips = useMemo(() => buildTrips(rows, home, plan, 'Hjem', details), [rows, home, plan, details])
   const tot = tripTotals(trips)
   const routes = trips.map((trip, i) => ({ points: trip.points, color: TRIP_COLORS[i % TRIP_COLORS.length] }))
   const noVenue = rows.length - trips.reduce((a, trip) => a + trip.races.length, 0)
@@ -84,7 +97,10 @@ export default function Planner({ profile, onChange, readOnly = false }) {
                   <Kpi v={tot.nights} label={t('nights')} />
                   <Kpi v={nok(tot.cost)} label={t('cost')} />
                 </div>
-                <div className="legs-sum">{t('roundtrip')} · {t('drive')} {nok(tot.drive)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)} · {tot.days} {t('daysAway')}</div>
+                <div className="legs-sum">
+                  {t('drive')} {nok(tot.drive)} · {t('flightW')} {nok(tot.flight)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)}
+                </div>
+                {tot.busTrips > 0 && <div className="covered">{t('coveredBySchool')}: {tot.busTrips} {t(tot.busTrips === 1 ? 'busTripWordOne' : 'busTripsWord')}</div>}
               </div>
               {trips.map((trip, i) => (
                 <div className="trip" key={i} style={{ borderLeftColor: TRIP_COLORS[i % TRIP_COLORS.length] }}>
@@ -96,16 +112,61 @@ export default function Planner({ profile, onChange, readOnly = false }) {
                   </div>
                   <div className="legs">
                     {trip.legs.map((l, j) => <div key={j}><span>{l.from} → {l.to}</span><span>{nok(l.km)} {t('km')}</span></div>)}
-                    <div><span>{t('drive')} {nok(trip.cost.drive)} · {t('stay')} {nok(trip.cost.stay)} · {t('fees')} {nok(trip.cost.fees)} · {t('liftL')} {nok(trip.cost.lift)}</span><span>{trip.starts} {t('startsL')}</span></div>
+                    <div><span>
+                      {trip.cost.drive > 0 && <>{t('drive')} {nok(trip.cost.drive)} · </>}
+                      {trip.cost.flight > 0 && <>{t('flightW')} {nok(trip.cost.flight)} · </>}
+                      {t('stay')} {nok(trip.cost.stay)} · {t('fees')} {nok(trip.cost.fees)} · {t('liftL')} {nok(trip.cost.lift)}
+                    </span><span>{trip.starts} {t('startsL')}</span></div>
                   </div>
-                  {trip.races.map((r, k) => (
-                    <div className="plan-race" key={r.id}>
-                      <span><b>{r.place}</b> · {fmt(r)} · {r.events}
-                        {!readOnly && k > 0 && <button className="btn small link split" onClick={() => splitHere(r.id)}>{t('splitBtn')}</button>}
-                      </span>
-                      {!readOnly && <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>}
-                    </div>
-                  ))}
+                  {trip.races.map((r, k) => {
+                    const d = details[r.id]
+                    const mode = raceMode(d)
+                    return (
+                      <div className="plan-race" key={r.id}>
+                        <div className="plan-race-main">
+                          <span><b>{r.place}</b> · {fmt(r)} · {r.events}
+                            {!readOnly && k > 0 && <button className="btn small link split" onClick={() => splitHere(r.id)}>{t('splitBtn')}</button>}
+                          </span>
+                          {!readOnly && <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>}
+                        </div>
+                        <div className="plan-race-opts">
+                          {readOnly ? (
+                            <span className="muted">{t(mode === 'bus' ? 'modeBus' : mode === 'flight' ? 'modeFlight' : 'modeCar')}
+                              {' · '}{raceNights(r, d)} {t('nightsLabel').toLowerCase()}
+                              {' · '}{raceStarts(r, d)} {t('startsL')}
+                              {mode === 'flight' && d?.flight_cost ? ` · ${nok(d.flight_cost)} kr` : ''}
+                            </span>
+                          ) : (
+                            <>
+                              <div className="modes">
+                                {TRAVEL_MODES.map(m => (
+                                  <button key={m} className={`chip ${mode === m ? 'on' : ''}`}
+                                    onClick={() => saveDetail(r.id, { travel_mode: m })}>
+                                    {t(m === 'bus' ? 'modeBus' : m === 'flight' ? 'modeFlight' : 'modeCar')}
+                                  </button>
+                                ))}
+                              </div>
+                              {mode === 'flight' && (
+                                <label className="mini">{t('flightCost')}
+                                  <input type="number" min="0" step="100" value={d?.flight_cost ?? ''}
+                                    onChange={e => saveDetail(r.id, { flight_cost: e.target.value === '' ? null : +e.target.value })} />
+                                </label>
+                              )}
+                              <label className="mini">{t('nightsLabel')}
+                                <input type="number" min="0" max="60" value={raceNights(r, d)}
+                                  onChange={e => saveDetail(r.id, { nights_override: e.target.value === '' ? null : +e.target.value })} />
+                              </label>
+                              <label className="mini">{t('startsLabel')}
+                                <input type="number" min="0" max="40" value={raceStarts(r, d)}
+                                  onChange={e => saveDetail(r.id, { starts_override: e.target.value === '' ? null : +e.target.value })} />
+                              </label>
+                            </>
+                          )}
+                        </div>
+                        {mode === 'bus' && <div className="covered small">{t('busNoDrive')}</div>}
+                      </div>
+                    )
+                  })}
                   {!readOnly && i > 0 && <div style={{ marginTop: 8 }}>
                     <button className="btn small link" onClick={() => joinPrev(trip.races[0].id)}>{t('joinBtn')}</button>
                   </div>}

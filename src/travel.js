@@ -53,6 +53,14 @@ export const HOMES = {
 
 export const DEFAULT_HOME = 'kolbotn'
 export const DEFAULT_PLAN = { kmRate: 3.5, hotel: 1200, entry: 350, lift: 300, maxGap: 2, joins: [], splits: [] }
+export const TRAVEL_MODES = ['bus', 'car', 'flight']
+export const DEFAULT_MODE = 'car'
+
+// Nights for one race: arrive on the first day, leave on the last, so a race
+// running 2-4 Feb is two nights. Overridable per race.
+export const raceNights = (r, d) => d?.nights_override ?? dayDiff(r.start_date, r.end_date)
+export const raceStarts = (r, d) => d?.starts_override ?? starts(r)
+export const raceMode = d => d?.travel_mode || DEFAULT_MODE
 export const TRIP_COLORS = ['#FFB547', '#FF7A59', '#F55FA1', '#B08CFF', '#4D8DFF', '#2ECC8F', '#E6D64A']
 
 export const homeLL = key => {
@@ -93,16 +101,22 @@ export function kmFromHome(race, home) {
 // Chain races into round trips from home. Races within maxGap days continue
 // the current trip; `joins` forces a race onto the previous trip and `splits`
 // forces a new trip, so the athlete can override the automatic chaining.
-export function buildTrips(races, home, settings, homeText = 'Hjem') {
+export function buildTrips(races, home, settings, homeText = 'Hjem', details = {}) {
   const s = { ...DEFAULT_PLAN, ...(settings || {}) }
   const joins = new Set(s.joins || []), splits = new Set(s.splits || [])
+  const det = r => details[r.id]
+  const isBus = r => raceMode(det(r)) === 'bus'
   const sel = races.filter(raceLL).sort((a, b) => a.start_date.localeCompare(b.start_date))
   const out = []
   let cur = null
   sel.forEach(r => {
     const prev = cur && cur.races[cur.races.length - 1]
     const gapOk = cur && dayDiff(prev.end_date, r.start_date) <= s.maxGap
-    if (cur && !splits.has(r.id) && (gapOk || joins.has(r.id))) {
+    // A school-bus race is never chained onto a car or flight trip: the bus is
+    // its own journey with no driving. Two bus races may still chain, so their
+    // nights run together.
+    const sameKind = cur && isBus(prev) === isBus(r)
+    if (cur && sameKind && !splits.has(r.id) && (gapOk || joins.has(r.id))) {
       cur.legs.push({ from: prev.place, to: r.place, km: roadKm(raceLL(prev), raceLL(r)) })
       cur.races.push(r)
     } else {
@@ -115,18 +129,35 @@ export function buildTrips(races, home, settings, homeText = 'Hjem') {
   out.forEach(t => {
     const last = t.races[t.races.length - 1]
     t.legs.push({ from: last.place, to: homeText, km: roadKm(raceLL(last), homeLL(home)) })
-    t.km = t.legs.reduce((a, l) => a + l.km, 0)
-    t.hours = Math.round(t.km / 70 * 10) / 10
+    // Trip mode: all bus, otherwise a flight anywhere in it replaces driving.
+    t.mode = t.races.every(r => isBus(r)) ? 'bus'
+      : t.races.some(r => raceMode(det(r)) === 'flight') ? 'flight' : 'car'
+    t.legKm = t.legs.reduce((a, l) => a + l.km, 0)
+    // The school bus is paid through the school fees, so it has no distance of
+    // its own. A flight still shows the distance, but it costs nothing.
+    t.km = t.mode === 'bus' ? 0 : t.legKm
+    // Only a car trip spends hours behind the wheel. A flight still shows its
+    // distance for orientation, but not a driving time.
+    t.hours = t.mode === 'car' ? Math.round(t.km / 70 * 10) / 10 : 0
     t.raceDays = t.races.reduce((a, r) => a + days(r), 0)
-    t.starts = t.races.reduce((a, r) => a + starts(r), 0)
-    t.nights = dayDiff(t.races[0].start_date, last.end_date) + 1
+    t.starts = t.races.reduce((a, r) => a + raceStarts(r, det(r)), 0)
+    // Nights are per race, plus the nights spent between chained races.
+    const gaps = t.races.slice(1).reduce((a, r, i) => a + dayDiff(t.races[i].end_date, r.start_date), 0)
+    t.nights = t.races.reduce((a, r) => a + raceNights(r, det(r)), 0) + gaps
     t.daysAway = t.nights + 1
+    const flight = t.races.reduce((a, r) => {
+      const d = det(r)
+      return a + (raceMode(d) === 'flight' ? Number(d?.flight_cost || 0) : 0)
+    }, 0)
     // Entry fee and lift pass are charged per start, not per race day.
     t.cost = {
-      drive: Math.round(t.km * s.kmRate), stay: t.nights * s.hotel,
-      fees: t.starts * s.entry, lift: t.starts * s.lift
+      drive: t.mode === 'car' ? Math.round(t.km * s.kmRate) : 0,
+      flight: Math.round(flight),
+      stay: t.nights * s.hotel,
+      fees: t.starts * s.entry,
+      lift: t.starts * s.lift
     }
-    t.cost.total = t.cost.drive + t.cost.stay + t.cost.fees + t.cost.lift
+    t.cost.total = t.cost.drive + t.cost.flight + t.cost.stay + t.cost.fees + t.cost.lift
     t.points = [homeLL(home), ...t.races.map(raceLL), homeLL(home)]
   })
   return out
@@ -134,6 +165,7 @@ export function buildTrips(races, home, settings, homeText = 'Hjem') {
 
 export const tripTotals = ts => ts.reduce((a, t) => ({
   km: a.km + t.km, hours: a.hours + t.hours, nights: a.nights + t.nights, days: a.days + t.daysAway,
-  starts: a.starts + t.starts, drive: a.drive + t.cost.drive, stay: a.stay + t.cost.stay,
-  fees: a.fees + t.cost.fees, lift: a.lift + t.cost.lift, cost: a.cost + t.cost.total
-}), { km: 0, hours: 0, nights: 0, days: 0, starts: 0, drive: 0, stay: 0, fees: 0, lift: 0, cost: 0 })
+  starts: a.starts + t.starts, drive: a.drive + t.cost.drive, flight: a.flight + t.cost.flight,
+  stay: a.stay + t.cost.stay, fees: a.fees + t.cost.fees, lift: a.lift + t.cost.lift,
+  cost: a.cost + t.cost.total, busTrips: a.busTrips + (t.mode === 'bus' ? 1 : 0)
+}), { km: 0, hours: 0, nights: 0, days: 0, starts: 0, drive: 0, flight: 0, stay: 0, fees: 0, lift: 0, cost: 0, busTrips: 0 })
