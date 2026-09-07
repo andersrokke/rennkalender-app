@@ -495,3 +495,33 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .assign-picks{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:12px}
 .assign-save{display:flex;gap:8px;margin-top:8px}
 .tag.assigned{background:#EEF2FB;color:#1D5FD1;margin-left:0;font-weight:600}
+
+/* --- Season setup matrix --- */
+.matrix-wrap{overflow:auto;max-height:calc(100vh - 220px);border-top:1px solid var(--line);background:var(--snow)}
+/* dragging across cells must not start a text selection */
+.matrix{border-collapse:separate;border-spacing:0;font-size:13px;user-select:none;-webkit-user-select:none}
+.matrix th,.matrix td{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.matrix thead th{position:sticky;top:0;z-index:3;background:var(--snow)}
+.matrix thead tr:nth-child(2) th{top:28px}
+.matrix .mhead{height:28px;font-size:12px;color:var(--mute);font-weight:600;text-align:left;padding:0 8px;background:var(--ice)}
+.matrix .rhead{min-width:64px;max-width:64px;padding:6px 4px;cursor:pointer;vertical-align:bottom;font-weight:600}
+.matrix .rhead:hover{background:var(--ice)}
+.matrix .rplace{display:block;font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.matrix .rdate{display:block;font-size:10px;color:var(--mute);font-weight:400}
+.matrix .corner{position:sticky;left:0;top:0;z-index:5;background:var(--snow);text-align:left;padding:6px 10px;min-width:190px}
+.matrix .ahead{position:sticky;left:0;z-index:2;background:var(--snow);text-align:left;padding:6px 10px;cursor:pointer;min-width:190px}
+.matrix .ahead:hover{background:var(--ice)}
+.matrix .aname{display:block;font-weight:600}
+.matrix .aload{display:block;font-size:11px;color:var(--mute);font-weight:400}
+.matrix .mcell{width:64px;height:34px;cursor:pointer;background:var(--snow);touch-action:none}
+.matrix .mcell:hover{outline:2px solid var(--swe);outline-offset:-2px}
+.matrix .mcell.none{background:var(--ice)}
+.matrix .mcell.wish{background:#E0A030}
+.matrix .mcell.planned{background:#5C6B7A}
+.matrix .mcell.entered{background:#2E8B57}
+.matrix .mcell.unavailable{background:#FBE9E9;cursor:not-allowed;
+  background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(200,16,46,.35) 4px,rgba(200,16,46,.35) 8px)}
+.matrix .mcell .dot{display:block;width:7px;height:7px;border-radius:50%;background:#fff;margin:0 auto;
+  box-shadow:0 0 0 2px rgba(29,95,209,.9)}
+.matrix .mcell.none .dot{background:var(--swe);box-shadow:none}
+.matrix-save{display:flex;gap:8px;padding:8px 24px;background:var(--panel-2);border-bottom:1px solid var(--line)}

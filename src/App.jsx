@@ -13,6 +13,7 @@ import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
 import Children from './components/Children.jsx'
+import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
@@ -87,7 +88,7 @@ export default function App() {
     : isCoach
       // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
       // meaning here. For the athlete, season and plan are now the same tab.
-      ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
+      ? [['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
       : [['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
@@ -123,6 +124,7 @@ export default function App() {
       </header>
       <InstallPrompt />
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
+      {active === 'matrix' && (team ? <SeasonMatrix team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
