@@ -199,3 +199,5 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
     font-size:10px;font-weight:800;border-radius:999px;padding:0 5px}
 }
 @media (min-width:821px){.tabbar,.scrim,.sheet-head{display:none!important}}
+.btn.link.split{margin-left:8px;font-size:12px}
+.plan-race{align-items:flex-start}

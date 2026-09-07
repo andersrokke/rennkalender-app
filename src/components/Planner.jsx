@@ -28,12 +28,23 @@ export default function Planner({ profile, onChange }) {
     await supabase.from('profiles').update({ home_city: v }).eq('id', profile.id)
     onChange?.()
   }
-  async function savePlan(key, value) {
-    const next = { ...plan, [key]: +value }
+  async function persist(next) {
     setPlan(next)
     await supabase.from('profiles').update({ plan_settings: next }).eq('id', profile.id)
     onChange?.()
   }
+  const savePlan = (key, value) => persist({ ...plan, [key]: +value })
+
+  // Manual overrides on top of the automatic chaining. A race is either forced
+  // onto the previous trip (join) or forced to start a new one (split).
+  const joinPrev = id => persist({
+    ...plan, joins: [...new Set([...(plan.joins || []), id])],
+    splits: (plan.splits || []).filter(x => x !== id)
+  })
+  const splitHere = id => persist({
+    ...plan, splits: [...new Set([...(plan.splits || []), id])],
+    joins: (plan.joins || []).filter(x => x !== id)
+  })
   async function removeRace(raceId) {
     await supabase.from('athlete_races').delete().eq('athlete_id', profile.id).eq('race_id', raceId)
     setRows(rs => rs.filter(r => r.id !== raceId))
@@ -71,7 +82,7 @@ export default function Planner({ profile, onChange }) {
                   <Kpi v={tot.nights} label={t('nights')} />
                   <Kpi v={nok(tot.cost)} label={t('cost')} />
                 </div>
-                <div className="legs-sum">{t('drive')} {nok(tot.drive)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} · {tot.days} {t('daysAway')}</div>
+                <div className="legs-sum">{t('roundtrip')} · {t('drive')} {nok(tot.drive)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)} · {tot.days} {t('daysAway')}</div>
               </div>
               {trips.map((trip, i) => (
                 <div className="trip" key={i} style={{ borderLeftColor: TRIP_COLORS[i % TRIP_COLORS.length] }}>
@@ -83,13 +94,19 @@ export default function Planner({ profile, onChange }) {
                   </div>
                   <div className="legs">
                     {trip.legs.map((l, j) => <div key={j}><span>{l.from} → {l.to}</span><span>{nok(l.km)} {t('km')}</span></div>)}
+                    <div><span>{t('drive')} {nok(trip.cost.drive)} · {t('stay')} {nok(trip.cost.stay)} · {t('fees')} {nok(trip.cost.fees)} · {t('liftL')} {nok(trip.cost.lift)}</span><span>{trip.starts} {t('startsL')}</span></div>
                   </div>
-                  {trip.races.map(r => (
+                  {trip.races.map((r, k) => (
                     <div className="plan-race" key={r.id}>
-                      <span><b>{r.place}</b> · {fmt(r)} · {r.events}</span>
+                      <span><b>{r.place}</b> · {fmt(r)} · {r.events}
+                        {k > 0 && <button className="btn small link split" onClick={() => splitHere(r.id)}>{t('splitBtn')}</button>}
+                      </span>
                       <button className="btn small" title={t('removeMine')} onClick={() => removeRace(r.id)}>×</button>
                     </div>
                   ))}
+                  {i > 0 && <div style={{ marginTop: 8 }}>
+                    <button className="btn small link" onClick={() => joinPrev(trip.races[0].id)}>{t('joinBtn')}</button>
+                  </div>}
                 </div>
               ))}
             </>
@@ -99,6 +116,7 @@ export default function Planner({ profile, onChange }) {
             <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={plan.kmRate} onChange={e => savePlan('kmRate', e.target.value)} /></div>
             <div><label>{t('hotel')}</label><input type="number" step="50" value={plan.hotel} onChange={e => savePlan('hotel', e.target.value)} /></div>
             <div><label>{t('entry')}</label><input type="number" step="50" value={plan.entry} onChange={e => savePlan('entry', e.target.value)} /></div>
+            <div><label>{t('liftS')}</label><input type="number" step="50" value={plan.lift} onChange={e => savePlan('lift', e.target.value)} /></div>
             <div><label>{t('maxGap')}</label><input type="number" min="0" max="10" value={plan.maxGap} onChange={e => savePlan('maxGap', e.target.value)} /></div>
           </div>
           <div className="hint">{t('hint')}</div>
