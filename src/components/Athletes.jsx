@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { STATUS, STATUS_COLOR, fmt, days } from '../util'
+import { STATUS, fmt, days } from '../util'
 import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
 
@@ -92,7 +92,7 @@ export default function Athletes({ team }) {
                 {row?.assigned && !hasAnswered(row) && <span className="tag warn">{t('noAnswer')}</span>}
                 {s?.athlete_note && <div className="muted">Løper: «{s.athlete_note}»</div>}</td>
               <td><div className="status-btns">
-                {Object.entries(STATUS).map(([k, l]) => <button key={k} className={s?.status === k ? 'on' : ''} style={s?.status === k ? { background: STATUS_COLOR[k], color: '#fff' } : {}} onClick={() => setStatus(sel, r.id, k)}>{t('st_' + k)}</button>)}
+                {Object.entries(STATUS).map(([k]) => <button key={k} className={s?.status === k ? `on st-${k}` : ''} onClick={() => setStatus(sel, r.id, k)}>{t('st_' + k)}</button>)}
                 {s && <button onClick={() => clear(sel, r.id)}>×</button>}
               </div></td>
             </tr>) })}</tbody></table>

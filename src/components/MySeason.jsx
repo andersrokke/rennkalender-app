@@ -3,7 +3,6 @@ import { supabase } from '../supabase'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import TripPlan from './TripPlan.jsx'
-import { STATUS_COLOR } from '../util'
 import { useT } from '../i18n'
 
 // The athlete's whole season in one place: races the coach put on the team
@@ -102,8 +101,7 @@ export default function MySeason({ profile, team, readOnly = false }) {
                   ) : (
                     <div className="status-btns">
                       {CHOICES.map(k => (
-                        <button key={k} className={status === k ? 'on' : ''}
-                          style={status === k ? { background: STATUS_COLOR[k], color: '#fff', borderColor: STATUS_COLOR[k] } : {}}
+                        <button key={k} className={status === k ? `on st-${k}` : ''}
                           onClick={() => setStatus(r.id, k)}>{t('st_' + k)}</button>
                       ))}
                       <button onClick={() => setNoteFor(noteFor === r.id ? null : r.id)}>

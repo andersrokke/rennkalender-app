@@ -14,5 +14,8 @@ export const fisUrl = r => r.fis_event_id ? `https://www.fis-ski.com/DB/general/
 export const STATUS = {
   planned: 'Planlagt', entered: 'Påmeldt', wish: 'Ønsker', reserve: 'Reserve', unavailable: 'Kan ikke'
 }
-export const STATUS_COLOR = { planned: '#5C6B7A', entered: '#2E8B57', wish: '#E0A030', reserve: '#0A5CB0', unavailable: '#C8102E' }
+// Traffic light. The CSS custom properties --st-* are the real source and are
+// theme-aware; these are the light-theme values for anything that still needs
+// a plain string.
+export const STATUS_COLOR = { planned: '#15803D', entered: '#064E3B', wish: '#E0A030', reserve: '#1D5FD1', unavailable: '#DC2626' }
 export function overlaps(a, b) { return a.start_date <= b.end_date && b.start_date <= a.end_date }
