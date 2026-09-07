@@ -18,6 +18,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const t = useT()
   const [people, setPeople] = useState([])
   const [disc, setDisc] = useState('GS')
+  const [only, setOnly] = useState('all')   // coach: show every athlete, or one
 
   useEffect(() => {
     if (isCoach && team) {
@@ -50,8 +51,10 @@ export default function Development({ profile, team, isCoach, readOnly = false }
 
   // One line per athlete for the chosen discipline (coach), or one line per
   // discipline for a single athlete.
+  const shown = isCoach && only !== 'all' ? people.filter(p => p.fis_code === only) : people
   const series = isCoach
     ? people.map((p, i) => ({ key: `${p.fis_code}|${disc}`, name: p.full_name, color: LINE_COLORS[i % LINE_COLORS.length] }))
+        .filter(s => only === 'all' || s.key.startsWith(only + '|'))
     : DISC.map(d => ({ key: `${profile.fis_code}|${d}`, name: d, color: DISC_COLOR[d] }))
         .filter(s => rows.some(r => r[s.key] != null))
 
@@ -66,7 +69,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   return (
     <div className="page">
       <div className="card">
-        <h2>{t('devTitle')}</h2>
+        <h2>{isCoach ? t('devTitleCoach') : readOnly ? profile.full_name : t('devTitle')}</h2>
         <p className="muted">{t('devSub')}</p>
         {profile.fis_code && !readOnly && (
           <div className="fis-head">
@@ -82,8 +85,16 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         )}
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {isCoach && (
-          <div className="row" style={{ margin: '10px 0' }}>
-            {DISC.map(d => <button key={d} className={`chip ${disc === d ? 'on' : ''}`} onClick={() => setDisc(d)}>{d}</button>)}
+          <div className="row" style={{ margin: '10px 0', gap: 14 }}>
+            <div className="row" style={{ gap: 4 }}>
+              {DISC.map(d => <button key={d} className={`chip ${disc === d ? 'on' : ''}`} onClick={() => setDisc(d)}>{d}</button>)}
+            </div>
+            {people.length > 1 && (
+              <select style={{ width: 'auto' }} value={only} onChange={e => setOnly(e.target.value)}>
+                <option value="all">{t('allAthletes')}</option>
+                {people.map(p => <option key={p.fis_code} value={p.fis_code}>{p.full_name}</option>)}
+              </select>
+            )}
           </div>
         )}
         {loading ? <p className="muted">{t('loading')}</p>
@@ -116,17 +127,17 @@ export default function Development({ profile, team, isCoach, readOnly = false }
 
       {people.map(p => <CupStandings key={'cup' + p.fis_code} groups={cups[p.fis_code]} />)}
 
-      {people.map(p => {
+      {shown.map(p => {
         const official = officialPoints(points, p.fis_code)
         const counting = countingResults(results, p.fis_code, season, official)
         const sum = seasonSummary(results, p.fis_code, season)
         const mine = results.filter(r => r.fis_code === p.fis_code)
-        if (!mine.length) return null
         return (
           <div className="card" key={p.fis_code}>
             <h2>{p.full_name}</h2>
             <h3>{t('countingResults')}</h3>
-            {Object.keys(counting).length === 0 ? <p className="muted">{t('devNoResults')}</p> : (
+            {mine.length === 0 ? <p className="muted">{t('devNoResults')}</p>
+              : Object.keys(counting).length === 0 ? <p className="muted">{t('devNoResults')}</p> : (
               <div className="counting">
                 {COUNT_DISC.filter(d => counting[d]).map(d => {
                   const c = counting[d]

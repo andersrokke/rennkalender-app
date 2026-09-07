@@ -466,3 +466,12 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .auth .pw{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .auth .pw .btn.primary{width:100%;margin-top:10px}
 .auth .pw .fine{display:block;margin-top:8px}
+
+/* --- Merged season view --- */
+.race-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.tag.team{background:var(--ice);color:var(--mute);margin-left:0}
+.tag.entered{background:#E9F7EE;color:#1E7A45;margin-left:0;font-weight:600}
+.status-btns button.on{color:#fff}
+.tripplan{border-top:8px solid var(--ice);padding:16px 0 0}
+.tripplan-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 20px 10px}
+.tripplan-head h3{margin:0;font-size:16px}

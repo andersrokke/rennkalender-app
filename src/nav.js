@@ -5,7 +5,9 @@
 // Which tab a bottom-bar button should open. 'map' and 'filter' never change
 // the tab — they switch the pane or open the filter sheet.
 export function tabForNav(key, { isParent = false } = {}) {
-  if (key === 'plan') return isParent ? 'children' : 'plan'
+  // «Min plan» is no longer its own tab: the plan lives inside «Min sesong»,
+  // and a guardian's equivalent is «Mine barn».
+  if (key === 'plan') return isParent ? 'children' : 'mine'
   if (key === 'list') return 'races'
   return null
 }
@@ -13,6 +15,6 @@ export function tabForNav(key, { isParent = false } = {}) {
 // Which bottom-bar button should read as active for a given tab and pane.
 export function navForState(activeTab, pane, { isParent = false } = {}) {
   if (pane === 'map') return 'map'
-  if (activeTab === 'plan' || (isParent && activeTab === 'children')) return 'plan'
+  if (activeTab === 'mine' || (isParent && activeTab === 'children')) return 'plan'
   return 'list'
 }

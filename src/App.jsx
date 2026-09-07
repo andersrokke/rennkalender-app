@@ -11,7 +11,6 @@ import Athletes from './components/Athletes.jsx'
 import MySeason from './components/MySeason.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
-import Planner from './components/Planner.jsx'
 import Development from './components/Development.jsx'
 import Children from './components/Children.jsx'
 import MobileNav from './components/MobileNav.jsx'
@@ -86,8 +85,10 @@ export default function App() {
   const tabs = isParent
     ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab]]
     : isCoach
-      ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTabCoach]]
-      : [['mine', d.mine], ['races', d.races], ['plan', d.plan], ['dev', d.dev], ['settings', d.settingsTab]]
+      // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
+      // meaning here. For the athlete, season and plan are now the same tab.
+      ? [['season', d.season], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
+      : [['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
@@ -126,7 +127,6 @@ export default function App() {
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
       {active === 'children' && <Children profile={profile} />}
-      {active === 'plan' && <Planner profile={profile} onChange={reload} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
       <div className="scrim" onClick={() => setSheet(false)} />

@@ -20,7 +20,7 @@ export const I18N = {
     start: 'Kom i gang', gender: 'Kjønn', birthYear: 'Fødselsår', fisCode: 'FIS-kode',
     woman: 'Kvinne', man: 'Mann',
     // statuses
-    st_planned: 'Planlagt', st_entered: 'Påmeldt', st_wish: 'Ønsker', st_reserve: 'Reserve', st_unavailable: 'Kan ikke',
+    st_planned: 'Skal kjøre', st_entered: 'Påmeldt', st_wish: 'Ønsker', st_reserve: 'Reserve', st_unavailable: 'Kan ikke',
     // race browser
     addMine: 'Legg til i min plan', removeMine: 'Fjern fra min plan',
     addTeam: 'Legg til for laget', removeTeam: 'Fjern fra laget', onTeamPlan: 'På lagets plan',
@@ -46,6 +46,9 @@ export const I18N = {
     hint: 'Kjørelengde er estimert (luftlinje × 1,3). Ligger to renn nær hverandre i tid, reiser du videre i stedet for hjem.',
     noVenue: 'renn i planen mangler sted på kartet og er ikke regnet med.',
     // my season
+    seasonCount: 'renn i sesongen din', wishedN: 'ønsket', enteredN: 'påmeldt',
+    teamPlanBadge: 'Lagets plan', travelAndCost: 'Reiser og kostnad',
+    devTitleCoach: 'Utvikling', allAthletes: 'Alle løpere',
     inMyPlan: 'renn i min plan', chosen: 'valgt', teamPlanN: 'renn i lagets plan',
     soloEmpty: 'Du har ikke lagt til noen renn ennå. Gå til «Alle renn» og legg dem til i planen din.',
     teamEmpty: 'Treneren har ikke lagt inn renn for laget ennå.',
@@ -115,7 +118,7 @@ export const I18N = {
     inviteFromCoach: 'Invite code from your coach', createTeam: 'Create team', join: 'Join',
     start: 'Get started', gender: 'Gender', birthYear: 'Year of birth', fisCode: 'FIS code',
     woman: 'Woman', man: 'Man',
-    st_planned: 'Planned', st_entered: 'Entered', st_wish: 'Wish', st_reserve: 'Reserve', st_unavailable: 'Unavailable',
+    st_planned: 'Will race', st_entered: 'Entered', st_wish: 'Wish', st_reserve: 'Reserve', st_unavailable: 'Unavailable',
     addMine: 'Add to my plan', removeMine: 'Remove from my plan',
     addTeam: 'Add for the team', removeTeam: 'Remove from team', onTeamPlan: 'On team plan',
     fromHome: 'km from home', signups: 'Sign-ups', heat: 'Heatmap', few: 'few', many: 'many sign-ups',
@@ -138,6 +141,9 @@ export const I18N = {
     maxGap: 'max days between races to continue travelling',
     hint: 'Driving distance is estimated (straight line × 1.3). If two races are close in time you travel on instead of going home.',
     noVenue: 'races in the plan have no venue on the map and are not counted.',
+    seasonCount: 'races in your season', wishedN: 'wished', enteredN: 'entered',
+    teamPlanBadge: 'Team plan', travelAndCost: 'Travel and cost',
+    devTitleCoach: 'Progress', allAthletes: 'All athletes',
     inMyPlan: 'races in my plan', chosen: 'chosen', teamPlanN: 'races in the team plan',
     soloEmpty: 'You have not added any races yet. Go to “All races” and add them to your plan.',
     teamEmpty: 'Your coach has not added any races for the team yet.',

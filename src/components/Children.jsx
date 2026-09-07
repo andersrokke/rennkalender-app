@@ -3,7 +3,6 @@ import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import { fmt } from '../util'
 import MySeason from './MySeason.jsx'
-import Planner from './Planner.jsx'
 import Development from './Development.jsx'
 
 // Guardian view. Everything here is read-only: the RLS policies on
@@ -62,7 +61,7 @@ export default function Children({ profile }) {
           <button className="btn small" onClick={() => setOpen(null)}>← {t('children')}</button>
           <b>{kid.full_name}</b>
           <div className="group">
-            {[['season', t('childSeason')], ['dev', t('childDev')], ['cost', t('childCost')]].map(([k, l]) => (
+            {[['season', t('childSeason')], ['dev', t('childDev')]].map(([k, l]) => (
               <button key={k} className={`chip ${view === k ? 'on' : ''}`} onClick={() => setOpen({ kid, view: k })}>{l}</button>
             ))}
           </div>
@@ -70,7 +69,6 @@ export default function Children({ profile }) {
         </div>
         {!child ? <div className="page muted">{t('loading')}</div>
           : view === 'season' ? <MySeason profile={child} team={team} readOnly />
-          : view === 'cost' ? <Planner profile={child} readOnly />
           : <Development profile={child} team={team} isCoach={false} readOnly />}
       </>
     )
@@ -98,7 +96,6 @@ export default function Children({ profile }) {
           <div className="row" style={{ marginTop: 10 }}>
             <button className="btn small primary" onClick={() => openChild(k, 'season')}>{t('childSeason')}</button>
             <button className="btn small" onClick={() => openChild(k, 'dev')}>{t('childDev')}</button>
-            <button className="btn small" onClick={() => openChild(k, 'cost')}>{t('childCost')}</button>
             <div className="spacer" style={{ flex: 1 }} />
             <button className="btn small link" onClick={() => unlink(k)}>{t('unlinkChild')}</button>
           </div>
