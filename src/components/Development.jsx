@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useT } from '../i18n'
+import { fetchFromFis, fisSummary } from '../fis'
 import {
   DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
   seasonSummary, currentSeasonStart, discCode, isFinish
@@ -27,7 +28,20 @@ export default function Development({ profile, team, isCoach }) {
   }, [isCoach, team?.id, profile.id, profile.fis_code])
 
   const codes = people.map(p => p.fis_code)
-  const { points, results, loading } = useDevelopment(codes)
+  const { points, results, updatedAt, loading, reload } = useDevelopment(codes)
+  const [fisBusy, setFisBusy] = useState(false)
+  const [fisMsg, setFisMsg] = useState(null)
+
+  // Same Edge Function as in Settings, so the athlete can refresh on demand
+  // instead of waiting for the nightly job.
+  async function fetchFis(code) {
+    setFisBusy(true); setFisMsg(null)
+    const res = await fetchFromFis(code)
+    setFisBusy(false)
+    setFisMsg(res.error ? res.error : fisSummary(res.athlete, t))
+    if (!res.error) reload()
+  }
+  const lastFetched = updatedAt[profile.fis_code]
   const rows = useMemo(() => toChartRows(points), [points])
   const nameOf = code => people.find(p => p.fis_code === code)?.full_name || code
 
@@ -51,13 +65,30 @@ export default function Development({ profile, team, isCoach }) {
       <div className="card">
         <h2>{t('devTitle')}</h2>
         <p className="muted">{t('devSub')}</p>
+        {profile.fis_code && (
+          <div className="fis-head">
+            <button className="btn link" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
+              {fisBusy ? t('fisFetching') : t('fisRefresh')}
+            </button>
+            {lastFetched && <span>{t('fisLastUpdated')} {new Date(lastFetched).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>}
+            {fisBusy && <span className="spinner" />}
+          </div>
+        )}
+        {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {isCoach && (
           <div className="row" style={{ margin: '10px 0' }}>
             {DISC.map(d => <button key={d} className={`chip ${disc === d ? 'on' : ''}`} onClick={() => setDisc(d)}>{d}</button>)}
           </div>
         )}
         {loading ? <p className="muted">{t('loading')}</p>
-          : rows.length === 0 ? <p className="muted">{t('devNoPoints')}</p> : (
+          : rows.length === 0 ? (
+            <div className="empty-fis">
+              <p className="muted">{profile.fis_code ? t('fisEmpty') : t('devNoPoints')}</p>
+              {profile.fis_code && <button className="btn primary" disabled={fisBusy} onClick={() => fetchFis(profile.fis_code)}>
+                {fisBusy ? t('fisFetching') : t('fisFetch')}
+              </button>}
+            </div>
+          ) : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={rows} margin={{ top: 8, right: 8, left: -18, bottom: 4 }}>

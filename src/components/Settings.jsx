@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import { fetchFromFis, fetchFromFisInBackground, fisSummary } from '../fis'
 
 export default function Settings({ profile, team, isCoach, onChange }) {
   const t = useT()
@@ -13,11 +14,40 @@ export default function Settings({ profile, team, isCoach, onChange }) {
   const [joinErr, setJoinErr] = useState(null)
   const [joining, setJoining] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [fisBusy, setFisBusy] = useState(false)
+  const [fisMsg, setFisMsg] = useState(null)
 
   async function saveProfile(e) {
     e.preventDefault()
-    const { error } = await supabase.from('profiles').update({ full_name: name, fis_code: fis || null, birth_year: year ? +year : null, gender: gender || null }).eq('id', profile.id)
+    const code = fis.trim()
+    const firstCode = !!code && !profile.fis_code
+    const { error } = await supabase.from('profiles').update({ full_name: name, fis_code: code || null, birth_year: year ? +year : null, gender: gender || null }).eq('id', profile.id)
     setMsg(error ? error.message : t('saved')); onChange()
+    // First time a FIS code is saved, warm the data in the background so the
+    // athlete does not have to wait for the nightly job. Saving is not blocked.
+    if (!error && firstCode) {
+      setFisBusy(true)
+      fetchFromFisInBackground(code, res => {
+        setFisBusy(false)
+        setFisMsg(res.error ? res.error : fisSummary(res.athlete, t))
+        onChange()
+      })
+    }
+  }
+
+  // Save the code first: can_see_fis() gates fis_points/fis_results/fis_athletes
+  // on a profile owning that code, so without saving we could not read back
+  // what the function just wrote.
+  async function fetchFis() {
+    const code = fis.trim()
+    if (!code) { setFisMsg(t('fisNeedCode')); return }
+    setFisBusy(true); setFisMsg(null)
+    const { error } = await supabase.from('profiles').update({ fis_code: code }).eq('id', profile.id)
+    if (error) { setFisBusy(false); setFisMsg(error.message); return }
+    const res = await fetchFromFis(code)
+    setFisBusy(false)
+    setFisMsg(res.error ? res.error : fisSummary(res.athlete, t))
+    onChange()
   }
   async function saveTeam(e) {
     e.preventDefault()
@@ -65,13 +95,22 @@ export default function Settings({ profile, team, isCoach, onChange }) {
           {!isCoach && <div className="row">
             <div style={{ flex: 1 }}><label>{t('gender')}</label><select value={gender} onChange={e => setGender(e.target.value)}><option value="">–</option><option value="W">{t('woman')}</option><option value="M">{t('man')}</option></select></div>
             <div style={{ flex: 1 }}><label>{t('birthYear')}</label><input type="number" value={year} onChange={e => setYear(e.target.value)} /></div>
-            <div style={{ flex: 1 }}><label>{t('fisCode')}</label><input value={fis} onChange={e => setFis(e.target.value)} /></div>
+            <div style={{ flex: 1 }}><label>{t('fisCode')}</label>
+              <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
+                <input value={fis} onChange={e => setFis(e.target.value)} />
+                <button type="button" className="btn small" disabled={fisBusy} onClick={fetchFis} style={{ whiteSpace: 'nowrap' }}>
+                  {fisBusy ? t('fisFetching') : t('fisFetch')}
+                </button>
+              </div>
+            </div>
           </div>}
           <div className="row" style={{ marginTop: 12 }}>
             <button className="btn small primary">Lagre</button>
             {!isCoach && team && <button type="button" className="btn small danger" onClick={leave}>{t('leaveTeam')}</button>}
           </div>
         </form>
+        {fisBusy && <div className="notice"><span className="spinner" />{t('fisFetching')}</div>}
+        {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {msg && <div className="notice">{msg}</div>}
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import { fetchFromFisInBackground } from '../fis'
 
 export default function Onboarding({ profile, onDone }) {
   const t = useT()
@@ -41,7 +42,9 @@ export default function Onboarding({ profile, onDone }) {
       full_name: name, role: 'athlete', gender: gender || null, birth_year: year ? +year : null, fis_code: fis || null, onboarded: true
     }).eq('id', profile.id)
     setBusy(false)
-    if (e2) setErr(e2.message); else onDone()
+    if (e2) { setErr(e2.message); return }
+    if (fis.trim()) fetchFromFisInBackground(fis, onDone)
+    onDone()
   }
 
   async function solo(e) {
@@ -50,7 +53,10 @@ export default function Onboarding({ profile, onDone }) {
       full_name: name, role: 'athlete', team_id: null, gender: gender || null, birth_year: year ? +year : null, fis_code: fis || null, onboarded: true
     }).eq('id', profile.id)
     setBusy(false)
-    if (error) setErr(error.message); else onDone()
+    if (error) { setErr(error.message); return }
+    // Fetch FIS data in the background; onboarding continues immediately.
+    if (fis.trim()) fetchFromFisInBackground(fis, onDone)
+    onDone()
   }
 
   return (

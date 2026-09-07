@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { fetchFromFisInBackground } from '../fis'
 
 // Followed athletes and which races they have entered.
 // friend_entries() is SECURITY DEFINER and already scoped to the caller's
@@ -45,8 +46,12 @@ export function useFriends(userId) {
     return row ? { athlete: row } : { notFound: true }
   }
   const follow = async code => {
-    const { error } = await supabase.from('follows').insert({ user_id: userId, fis_code: String(code).trim() })
+    const c = String(code).trim()
+    const { error } = await supabase.from('follows').insert({ user_id: userId, fis_code: c })
     await load()
+    // Warm the friend's name and points straight away rather than waiting for
+    // the nightly job. Runs in the background; following is already done.
+    if (!error) fetchFromFisInBackground(c, () => load())
     return error?.message || null
   }
   const unfollow = async code => {

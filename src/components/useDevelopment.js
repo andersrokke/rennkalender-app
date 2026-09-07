@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 
 export const DISC = ['SL', 'GS', 'SG', 'DH']
@@ -18,26 +18,28 @@ export function useDevelopment(codes) {
   const key = (codes || []).filter(Boolean).sort().join(',')
   const [points, setPoints] = useState([])
   const [results, setResults] = useState([])
+  const [updatedAt, setUpdatedAt] = useState({})
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     const list = key ? key.split(',') : []
-    if (!list.length) { setPoints([]); setResults([]); setLoading(false); return }
-    let cancelled = false
+    if (!list.length) { setPoints([]); setResults([]); setUpdatedAt({}); setLoading(false); return }
     setLoading(true)
-    Promise.all([
+    const [p, r, a] = await Promise.all([
       supabase.from('fis_points').select('fis_code, list_id, list_label, season, discipline, points, rank')
         .in('fis_code', list).order('list_id'),
       supabase.from('fis_results').select('fis_code, race_date, place, discipline, category, position, fis_points')
-        .in('fis_code', list).order('race_date', { ascending: false })
-    ]).then(([p, r]) => {
-      if (cancelled) return
-      setPoints(p.data || []); setResults(r.data || []); setLoading(false)
-    })
-    return () => { cancelled = true }
+        .in('fis_code', list).order('race_date', { ascending: false }),
+      supabase.from('fis_athletes').select('fis_code, updated_at').in('fis_code', list)
+    ])
+    setPoints(p.data || []); setResults(r.data || [])
+    setUpdatedAt(Object.fromEntries((a.data || []).map(x => [x.fis_code, x.updated_at])))
+    setLoading(false)
   }, [key])
 
-  return { points, results, loading }
+  useEffect(() => { load() }, [load])
+
+  return { points, results, updatedAt, loading, reload: load }
 }
 
 // One row per points list, with a series per athlete+discipline.
