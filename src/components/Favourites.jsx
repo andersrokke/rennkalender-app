@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useT } from '../i18n'
+import CupStandings from './CupStandings.jsx'
 
 const fullName = a => `${a.first_name || ''} ${a.last_name || ''}`.trim()
 
 // Follow athletes by FIS code. The code is confirmed against the points list
 // so you can see who you are about to follow before it is saved.
-export default function Favourites({ follows, names, lookup, follow, unfollow }) {
+export default function Favourites({ follows, names, lookup, follow, unfollow, cups = {} }) {
   const t = useT()
   const [code, setCode] = useState('')
   const [pending, setPending] = useState(null)
@@ -53,6 +54,16 @@ export default function Favourites({ follows, names, lookup, follow, unfollow })
         </span>
       )}
       {msg && <span className="muted">{msg}</span>}
+      {follows.some(f => cups[f.fis_code]?.length) && (
+        <div className="fav-cups">
+          {follows.filter(f => cups[f.fis_code]?.length).map(f => (
+            <div key={f.fis_code}>
+              <span className="fav-who">👥 {names[f.fis_code] || f.fis_code}</span>
+              <CupStandings groups={cups[f.fis_code]} compact />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

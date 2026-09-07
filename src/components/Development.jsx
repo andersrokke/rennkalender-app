@@ -3,6 +3,8 @@ import { supabase } from '../supabase'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useT } from '../i18n'
 import { fetchFromFis, fisSummary } from '../fis'
+import { useCupStandings } from './useCupStandings'
+import CupStandings from './CupStandings.jsx'
 import {
   DISC, COUNT_DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish
@@ -29,6 +31,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
 
   const codes = people.map(p => p.fis_code)
   const { points, results, updatedAt, loading, reload } = useDevelopment(codes)
+  const { byCode: cups } = useCupStandings()
   const [fisBusy, setFisBusy] = useState(false)
   const [fisMsg, setFisMsg] = useState(null)
 
@@ -110,6 +113,8 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           </div>
         )}
       </div>
+
+      {people.map(p => <CupStandings key={'cup' + p.fis_code} groups={cups[p.fis_code]} />)}
 
       {people.map(p => {
         const official = officialPoints(points, p.fis_code)

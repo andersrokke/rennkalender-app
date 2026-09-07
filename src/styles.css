@@ -382,3 +382,15 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .count-head .official b{color:var(--slate);font-size:15px}
 .count-note{font-size:12px;color:var(--mute);margin:2px 0 4px}
 .count-note b{color:var(--slate)}
+
+/* --- Cup standings --- */
+.cup-row{padding:6px 0;border-top:1px solid var(--line)}
+.cup-row:first-of-type{border-top:0}
+.cup-name{font-weight:700;font-size:14px}
+.cup-line{font-size:13px;color:var(--mute)}
+.cup-line .podium{color:var(--fin);font-weight:700}
+.cup-updated{margin-top:8px;font-size:12px}
+.cup-compact{font-size:12px;color:var(--mute)}
+.cup-compact .podium{color:var(--fin);font-weight:700}
+.fav-cups{width:100%;display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.fav-who{font-size:12px;font-weight:600;color:var(--slate);margin-right:6px}
