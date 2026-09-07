@@ -378,3 +378,7 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 @media (max-width:900px){
   .auth-panel{position:relative;z-index:1}
 }
+.count-head .official{font-size:13px;color:var(--mute)}
+.count-head .official b{color:var(--slate);font-size:15px}
+.count-note{font-size:12px;color:var(--mute);margin:2px 0 4px}
+.count-note b{color:var(--slate)}

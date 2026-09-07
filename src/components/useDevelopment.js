@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 
 export const DISC = ['SL', 'GS', 'SG', 'DH']
+// Disciplines that can carry counting results, speed events included.
+export const COUNT_DISC = ['SL', 'GS', 'SG', 'DH', 'AC']
+// FIS Points Rules 2025/26 art. 4.2.1.1 / 4.2.1.2: tech needs three results,
+// speed and combined two.
+export const NEEDED = { SL: 3, GS: 3, SG: 2, DH: 2, AC: 2 }
 export const DISC_COLOR = { SL: '#4D8DFF', GS: '#2ECC8F', SG: '#FFB547', DH: '#F55FA1' }
 // fis_results spells disciplines out; fis_points uses the codes.
 const LONG_TO_CODE = {
@@ -59,17 +64,59 @@ export function shortLabel(label) {
   return m ? `${m[1]} · ${m[2].slice(2)}/${m[3].slice(-2)}` : (label || '')
 }
 
-// FIS counts the average of an athlete's two best results per discipline.
-export function countingResults(results, code) {
+const round2 = n => Math.round(n * 100) / 100
+
+// The athlete's official FIS points, taken from the most recent list they
+// appear on. This is always the value that actually counts.
+export function officialPoints(points, code) {
+  const mine = (points || []).filter(p => p.fis_code === code && p.points != null)
+  if (!mine.length) return {}
+  const latest = Math.max(...mine.map(p => p.list_id))
   const out = {}
-  DISC.forEach(d => {
-    const scored = results
-      .filter(r => r.fis_code === code && discCode(r.discipline) === d && r.fis_points != null)
+  mine.filter(p => p.list_id === latest).forEach(p => {
+    out[p.discipline] = {
+      points: Number(p.points), rank: p.rank, baseList: !!p.base_list, label: p.list_label
+    }
+  })
+  return out
+}
+
+// Counting results per FIS Points Rules 2025/26 (art. 4.2.1.1, 4.2.1.2,
+// 4.2.2.1, 4.2.4), in force from the 2026/27 season.
+//
+//  - SL and GS count the average of the three best results, DH/SG/AC the two best.
+//  - Too few results adds 20 % per missing step: two of three -> +20 %,
+//    one of three -> +20 % twice (48.00 -> 57.60 -> 69.12), one of two -> +20 %.
+//  - Only the current season counts (1 July - 30 June).
+//  - With no results at all this season the base list points still stand, so
+//    nothing is calculated.
+//
+// The average is penalised before rounding: (15.00 + 25.89) / 2 = 20.445,
+// x1.2 = 24.53. Rounding first would give 24.54.
+export function countingResults(results, code, seasonStart, official = {}) {
+  const out = {}
+  COUNT_DISC.forEach(d => {
+    const need = NEEDED[d]
+    const scored = (results || [])
+      .filter(r => r.fis_code === code && discCode(r.discipline) === d &&
+        r.fis_points != null && inSeason(r.race_date, seasonStart))
       .map(r => ({ ...r, pts: Number(r.fis_points) }))
       .sort((a, b) => a.pts - b.pts)
-    if (!scored.length) return
-    const best = scored.slice(0, 2)
-    out[d] = { best, average: best.reduce((a, r) => a + r.pts, 0) / best.length, total: scored.length }
+
+    const off = official[d] || null
+    if (!scored.length) {
+      // Base list points carry until the athlete has a result this season.
+      if (off) out[d] = { need, count: 0, best: [], official: off, baseListStands: true }
+      return
+    }
+    const best = scored.slice(0, need)
+    const raw = best.reduce((a, r) => a + r.pts, 0) / best.length
+    const missing = Math.max(0, need - best.length)
+    const calculated = round2(raw * Math.pow(1.2, missing))
+    out[d] = {
+      need, count: scored.length, best, official: off,
+      baseListStands: false, raw, missing, penaltyPct: missing * 20, calculated
+    }
   })
   return out
 }

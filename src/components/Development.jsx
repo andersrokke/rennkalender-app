@@ -4,8 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { useT } from '../i18n'
 import { fetchFromFis, fisSummary } from '../fis'
 import {
-  DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
-  seasonSummary, currentSeasonStart, discCode, isFinish
+  DISC, COUNT_DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
+  officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish
 } from './useDevelopment'
 
 const n1 = v => v == null ? '–' : Number(v).toLocaleString('nb-NO', { maximumFractionDigits: 2 })
@@ -112,7 +112,8 @@ export default function Development({ profile, team, isCoach, readOnly = false }
       </div>
 
       {people.map(p => {
-        const counting = countingResults(results, p.fis_code)
+        const official = officialPoints(points, p.fis_code)
+        const counting = countingResults(results, p.fis_code, season, official)
         const sum = seasonSummary(results, p.fis_code, season)
         const mine = results.filter(r => r.fis_code === p.fis_code)
         if (!mine.length) return null
@@ -122,18 +123,32 @@ export default function Development({ profile, team, isCoach, readOnly = false }
             <h3>{t('countingResults')}</h3>
             {Object.keys(counting).length === 0 ? <p className="muted">{t('devNoResults')}</p> : (
               <div className="counting">
-                {DISC.filter(d => counting[d]).map(d => (
-                  <div key={d} className="count-disc">
-                    <div className="count-head"><b style={{ color: DISC_COLOR[d] }}>{d}</b>
-                      <span className="muted">{t('avgOfTwo')} <b>{n1(counting[d].average)}</b></span></div>
-                    {counting[d].best.map((r, i) => (
-                      <div key={i} className="count-row">
-                        <span>{r.race_date} · {r.place} · {r.category}</span>
-                        <span>{t('pos')} {r.position} · {n1(r.fis_points)} p</span>
+                {COUNT_DISC.filter(d => counting[d]).map(d => {
+                  const c = counting[d]
+                  return (
+                    <div key={d} className="count-disc">
+                      <div className="count-head">
+                        <b style={{ color: DISC_COLOR[d] || 'var(--slate)' }}>{d}</b>
+                        {c.official && <span className="official">{t('officialNow')} <b>{n1(c.official.points)}</b></span>}
                       </div>
-                    ))}
-                  </div>
-                ))}
+                      {c.baseListStands ? (
+                        <div className="count-note">{t('blStands')}</div>
+                      ) : (
+                        <div className="count-note">
+                          {t('calcPerRules')}: <b>{n1(c.calculated)}</b>
+                          {' — '}{c.need === 3 ? t('avgOfThree') : t('avgOfTwo')}
+                          {c.best.length < c.need && ` (${c.best.length} ${t('ofN')} ${c.need} ${t('resultsWord')}, +${c.penaltyPct} %)`}
+                        </div>
+                      )}
+                      {c.best.map((r, i) => (
+                        <div key={i} className="count-row">
+                          <span>{r.race_date} · {r.place} · {r.category}</span>
+                          <span>{t('pos')} {r.position} · {n1(r.fis_points)} p</span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
               </div>
             )}
             <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}</h3>
