@@ -201,3 +201,4 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 @media (min-width:821px){.tabbar,.scrim,.sheet-head{display:none!important}}
 .btn.link.split{margin-left:8px;font-size:12px}
 .plan-race{align-items:flex-start}
+.chip[disabled]{opacity:.45;cursor:default}

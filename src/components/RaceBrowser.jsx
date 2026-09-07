@@ -77,12 +77,12 @@ export default function RaceBrowser({ profile, team, isCoach }) {
     <>
       <Filters f={f} setF={setF} view={view} setView={setView} onDone={() => setSheet(false)} extra={
         <div className="group"><span>{t('signups')}</span>
-          <button className={`chip ${heat ? 'on' : ''}`} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
+          <button className={`chip ${heat && has ? 'on' : ''}`} disabled={!has} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
           <span className="muted src">{has ? `${t('srcLive')} ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : t('srcNone')}</span>
         </div>
       } />
       <div className="split">
-        <RaceMap races={rows} focus={focus} view={view} heat={heat} signups={byRace} maxSignups={max} />
+        <RaceMap races={rows} focus={focus} view={view} heat={heat && has} signups={byRace} maxSignups={max} />
         <RaceList races={rows} onSelect={setFocus} active={focus}
           selectedIds={new Set((isCoach ? teamRaces : mine).keys())}
           renderExtra={isCoach ? r => (
