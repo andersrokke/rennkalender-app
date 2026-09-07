@@ -64,13 +64,32 @@ export default function Auth() {
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [code, setCode] = useState('')
+  const [codeErr, setCodeErr] = useState(null)
+  const [verifying, setVerifying] = useState(false)
 
   async function send(e) {
-    e.preventDefault(); setBusy(true); setErr(null)
+    e?.preventDefault(); setBusy(true); setErr(null); setCodeErr(null)
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
     setBusy(false)
     if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : error.message)
     else setSent(true)
+  }
+
+  // The email carries both a link and a 6-digit code, so someone who typed
+  // their address on a laptop can finish there with the code from their phone.
+  // On success onAuthStateChange in App picks up the new session.
+  async function verify(e) {
+    e.preventDefault(); setVerifying(true); setCodeErr(null)
+    const token = code.replace(/\D/g, '')
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+    setVerifying(false)
+    if (error) setCodeErr(error.message.includes('rate limit') ? L.rateLimit : L.codeBad)
+  }
+
+  async function resend() {
+    setCode(''); setCodeErr(null)
+    await send()
   }
 
   return (
@@ -102,6 +121,20 @@ export default function Auth() {
               <h2>{L.checkInbox}</h2>
               <p>{L.sentTo} <b>{email}</b>. {L.tapIt}</p>
               <p className="fine">{L.spam}</p>
+
+              <form className="otp" onSubmit={verify}>
+                <p className="otp-lead">{L.codeLead}</p>
+                <label>{L.codeLabel}</label>
+                <input value={code} onChange={e => { setCode(e.target.value); setCodeErr(null) }}
+                  inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*"
+                  maxLength={6} placeholder="123456" aria-label={L.codeLabel} />
+                <button className="btn primary" disabled={verifying || code.replace(/\D/g, '').length < 6}>
+                  {verifying ? L.sending : L.codeSignIn}
+                </button>
+                {codeErr && <div className="error">{codeErr}</div>}
+                <button type="button" className="btn link" onClick={resend} disabled={busy}>{L.codeResend}</button>
+              </form>
+
               <button className="btn link" onClick={() => setSent(false)}>{L.otherEmail}</button>
             </div>
           ) : (

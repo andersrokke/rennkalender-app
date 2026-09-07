@@ -395,3 +395,9 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .fav-cups{width:100%;display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .fav-who{font-size:12px;font-weight:600;color:var(--slate);margin-right:6px}
 .count-note .improves{color:var(--fin);font-weight:600}
+
+/* --- One-time code on the sign-in card --- */
+.auth .otp{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
+.auth .otp-lead{margin:0 0 8px;font-size:13px;color:var(--mute)}
+.auth .otp input{letter-spacing:.35em;font-size:20px;font-weight:700;text-align:center;padding:12px}
+.auth .otp .btn.link{display:block;margin:12px auto 0}
