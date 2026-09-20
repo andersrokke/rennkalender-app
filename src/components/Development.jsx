@@ -7,6 +7,7 @@ import { fisPoints, dateTime } from '../format'
 import { fetchFromFis, fisSummary } from '../fis'
 import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
+import Timing from './Timing.jsx'
 import {
   DISC, COUNT_DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish
@@ -197,6 +198,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           </div>
         )
       })}
+      <Timing profile={profile} team={team} isCoach={isCoach} />
     </div>
   )
 }

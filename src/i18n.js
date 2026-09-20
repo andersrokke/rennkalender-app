@@ -3,6 +3,15 @@ import { createContext, useContext } from 'react'
 // Dictionary for the signed-in app. Race-list wording follows the prototype.
 export const I18N = {
   no: {
+    // mellomtider
+    tmTitle: 'Mellomtider', tmSub: 'Hvor i løypa tiden går. Beste seksjonstid i økta er referansen, uansett hvem som satte den.',
+    tmEmpty: 'Ingen økter importert ennå. Eksporter økta fra HC Timing og last opp CSV-fila her.',
+    tmNoSplits: 'Denne økta har ingen fullførte løp med mellomtider.',
+    tmYouLose: 'Du taper mest tid i', tmSection: 'Seksjon', tmPerRun: 'i snitt per løp', tmThisRun: 'på dette løpet',
+    tmRun: 'Løp', tmRunNo: 'omgang', tmTotal: 'Totalt', tmBest: 'Beste i økta',
+    tmOfRuns: 'av', tmMapped: 'løp koblet til en løper',
+    tmNote: 'Tallene er avvik fra beste seksjonstid i økta. Grønt er raskest, rødt er der du taper mest.',
+    tmDnf: 'løp uten måltid (utgått eller diskvalifisert).',
     // neste renn / portlinje
     nextTab: 'Neste renn',
     nrNone: 'Ingen renn framover', nrNoneBody: 'Legg til renn under «Alle renn», så dukker det neste opp her.',
@@ -133,6 +142,15 @@ export const I18N = {
     noTeamBody: 'Opprett et lag for å planlegge sesongen, invitere løpere med en kode og sette status per renn. Du kan fortsatt se «Alle renn» uten lag.'
   },
   en: {
+    // split times
+    tmTitle: 'Split times', tmSub: 'Where the time goes. The fastest section in the session is the reference, whoever set it.',
+    tmEmpty: 'No sessions imported yet. Export the session from HC Timing and upload the CSV here.',
+    tmNoSplits: 'This session has no finished runs with split times.',
+    tmYouLose: 'You lose most time in', tmSection: 'Section', tmPerRun: 'on average per run', tmThisRun: 'on this run',
+    tmRun: 'Run', tmRunNo: 'run', tmTotal: 'Total', tmBest: 'Fastest in session',
+    tmOfRuns: 'of', tmMapped: 'runs matched to an athlete',
+    tmNote: 'Numbers are the gap to the fastest section in the session. Green is fastest, red is where you lose most.',
+    tmDnf: 'runs without a finish time (DNF or DSQ).',
     // next race / gate line
     nextTab: 'Next race',
     nrNone: 'No races coming up', nrNoneBody: 'Add races under \u201cAll races\u201d and the next one shows up here.',
