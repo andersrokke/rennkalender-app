@@ -597,4 +597,113 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .status-pill.st-unavailable{background:var(--st-unavailable);color:var(--st-unavailable-fg)}
 .season-best{margin-top:6px;font-size:13px}
 .season-best b{font-size:15px}
+/* ===========================================================================
+   Neste renn
+   Skjermen som svarer på «hva trenger jeg å vite nå»: rennet som kommer,
+   fristen, antatt startnummer, reisa og hvem fra laget som kommer.
+   =========================================================================== */
+.nextwrap{max-width:1060px;margin:0 auto;padding:20px 20px 28px;display:flex;flex-direction:column;gap:16px}
 
+.nr-hero{display:grid;grid-template-columns:minmax(0,1fr) 284px;background:var(--snow);
+  border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--lift);overflow:hidden}
+.nr-main{padding:26px 26px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.nr-kicker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nr-when{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+  background:var(--accent-soft);padding:4px 10px;border-radius:999px}
+.nr-when.soon{color:var(--danger-ink);background:var(--danger-soft)}
+.nr-eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.nr-hero h2{margin:0;font-size:clamp(26px,4.2vw,38px);line-height:1.04;letter-spacing:-.035em;font-weight:800}
+.nr-meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:13.5px;color:var(--mute)}
+.nr-meta .sep{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.nr-meta b{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--slate);font-weight:700}
+
+.nr-alert{display:flex;align-items:center;gap:10px;background:var(--danger-soft);color:var(--danger-ink);
+  border-radius:var(--r-s);padding:11px 14px;font-size:13.5px;font-weight:650}
+.nr-alert svg{width:17px;height:17px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.nr-alert a{margin-left:auto;background:var(--danger);color:var(--accent-fg);text-decoration:none;font-size:12.5px;
+  font-weight:700;padding:7px 14px;border-radius:999px;white-space:nowrap}
+
+.nr-route{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);flex-wrap:wrap}
+.nr-route .leg{flex:1;min-width:40px;height:2px;background:var(--line);border-radius:2px;position:relative}
+.nr-route .leg::after{content:"";position:absolute;left:0;top:-2px;width:6px;height:6px;border-radius:50%;
+  background:var(--accent)}
+.nr-route .far{margin-left:auto;font-family:var(--num);font-variant-numeric:tabular-nums}
+
+/* Tidtakerpanelet: mørk innfelling med store tall, lånt fra måltavla. */
+.nr-timing{background:var(--night-2);color:#EAF1FB;padding:22px 20px;display:flex;flex-direction:column;
+  gap:15px;justify-content:center;border-left:1px solid var(--line)}
+.nr-timing .row{display:flex;flex-direction:column;gap:2px}
+.nr-timing .lab{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#8FA5C4}
+.nr-timing .big{font-family:var(--num);font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.nr-timing .big sup{font-size:14px;font-weight:700;vertical-align:super;color:#8FA5C4;margin-left:3px}
+.nr-timing .val{font-family:var(--num);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.nr-timing .sep{height:1px;background:rgba(255,255,255,.12)}
+.nr-timing .note{font-size:11.5px;color:#8FA5C4;line-height:1.4;margin:0}
+.nr-timing .drawn{color:#7FE0A8}
+
+/* Tre fliser under helten. */
+.nr-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.nr-tile{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-m);padding:18px 20px;
+  box-shadow:var(--lift-sm);display:flex;flex-direction:column;gap:9px}
+.nr-tile .lab{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.nr-tile .big{font-family:var(--num);font-size:29px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.nr-tile .big small{font-size:14px;font-weight:600;color:var(--faint);letter-spacing:0}
+.nr-tile .sub{font-size:12.5px;color:var(--mute);line-height:1.4}
+.nr-spark{width:100%;height:auto;aspect-ratio:164/32;overflow:visible}
+.nr-avs{display:flex}
+.nr-avs i{width:27px;height:27px;border-radius:50%;margin-left:-7px;border:2px solid var(--snow);
+  display:grid;place-items:center;font-size:10px;font-weight:800;font-style:normal;color:#fff;
+  background:var(--mute);font-family:var(--ui)}
+.nr-avs i:first-child{margin-left:0}
+.nr-avs i.n{background:var(--sunken);color:var(--mute)}
+
+.nr-empty{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-l);padding:38px 26px;
+  text-align:center;color:var(--mute);box-shadow:var(--lift-sm)}
+.nr-empty b{display:block;color:var(--slate);font-size:17px;margin-bottom:6px}
+
+@media (max-width:900px){
+  .nr-hero{grid-template-columns:1fr}
+  .nr-tiles{grid-template-columns:1fr}
+}
+
+/* ===========================================================================
+   Portlinja
+   Sesongen som en slalåmløype: blå og rød port annenhver, status i porten,
+   neste renn markert. Både bilde av sesongen og navigasjon.
+   =========================================================================== */
+.gateline{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-m);
+  box-shadow:var(--lift-sm);padding:16px 20px 18px}
+.gateline-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.gateline-head h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.015em}
+.gateline-head .side{margin-left:auto;font-size:12.5px;color:var(--faint)}
+.gate-track{position:relative;overflow-x:auto;overflow-y:hidden;padding:24px 0 6px;
+  scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.gate-track::before{content:"";position:absolute;left:0;right:0;top:42px;height:2px;background:var(--line);
+  border-radius:2px}
+.gate-row{display:flex;min-width:max-content;position:relative}
+.gate{display:flex;flex-direction:column;align-items:center;gap:7px;width:98px;flex:0 0 98px;
+  background:transparent;border:0;font:inherit;cursor:pointer;padding:0;color:inherit}
+.gate .pole{width:3px;height:18px;border-radius:2px;background:var(--accent)}
+.gate:nth-child(even) .pole{background:var(--danger)}
+.gate .knob{width:13px;height:13px;border-radius:50%;background:var(--snow);border:2.5px solid var(--line);
+  transition:transform .16s,border-color .16s}
+.gate[data-s=entered] .knob{border-color:var(--st-entered);background:var(--st-entered)}
+.gate[data-s=planned] .knob{border-color:var(--accent)}
+.gate[data-s=wish] .knob{border-color:var(--st-wish)}
+.gate[data-s=unavailable] .knob{border-color:var(--st-none);background:var(--st-none)}
+.gate.next .knob{border-color:var(--danger);background:var(--danger);box-shadow:0 0 0 5px var(--danger-soft);
+  transform:scale(1.18)}
+.gate:hover .knob,.gate.on .knob{transform:scale(1.3)}
+.gate:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.gate .gd{font-family:var(--num);font-size:11px;font-weight:700;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.gate .gp{font-size:11.5px;font-weight:650;color:var(--mute);text-align:center;line-height:1.25;
+  max-width:92px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical}
+.gate.next .gp,.gate.on .gp{color:var(--slate)}
+.gate-empty{color:var(--faint);font-size:13px;padding:10px 0}
+
+/* Nasjonskode i rennraden. Erstatter fargestripa som betydning. */
+.nation{font-family:var(--num);font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 6px;
+  border-radius:var(--r-xs);background:var(--sunken);color:var(--mute);vertical-align:middle;
+  margin-left:6px}

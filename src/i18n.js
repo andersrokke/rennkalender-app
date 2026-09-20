@@ -3,6 +3,23 @@ import { createContext, useContext } from 'react'
 // Dictionary for the signed-in app. Race-list wording follows the prototype.
 export const I18N = {
   no: {
+    // neste renn / portlinje
+    nextTab: 'Neste renn',
+    nrNone: 'Ingen renn framover', nrNoneBody: 'Legg til renn under «Alle renn», så dukker det neste opp her.',
+    nrNext: 'Neste renn i planen din', nrRunning: 'Pågår nå', nrToday: 'I dag', nrTomorrow: 'I morgen',
+    nrInDays: 'Om {n} dager', nrDeadline: 'Påmeldingsfristen går ut', nrEnter: 'Meld på',
+    nrStartNo: 'Antatt startnummer', nrOf: 'av', nrToDraw: 'Til trekningsgruppa',
+    nrInDraw: 'Trekningsgruppa', nrInDrawYes: 'Du er inne', nrYourPoints: 'Dine poeng {d}',
+    nrDrawNote: 'Trekning blant de {n} beste. {a} påmeldte, {b} med poeng.',
+    nrNoEntries: 'Ingen deltakerliste ennå. Antatt startnummer dukker opp når iSonen åpner lista.',
+    nrNoFis: 'Legg inn FIS-koden din under «Profil», så regner vi ut antatt startnummer.',
+    nrSignups: 'Påmeldte', nrLast7: '+{n} på sju dager.', nrSpotsLeft: '{n} plasser igjen.',
+    nrTravel: 'Reise og kost', nrKmReturn: 'km tur/retur',
+    nrTravelNote: '{km} km tur/retur à {rate} kr per km.',
+    nrNoVenue: 'Stedet mangler koordinater, så avstanden kan ikke regnes ut.',
+    nrSolo: 'Sesongen din', nrSoloNote: 'renn framover i planen din.',
+    nrAlsoGoing: '{names} skal også.', nrOnlyYou: 'Ingen andre fra laget har svart ennå.',
+    nrSeason: 'Sesongen din', gateEmpty: 'Ingen renn i planen ennå.',
     appTitle: 'Rennkalender 2026/27',
     // tabs
     season: 'Lagets sesong', athletes: 'Løpere', races: 'Alle renn', plan: 'Min plan',
@@ -116,6 +133,23 @@ export const I18N = {
     noTeamBody: 'Opprett et lag for å planlegge sesongen, invitere løpere med en kode og sette status per renn. Du kan fortsatt se «Alle renn» uten lag.'
   },
   en: {
+    // next race / gate line
+    nextTab: 'Next race',
+    nrNone: 'No races coming up', nrNoneBody: 'Add races under \u201cAll races\u201d and the next one shows up here.',
+    nrNext: 'Next race in your plan', nrRunning: 'Running now', nrToday: 'Today', nrTomorrow: 'Tomorrow',
+    nrInDays: 'In {n} days', nrDeadline: 'Entry deadline', nrEnter: 'Enter',
+    nrStartNo: 'Predicted bib', nrOf: 'of', nrToDraw: 'To the draw group',
+    nrInDraw: 'Draw group', nrInDrawYes: 'You are in', nrYourPoints: 'Your points {d}',
+    nrDrawNote: 'Draw among the top {n}. {a} entered, {b} with points.',
+    nrNoEntries: 'No entry list yet. The predicted bib appears once iSonen opens it.',
+    nrNoFis: 'Add your FIS code under \u201cProfile\u201d and we work out your bib.',
+    nrSignups: 'Entries', nrLast7: '+{n} in seven days.', nrSpotsLeft: '{n} spots left.',
+    nrTravel: 'Travel and cost', nrKmReturn: 'km return',
+    nrTravelNote: '{km} km return at {rate} kr per km.',
+    nrNoVenue: 'The venue has no coordinates, so the distance cannot be worked out.',
+    nrSolo: 'Your season', nrSoloNote: 'races coming up in your plan.',
+    nrAlsoGoing: '{names} are going too.', nrOnlyYou: 'Nobody else on the team has answered yet.',
+    nrSeason: 'Your season', gateEmpty: 'No races in the plan yet.',
     appTitle: 'Race calendar 2026/27',
     season: 'Team season', athletes: 'Athletes', races: 'All races', plan: 'My plan',
     mine: 'My season', settingsTab: 'Profile', settingsTabCoach: 'Team and profile',
