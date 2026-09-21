@@ -47,6 +47,20 @@ export function useDevelopment(codes) {
   return { points, results, updatedAt, loading, reload: load }
 }
 
+// Den gjeldende FIS-lista, hentet fra fis_lists og ikke fra løperens egne
+// poeng: lista er gjeldende enten løperen står på den eller ikke.
+export function useCurrentList() {
+  const [list, setList] = useState(null)
+  useEffect(() => {
+    let alive = true
+    supabase.from('fis_lists').select('list_id, list_no, season_code, name, published, imported_at')
+      .order('list_id', { ascending: false }).limit(1)
+      .then(({ data }) => { if (alive) setList(data?.[0] || null) })
+    return () => { alive = false }
+  }, [])
+  return list
+}
+
 // One row per points list, with a series per athlete+discipline.
 export function toChartRows(points) {
   const byList = new Map()

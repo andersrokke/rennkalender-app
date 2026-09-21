@@ -729,3 +729,22 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .tm-lost{color:var(--mute)}
 .tm-worst{color:var(--danger-ink);font-weight:700;background:var(--danger-soft)}
 .tm-note{margin-top:10px}
+
+/* ===========================================================================
+   Gjeldende FIS-liste
+   Grafen viser seksti lister etter hverandre uten at noe sier hvor «naa» er.
+   Stripa svarer paa det i tekst, referanselinja i selve grafen.
+   =========================================================================== */
+.fis-period{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:14px 0 4px;
+  padding:12px 16px;background:var(--accent-soft);border-radius:var(--r-s);
+  border-left:3px solid var(--accent)}
+.fis-period .lab{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent)}
+.fis-period .now{font-family:var(--num);font-size:21px;font-weight:800;letter-spacing:-.02em;
+  color:var(--slate);line-height:1}
+.fis-period .when{margin-left:auto;font-size:12.5px;color:var(--mute);
+  font-variant-numeric:tabular-nums;text-align:right}
+.fis-period .miss{width:100%;font-size:12.5px;color:var(--mute);margin:0}
+@media (max-width:560px){
+  .fis-period .when{margin-left:0;text-align:left;width:100%}
+}

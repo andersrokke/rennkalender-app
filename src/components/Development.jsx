@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts'
 import { useT } from '../i18n'
 import { fmt } from '../util'
 import { fisPoints, dateTime } from '../format'
@@ -9,8 +9,8 @@ import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
 import Timing from './Timing.jsx'
 import {
-  DISC, COUNT_DISC, DISC_COLOR, useDevelopment, toChartRows, countingResults,
-  officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish
+  DISC, COUNT_DISC, DISC_COLOR, useDevelopment, useCurrentList, toChartRows, countingResults,
+  officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish, shortLabel
 } from './useDevelopment'
 
 
@@ -51,6 +51,21 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   }
   const lastFetched = updatedAt[profile.fis_code]
   const rows = useMemo(() => toChartRows(points), [points])
+
+  // «Hvor er vi nå» i en graf over seksti lister. Sesongen skyggelegges, og
+  // den gjeldende lista får en egen linje - men bare hvis noen faktisk har
+  // poeng på den, ellers ville linja havnet på feil kategori.
+  const curList = useCurrentList()
+  const curLabel = curList ? shortLabel(curList.name) : null
+  const nowLabel = curLabel && rows.some(r => r.label === curLabel) ? curLabel : null
+  const seasonBand = useMemo(() => {
+    if (!curList) return null
+    const suffix = `${String(curList.season_code - 1).slice(2)}/${String(curList.season_code).slice(2)}`
+    const inSeason = rows.filter(r => r.label.endsWith(suffix))
+    return inSeason.length > 1 ? [inSeason[0].label, inSeason[inSeason.length - 1].label] : null
+  }, [rows, curList])
+  const onlyDate = v => new Date(v).toLocaleDateString(t.lang === 'en' ? 'en-GB' : 'nb-NO',
+    { day: 'numeric', month: 'short', year: 'numeric' })
   const nameOf = code => people.find(p => p.fis_code === code)?.full_name || code
 
   // One line per athlete for the chosen discipline (coach), or one line per
@@ -101,6 +116,19 @@ export default function Development({ profile, team, isCoach, readOnly = false }
             )}
           </div>
         )}
+        {curList && (
+          <div className="fis-period">
+            <span className="lab">{t('fisPeriod')}</span>
+            <span className="now">{shortLabel(curList.name)}</span>
+            <span className="when">
+              {curList.imported_at && <>{t('fisFetchedList')} {onlyDate(curList.imported_at)}<br /></>}
+              {t('fisToday')} {onlyDate(Date.now())}
+            </span>
+            {rows.length > 0 && !nowLabel && (
+              <p className="miss">{isCoach ? t('fisNoOneOnList') : t('fisNotOnList')}</p>
+            )}
+          </div>
+        )}
         {loading ? <p className="muted">{t('loading')}</p>
           : rows.length === 0 ? (
             <div className="empty-fis">
@@ -112,8 +140,17 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           ) : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={rows} margin={{ top: 8, right: 8, left: -18, bottom: 4 }}>
+              <LineChart data={rows} margin={{ top: 22, right: 30, left: -18, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                {seasonBand && (
+                  <ReferenceArea x1={seasonBand[0]} x2={seasonBand[1]}
+                    fill="var(--accent)" fillOpacity={0.08} stroke="none" />
+                )}
+                {nowLabel && (
+                  <ReferenceLine x={nowLabel} stroke="var(--slate)" strokeWidth={2}
+                    label={{ value: t('fisNowMark'), position: 'top', fill: 'var(--slate)',
+                      fontSize: 11, fontWeight: 800 }} />
+                )}
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--mute)' }} interval="preserveStartEnd" />
                 {/* lower FIS points are better, so the axis is reversed */}
                 <YAxis reversed tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={v => fisPoints(v, t.lang)} />

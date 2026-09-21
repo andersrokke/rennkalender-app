@@ -3,6 +3,10 @@ import { createContext, useContext } from 'react'
 // Dictionary for the signed-in app. Race-list wording follows the prototype.
 export const I18N = {
   no: {
+    // gjeldende FIS-liste
+    fisPeriod: 'Gjeldende FIS-liste', fisFetchedList: 'Hentet', fisToday: 'I dag', fisNowMark: 'Nå',
+    fisNotOnList: 'Du har ingen poeng på denne lista ennå. Grafen stopper på den siste lista du står på.',
+    fisNoOneOnList: 'Ingen på laget har poeng på denne lista ennå.',
     // mellomtider
     tmTitle: 'Mellomtider', tmSub: 'Hvor i løypa tiden går. Beste seksjonstid i økta er referansen, uansett hvem som satte den.',
     tmEmpty: 'Ingen økter importert ennå. Eksporter økta fra HC Timing og last opp CSV-fila her.',
@@ -142,6 +146,10 @@ export const I18N = {
     noTeamBody: 'Opprett et lag for å planlegge sesongen, invitere løpere med en kode og sette status per renn. Du kan fortsatt se «Alle renn» uten lag.'
   },
   en: {
+    // current FIS list
+    fisPeriod: 'Current FIS list', fisFetchedList: 'Fetched', fisToday: 'Today', fisNowMark: 'Now',
+    fisNotOnList: 'You have no points on this list yet. The chart ends at the last list you appear on.',
+    fisNoOneOnList: 'Nobody on the team has points on this list yet.',
     // split times
     tmTitle: 'Split times', tmSub: 'Where the time goes. The fastest section in the session is the reference, whoever set it.',
     tmEmpty: 'No sessions imported yet. Export the session from HC Timing and upload the CSV here.',
