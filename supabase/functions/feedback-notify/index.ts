@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   const { data: f, error } = await supabase
     .from("feedback")
     .select("id, kind, title, body, area, user_agent, author:profiles!feedback_author_id_fkey(full_name)")
-    .eq("id", id).single();
+    .eq("id", id).maybeSingle();
   if (error || !f) return reply({ sent: false, reason: error?.message ?? "fant ikke saken" });
 
   // Mottakerne er de som er merket som administrator. Ingen adresse står i

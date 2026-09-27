@@ -83,8 +83,32 @@ npx supabase db diff -f beskrivende_navn
 # 3. Test at den bygger rent fra bunnen
 npx supabase db reset
 
-# 4. Commit, og send til produksjon
+# 4. Commit og push til main. GitHub-koblingen kjører migrasjonen selv.
+#    Haster det, eller er koblingen av, kan den sendes for hånd:
 npx supabase db push
+```
+
+### GitHub-koblingen
+
+Prosjektet er koblet til `andersrokke/rennkalender-app` i Supabase. **En push
+til `main` kjører nye migrasjoner mot produksjon og ruller ut edge-funksjoner.**
+Det er ingen egen GitHub Actions-workflow i repoet; koblingen settes opp i
+Supabase-dashbordet under Integrations.
+
+To ting følger av dette:
+
+- `npx supabase db push` trengs vanligvis ikke. Kjører du den likevel er det
+  ufarlig - en migrasjon som alt står i `supabase_migrations.schema_migrations`
+  hoppes over.
+- **En funksjon som ikke står i `[functions.*]` i `config.toml` blir ikke rullet
+  ut**, selv om koden ligger i `supabase/functions/`. Det skjedde med
+  `feedback-notify` 27. september: tabellen og triggeren kom på plass, mens
+  funksjonen triggeren postet til ikke fantes.
+
+Sjekk hva som faktisk står i produksjon:
+
+```sql
+select version, name from supabase_migrations.schema_migrations order by version;
 ```
 
 `db diff` sammenligner den lokale databasen mot migrasjonene og skriver
