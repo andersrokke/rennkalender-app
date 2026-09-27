@@ -98,7 +98,14 @@ export default function App() {
       : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab], ['feedback', d.fbTab]]
   // Admin-fanen er en snarvei, ikke en rettighet. Skjuler vi den, er dataene
   // fortsatt stengt: admin_*-funksjonene sjekker is_admin() i basen selv.
-  const tabs = profile.is_admin ? [...baseTabs, ['admin', d.adTab]] : baseTabs
+  //
+  // Uten lag kommer den først. En administrator som drifter appen for andre
+  // har ikke noe lag selv, og skal ikke lande på en skjerm som ber henne
+  // opprette et - hun skal lande der arbeidet hennes er.
+  const adminFane = ['admin', d.adTab]
+  const tabs = !profile.is_admin ? baseTabs
+    : team ? [...baseTabs, adminFane]
+      : [adminFane, ...baseTabs]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
