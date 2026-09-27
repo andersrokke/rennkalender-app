@@ -315,6 +315,23 @@ function Drift({ o, t }) {
         )}
       </div>
       <div className="card">
+        <h2>{t('adAlerts')}</h2>
+        <p className="muted">{t('adAlertsSub')}</p>
+        {!o.varsler?.length ? <p className="muted">{t('adNoAlerts')}</p> : (
+          <ul className="fb-list">
+            {o.varsler.map((v, i) => (
+              <li className="fb-item" key={i}>
+                <div className="fb-head">
+                  <span className="fb-kind bug">{v.status ?? t('adNoAnswer')}</span>
+                  <b>{dtt(v.nar)}</b>
+                </div>
+                <p className="fb-body">{v.svar}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="card">
         <h2>{t('adFreshness')}</h2>
         <p className="muted">{t('adFreshnessSub')}</p>
         <ul className="ad-liste">
