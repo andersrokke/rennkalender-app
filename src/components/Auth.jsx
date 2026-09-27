@@ -57,6 +57,17 @@ const Hero = () => (
   </svg>
 )
 
+// Googles «G». Egen markup og ikke en bildefil, saa den foelger med i bunten
+// og ikke kan bli borte bak en blokkert CDN.
+const GoogleMark = () => (
+  <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-4H24v7.3h12.1c-.2 1.8-1.6 4.6-4.5 6.5l6.9 5.4c4.1-3.8 6.6-9.4 6.6-15.2z" />
+    <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C7.1 41 14.9 46 24 46z" />
+    <path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9l7.1-5.5z" />
+    <path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 14.9 2 7.1 7 4.4 14.1l7.1 5.5c1.8-5.3 6.7-9.1 12.5-9.1z" />
+  </svg>
+)
+
 export default function Auth() {
   const [lang, setLang] = useState(detectLang())
   const L = t(lang)
@@ -65,13 +76,18 @@ export default function Auth() {
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
   const [password, setPassword] = useState('')
-  const [pwMode, setPwMode] = useState(false)
+  const [mode, setMode] = useState('in')        // 'in' = logg inn, 'up' = opprett
+  // Innboksskjermen sier forskjellige ting, og verifyOtp trenger riktig type.
+  const [sentKind, setSentKind] = useState('link')
   const [code, setCode] = useState('')
   const [codeErr, setCodeErr] = useState(null)
   const [verifying, setVerifying] = useState(false)
 
+  // Magisk lenke er ikke lenger hovedveien inn, men veien tilbake naar
+  // passordet er glemt. Den samme e-posten baerer bade lenke og kode.
   async function send(e) {
     e?.preventDefault(); setBusy(true); setErr(null); setCodeErr(null)
+    setSentKind('link')
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
     setBusy(false)
     if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : error.message)
@@ -84,28 +100,44 @@ export default function Auth() {
   async function verify(e) {
     e.preventDefault(); setVerifying(true); setCodeErr(null)
     const token = code.replace(/\D/g, '')
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+    const { error } = await supabase.auth.verifyOtp({
+      email, token, type: sentKind === 'signup' ? 'signup' : 'email' })
     setVerifying(false)
     if (error) setCodeErr(error.message.includes('rate limit') ? L.rateLimit : L.codeBad)
   }
 
-  // Test route only: shown in dev, or for the @test.rennkalender accounts used
-  // to exercise the four onboarding roles. Never offered to real users in
-  // production, who sign in with a link or a code.
-  async function signInWithPassword(e) {
+  async function withGoogle() {
+    setBusy(true); setErr(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google', options: { redirectTo: window.location.origin }
+    })
+    // Går det bra, forlater nettleseren siden; da skal knappen bli stående.
+    if (error) { setBusy(false); setErr(L.googleFailed) }
+  }
+
+  async function submitPw(e) {
     e.preventDefault(); setBusy(true); setErr(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setBusy(false)
-    if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : L.pwFailed)
+    if (mode === 'up') {
+      const { data, error } = await supabase.auth.signUp({
+        email, password, options: { emailRedirectTo: window.location.origin }
+      })
+      setBusy(false)
+      if (error) return setErr(error.message.includes('rate limit') ? L.rateLimit : error.message)
+      // Uten sesjon venter Supabase på at adressen bekreftes. Finnes adressen
+      // fra før, svarer Supabase likt - med vilje, så ingen kan avdekke hvem
+      // som har konto. Derfor samme skjerm uansett.
+      if (!data.session) { setSentKind('signup'); setSent(true) }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      setBusy(false)
+      if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : L.pwFailed)
+    }
   }
 
   async function resend() {
     setCode(''); setCodeErr(null)
     await send()
   }
-
-  const showPassword = import.meta.env.DEV ||
-    email.trim().toLowerCase().endsWith('@test.rennkalender')
 
   return (
     <div className="auth-wrap">
@@ -133,8 +165,8 @@ export default function Auth() {
           {sent ? (
             <div className="sent">
               <div className="icon">✓</div>
-              <h2>{L.checkInbox}</h2>
-              <p>{L.sentTo} <b>{email}</b>. {L.tapIt}</p>
+              <h2>{sentKind === 'signup' ? L.confirmTitle : L.checkInbox}</h2>
+              <p>{sentKind === 'signup' ? L.confirmSentTo : L.sentTo} <b>{email}</b>. {L.tapIt}</p>
               <p className="fine">{L.spam}</p>
 
               <form className="otp" onSubmit={verify}>
@@ -153,26 +185,43 @@ export default function Auth() {
               <button className="btn link" onClick={() => setSent(false)}>{L.otherEmail}</button>
             </div>
           ) : (
-            <form onSubmit={send}>
-              <h2>{L.signIn}</h2>
-              <p>{L.signInLead}</p>
-              <label>{L.email}</label>
-              <input type="email" required inputMode="email" autoComplete="email"
-                value={email} onChange={e => setEmail(e.target.value)} placeholder="navn@example.com" />
-              <button className="btn primary" disabled={busy}>{busy ? L.sending : L.sendLink}</button>
-              {showPassword && (pwMode ? (
-                <div className="pw">
-                  <label>{L.password}</label>
-                  <input type="password" value={password} autoComplete="current-password"
-                    onChange={e => { setPassword(e.target.value); setErr(null) }} />
-                  <button type="button" className="btn small primary" disabled={busy || !password}
-                    onClick={signInWithPassword}>{L.pwSignIn}</button>
-                  <span className="fine">{L.pwHint}</span>
-                </div>
-              ) : (
-                <button type="button" className="btn link pw-link" onClick={() => setPwMode(true)}>{L.pwLink}</button>
-              ))}
+            <form onSubmit={submitPw}>
+              <h2>{mode === 'up' ? L.signUp : L.signIn}</h2>
+              <p>{mode === 'up' ? L.signUpLead : L.signInLead}</p>
+
+              <button type="button" className="btn google" disabled={busy} onClick={withGoogle}>
+                <GoogleMark />{L.withGoogle}
+              </button>
+              <div className="or"><span>{L.orEmail}</span></div>
+
+              <label htmlFor="au-email">{L.email}</label>
+              <input id="au-email" type="email" required inputMode="email" autoComplete="email"
+                value={email} onChange={e => { setEmail(e.target.value); setErr(null) }}
+                placeholder="navn@example.com" />
+
+              <label htmlFor="au-pw">{mode === 'up' ? L.pwNew : L.password}</label>
+              <input id="au-pw" type="password" required minLength={8} value={password}
+                autoComplete={mode === 'up' ? 'new-password' : 'current-password'}
+                onChange={e => { setPassword(e.target.value); setErr(null) }} />
+              {mode === 'up' && <span className="fine">{L.pwMin}</span>}
+
+              <button className="btn primary" disabled={busy || !email || password.length < 8}>
+                {busy ? L.sending : mode === 'up' ? L.signUp : L.pwSignIn}
+              </button>
               {err && <div className="error">{err}</div>}
+
+              <div className="auth-alt">
+                <button type="button" className="btn link"
+                  onClick={() => { setMode(m => (m === 'up' ? 'in' : 'up')); setErr(null) }}>
+                  {mode === 'up' ? L.haveAccount : L.noAccount}
+                </button>
+                {mode === 'in' && (
+                  <button type="button" className="btn link" disabled={busy || !email} onClick={send}>
+                    {L.forgot}
+                  </button>
+                )}
+              </div>
+
               <div className="roles">
                 <span>{L.roleAthlete}</span><span>{L.roleCoach}</span><span>{L.roleParent}</span>
               </div>
