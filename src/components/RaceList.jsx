@@ -20,7 +20,9 @@ export default function RaceList({ races, onSelect, active, renderExtra, selecte
         <div className="date">{fmt(r)}</div>
         <div>
           <span className="place">{r.place}</span>
-          {g === 'EUR' && <span className="tag">{r.host_nation}</span>}
+          {/* Nasjonskoden står alltid: fargen i venstrekanten er dempet og
+              skal ikke lenger være det eneste som sier hvilket land det er. */}
+          <span className="nation">{r.host_nation}</span>
           {r.organiser_nation && <span className="tag">{r.organiser_nation}-arrangert</span>}
           {r.gender === 'M' && <span className="tag">kun menn</span>}
           {r.gender === 'W' && <span className="tag">kun damer</span>}

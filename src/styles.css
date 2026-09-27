@@ -1,31 +1,61 @@
-/* Light is the default. Values follow the prototype's html[data-theme=light]. */
+/* Portene.
+   I alpint er blått og rødt ikke flagget, det er portene: hver slalåmløype
+   veksler blå og rød, og snøen er hvit. Derfor får blått bety handling og rødt
+   bety tid som renner ut - og nasjonalitet, som eide begge fargene før, går
+   over til dempede toner og en nasjonskode i raden.
+   Lys er standard. */
 :root{
-  --ice:#EEF2F8; --snow:#FFFFFF; --panel-2:#F4F7FB; --slate:#0F1B2D; --mute:#6B7A8C; --line:#DCE3EE;
-  --nor:#D7263D; --swe:#1D5FD1; --fin:#1A9A6A; --eur:#7C5CE0; --amber:#D98A00;
-  --accent-fg:#FFFFFF; --sel:#F1F7F2; --sel-fg:#1E5631;
-  /* Status = traffic light. Deliberately more saturated than the country
-     colours on the map (--nor/--swe/--fin) so a status block never reads as a
-     nationality. Foreground is chosen per colour to clear WCAG AA. */
+  /* Flater: night -> ice -> snow. Panelene løfter seg fra bunnen i stedet for
+     å være streket opp, så dybde gjør jobben 1px-rammene gjorde før. */
+  --night:#071528; --night-2:#0D2340;
+  --ice:#E9EFF7; --snow:#FFFFFF; --panel-2:#F2F6FC; --sunken:#EDF2F9;
+  --slate:#08131F; --mute:#56687F; --faint:#66778F; --line:#D9E2EF;
+  /* De to portefargene. Alt annet må klare seg uten dem. */
+  --accent:#2563EB; --accent-soft:#EBF1FE;
+  --danger:#E32347; --danger-soft:#FDE8EC; --danger-ink:#C4102E;
+  --good:#0F7A47;   --good-soft:#E3F3EA;
+  --accent-fg:#FFFFFF;
+  /* Nasjonalitet er ikke lenger en UI-farge. Tonene er dempet med vilje. */
+  --nor:#B8697A; --swe:#6E8DC4; --fin:#74A894; --eur:#9A8FC0; --amber:#D98A00;
+  --sel:#EEF4FF; --sel-fg:#1B3E7A;
+  /* Status = trafikklys. Uendret: tonene er kontrastsjekket fra før, og de
+     skal fortsatt aldri leses som en nasjonalitet. */
   --st-planned:#15803D;     --st-planned-fg:#FFFFFF;
   --st-entered:#064E3B;     --st-entered-fg:#FFFFFF;
   --st-wish:#E0A030;        --st-wish-fg:#2A1E00;
   --st-unavailable:#DC2626; --st-unavailable-fg:#FFFFFF;
-  --st-none:#E4E7EC;        --st-none-fg:#475467;
+  --st-none:#E4EAF3;        --st-none-fg:#4A5B72;
   /* aliases used by the login screen's CSS */
   --bg:var(--ice); --ink-2:var(--mute);
-  --warn-bg:#FFF3D6; --warn-fg:#7A5A10; --map-bg:#D9E4F0; --soon:#B45309;
+  --warn-bg:#FBF1D9; --warn-fg:#7A5A10; --map-bg:#DCE6F3; --soon:#B4740A;
+  /* Radius- og dybdeskala, slik at ikke alt er samme kort. */
+  --r-xs:6px; --r-s:10px; --r-m:14px; --r-l:18px;
+  --lift-sm:0 1px 2px rgba(8,19,31,.06);
+  --lift:0 1px 2px rgba(8,19,31,.06), 0 14px 32px -20px rgba(8,19,31,.34);
+  --lift-lg:0 1px 2px rgba(8,19,31,.07), 0 26px 56px -28px rgba(8,19,31,.42);
+  /* Schibsted Grotesk til grensesnitt, Archivo til tall. */
+  --ui:"Schibsted Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --num:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
 }
-/* Dark uses the prototype's :root palette. */
 html[data-theme=dark]{
-  --ice:#0B1220; --snow:#111A2C; --panel-2:#16213A; --slate:#EAF0FA; --mute:#7F8DA6; --line:#233049;
-  --nor:#FF4D5E; --swe:#4D8DFF; --fin:#2ECC8F; --eur:#B08CFF; --amber:#FFB547;
-  --accent-fg:#0B1220; --sel:#16213A; --sel-fg:#2ECC8F;
+  --night:#030A14; --night-2:#050E1D;
+  --ice:#060D18; --snow:#101C2F; --panel-2:#16243B; --sunken:#0C1626;
+  --slate:#E9F0FA; --mute:#93A6C0; --faint:#7B8EA8; --line:#22344F;
+  --accent:#5B92F5; --accent-soft:#132846;
+  --danger:#FF5871; --danger-soft:#33141C; --danger-ink:#FF5871;
+  --good:#4ADE80;   --good-soft:#0F2F1D;
+  --accent-fg:#04101F;
+  --nor:#C4808A; --swe:#7C97C9; --fin:#7FAE9C; --eur:#A296C4; --amber:#FFB547;
+  --sel:#152743; --sel-fg:#8FB6FF;
   --st-planned:#22C55E;     --st-planned-fg:#04140A;
   --st-entered:#065F46;     --st-entered-fg:#FFFFFF;
   --st-wish:#FBBF24;        --st-wish-fg:#2A1E00;
   --st-unavailable:#F87171; --st-unavailable-fg:#2A0A0A;
-  --st-none:#2F3F5C;        --st-none-fg:#B7C3D6;
-  --warn-bg:#3A2E12; --warn-fg:#FFD98A; --map-bg:#0E1626; --soon:#FFB547;
+  --st-none:#1E2C45;        --st-none-fg:#A9B8CD;
+  --warn-bg:#3A2D0C; --warn-fg:#FFD98A; --map-bg:#0B1524; --soon:#FFB547;
+  --lift-sm:0 1px 2px rgba(0,0,0,.4);
+  --lift:0 1px 2px rgba(0,0,0,.4), 0 16px 38px -22px rgba(0,0,0,.85);
+  --lift-lg:0 1px 2px rgba(0,0,0,.45), 0 28px 60px -30px rgba(0,0,0,.95);
 }
 html{color-scheme:light}
 html[data-theme=dark]{color-scheme:dark}
@@ -34,34 +64,36 @@ html[data-theme=dark]{color-scheme:dark}
    mens innholdet var flere tusen piksler. Da havner overflyten utenfor
    paddingboksen til body, og iOS Safari mister festet til bunnmenyen. */
 html,body,#root{margin:0;min-height:100%}
-body{background:var(--ice);color:var(--slate);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45}
-a{color:var(--swe)}
+body{background:var(--ice);color:var(--slate);font-family:var(--ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
 button{font:inherit;cursor:pointer}
-input,select,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--snow);color:var(--slate);width:100%}
+input,select,textarea{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--snow);color:var(--slate);width:100%}
 textarea{min-height:64px;resize:vertical}
 label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
 
 .topbar{display:flex;align-items:center;gap:18px;padding:14px 24px;background:var(--snow);border-bottom:1px solid var(--line);flex-wrap:wrap}
-.topbar h1{margin:0;font-size:20px;font-weight:700}
+.topbar h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.025em}
 .topbar h1 small{font-weight:400;color:var(--mute);font-size:13px;margin-left:8px}
 .topbar .spacer{flex:1}
 .topbar nav{display:flex;gap:4px}
 .topbar nav button{border:0;background:transparent;padding:8px 12px;border-radius:6px;color:var(--mute)}
-.topbar nav button.on{background:var(--ice);color:var(--slate);font-weight:600}
+.topbar nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
 .topbar .who{font-size:13px;color:var(--mute)}
 .btn{border:1px solid var(--line);background:var(--snow);color:var(--slate);padding:8px 14px;border-radius:8px}
 .btn:hover{border-color:var(--slate)}
-.btn.primary{background:var(--slate);color:var(--accent-fg);border-color:var(--slate)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .btn.small{padding:4px 10px;font-size:13px}
-.btn.danger{color:var(--nor);border-color:var(--nor)}
-.btn.link{border:0;background:transparent;color:var(--swe);padding:0}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.link{border:0;background:transparent;color:var(--accent);padding:0}
 
 .chip{border:1px solid var(--line);background:var(--snow);color:var(--slate);padding:5px 11px;border-radius:999px;font-size:13px}
 .chip.on{background:var(--slate);color:var(--accent-fg);border-color:var(--slate)}
-.chip.nor.on{background:var(--nor);border-color:var(--nor);color:var(--accent-fg)}
-.chip.swe.on{background:var(--swe);border-color:var(--swe)}
-.chip.fin.on{background:var(--fin);border-color:var(--fin)}
-.chip.eur.on{background:var(--eur);border-color:var(--eur)}
+.chip.nor,.chip.swe,.chip.fin,.chip.eur{display:inline-flex;align-items:center;gap:7px}
+.chip.nor::before,.chip.swe::before,.chip.fin::before,.chip.eur::before{content:"";width:8px;height:8px;
+  border-radius:50%;background:var(--nor);flex:0 0 auto}
+.chip.swe::before{background:var(--swe)}
+.chip.fin::before{background:var(--fin)}
+.chip.eur::before{background:var(--eur)}
 .controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:10px 24px;background:var(--snow);border-bottom:1px solid var(--line)}
 .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .group>span{font-size:13px;color:var(--mute);margin-right:2px}
@@ -69,15 +101,15 @@ label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
 .split{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(380px,.9fr);height:calc(100vh - 120px);min-height:520px}
 .map{height:100%;width:100%;background:var(--map-bg)}
 .list{overflow:auto;background:var(--snow);border-left:1px solid var(--line)}
-.month{position:sticky;top:0;background:var(--snow);padding:12px 20px 8px;font-weight:700;font-size:16px;border-bottom:1px solid var(--line);z-index:2}
+.month{position:sticky;top:0;background:var(--snow);padding:13px 20px 9px;font-weight:800;font-size:15px;letter-spacing:-.015em;border-bottom:1px solid var(--line);z-index:2}
 .month em{font-style:normal;font-weight:400;color:var(--mute);font-size:13px;margin-left:8px}
-.race{display:grid;grid-template-columns:92px 1fr auto;gap:4px 14px;padding:10px 20px;border-bottom:1px solid var(--line);border-left:4px solid transparent}
+.race{display:grid;grid-template-columns:92px 1fr auto;gap:4px 14px;padding:13px 20px;border-bottom:1px solid var(--line);border-left:3px solid transparent}
 .race.clickable{cursor:pointer}
 .race:hover,.race.active{background:var(--ice)}
 .race.nor{border-left-color:var(--nor)} .race.swe{border-left-color:var(--swe)} .race.fin{border-left-color:var(--fin)} .race.eur{border-left-color:var(--eur)}
 .race.selected{background:var(--sel)}
-.date{font-variant-numeric:tabular-nums;color:var(--mute);font-size:14px;padding-top:1px}
-.place{font-weight:700}
+.date{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--faint);font-size:13px;font-weight:600;padding-top:2px}
+.place{font-weight:700;letter-spacing:-.012em}
 .cat{font-size:13px;color:var(--mute)}
 .ev{font-size:13px;text-align:right;white-space:nowrap}
 .ev a{font-size:12px;text-decoration:none}
@@ -86,8 +118,8 @@ label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
 .empty{padding:40px 20px;color:var(--mute)}
 
 .page{max-width:960px;margin:0 auto;padding:24px}
-.card{background:var(--snow);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px}
-.card h2{margin:0 0 6px;font-size:18px}
+.card{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-m);padding:20px;margin-bottom:16px;box-shadow:var(--lift-sm)}
+.card h2{margin:0 0 6px;font-size:18px;font-weight:700;letter-spacing:-.02em}
 .card h3{margin:18px 0 6px;font-size:15px}
 .muted{color:var(--mute);font-size:13px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -119,7 +151,7 @@ th{font-size:12px;color:var(--mute);font-weight:600}
 .trip .when{font-size:13px;color:var(--mute);margin-top:2px}
 .kpis{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 8px}
 .kpi{display:flex;flex-direction:column}
-.kpi b{font-size:18px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi b{font-family:var(--num);font-size:19px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
 .kpi span{font-size:12px;color:var(--mute)}
 .legs{font-size:13px;color:var(--mute)}
 .legs div{display:flex;justify-content:space-between;gap:12px;padding:1px 0}
@@ -138,7 +170,7 @@ th{font-size:12px;color:var(--mute);font-weight:600}
 .signup .bar{display:inline-block;width:70px;height:6px;border-radius:6px;background:var(--ice);overflow:hidden}
 .signup .bar i{display:block;height:100%;border-radius:6px}
 .signup .soon{color:var(--soon);font-weight:600}
-.signup .neg{color:var(--nor)}
+.signup .neg{color:var(--danger)}
 .signup.none{opacity:.65;font-style:italic}
 .src{font-size:12px}
 
@@ -216,8 +248,8 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
   .tabbar button{border:0;background:transparent;color:var(--mute);font:inherit;font-size:10.5px;font-weight:600;
     display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;position:relative}
   .tabbar button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-  .tabbar button.on{color:var(--swe)}
-  .tabbar .badge{position:absolute;top:2px;left:50%;transform:translateX(6px);background:var(--amber);color:#1a1200;
+  .tabbar button.on{color:var(--accent)}
+  .tabbar .badge{position:absolute;top:2px;left:50%;transform:translateX(6px);background:var(--accent);color:var(--accent-fg);
     font-size:10px;font-weight:800;border-radius:999px;padding:0 5px}
 }
 @media (min-width:821px){.tabbar,.scrim,.sheet-head{display:none!important}}
@@ -229,8 +261,8 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .starts{display:flex;flex-direction:column;gap:2px;margin-top:4px;width:100%}
 .startno{font-size:12px;color:var(--mute)}
 .startno b{color:var(--slate)}
-.startno.draw{color:var(--fin);font-weight:600}
-.startno.draw b{color:var(--fin)}
+.startno.draw{color:var(--good);font-weight:600}
+.startno.draw b{color:var(--good)}
 
 /* --- Development --- */
 .chart{margin-top:12px;width:100%}
@@ -245,7 +277,7 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .fav .chipx{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 6px 4px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--slate)}
 .fav .chipx button{border:0;background:transparent;color:var(--mute);font-size:14px;line-height:1;padding:0 2px}
 .fav-confirm{display:inline-flex;align-items:center;gap:8px;font-size:13px;background:var(--sel);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
-.friends{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--fin);font-weight:600;margin-top:4px;width:100%}
+.friends{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--good);font-weight:600;margin-top:4px;width:100%}
 
 /* --- FIS fetch --- */
 .spinner{display:inline-block;width:12px;height:12px;margin-right:8px;vertical-align:-1px;border:2px solid var(--line);border-top-color:var(--slate);border-radius:50%;animation:spin .7s linear infinite}
@@ -410,13 +442,13 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .cup-row:first-of-type{border-top:0}
 .cup-name{font-weight:700;font-size:14px}
 .cup-line{font-size:13px;color:var(--mute)}
-.cup-line .podium{color:var(--fin);font-weight:700}
+.cup-line .podium{color:var(--good);font-weight:700}
 .cup-updated{margin-top:8px;font-size:12px}
 .cup-compact{font-size:12px;color:var(--mute)}
-.cup-compact .podium{color:var(--fin);font-weight:700}
+.cup-compact .podium{color:var(--good);font-weight:700}
 .fav-cups{width:100%;display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .fav-who{font-size:12px;font-weight:600;color:var(--slate);margin-right:6px}
-.count-note .improves{color:var(--fin);font-weight:600}
+.count-note .improves{color:var(--good);font-weight:600}
 
 /* --- One-time code on the sign-in card --- */
 .auth .otp{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
@@ -473,7 +505,7 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .plan-race-opts .chip{font-size:12px;padding:3px 9px}
 .plan-race-opts .mini{display:flex;flex-direction:column;font-size:11px;color:var(--mute);margin:0;gap:2px}
 .plan-race-opts .mini input{width:84px;padding:4px 8px;font-size:13px}
-.covered{font-size:12px;color:var(--fin);font-weight:600;margin-top:6px}
+.covered{font-size:12px;color:var(--good);font-weight:600;margin-top:6px}
 .covered.small{font-weight:400;font-size:11px;margin-top:2px}
 .auth .pw-link{display:block;margin-top:12px;font-size:13px}
 .auth .pw{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
@@ -565,3 +597,176 @@ html[data-theme=dark] .leaflet-tile{filter:brightness(.72) saturate(.85) contras
 .status-pill.st-unavailable{background:var(--st-unavailable);color:var(--st-unavailable-fg)}
 .season-best{margin-top:6px;font-size:13px}
 .season-best b{font-size:15px}
+/* ===========================================================================
+   Neste renn
+   Skjermen som svarer på «hva trenger jeg å vite nå»: rennet som kommer,
+   fristen, antatt startnummer, reisa og hvem fra laget som kommer.
+   =========================================================================== */
+.nextwrap{max-width:1060px;margin:0 auto;padding:20px 20px 28px;display:flex;flex-direction:column;gap:16px}
+
+.nr-hero{display:grid;grid-template-columns:minmax(0,1fr) 284px;background:var(--snow);
+  border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--lift);overflow:hidden}
+.nr-main{padding:26px 26px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.nr-kicker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nr-when{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+  background:var(--accent-soft);padding:4px 10px;border-radius:999px}
+.nr-when.soon{color:var(--danger-ink);background:var(--danger-soft)}
+.nr-eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.nr-hero h2{margin:0;font-size:clamp(26px,4.2vw,38px);line-height:1.04;letter-spacing:-.035em;font-weight:800}
+.nr-meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:13.5px;color:var(--mute)}
+.nr-meta .sep{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.nr-meta b{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--slate);font-weight:700}
+
+.nr-alert{display:flex;align-items:center;gap:10px;background:var(--danger-soft);color:var(--danger-ink);
+  border-radius:var(--r-s);padding:11px 14px;font-size:13.5px;font-weight:650}
+.nr-alert svg{width:17px;height:17px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.nr-alert a{margin-left:auto;background:var(--danger);color:var(--accent-fg);text-decoration:none;font-size:12.5px;
+  font-weight:700;padding:7px 14px;border-radius:999px;white-space:nowrap}
+
+.nr-route{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);flex-wrap:wrap}
+.nr-route .leg{flex:1;min-width:40px;height:2px;background:var(--line);border-radius:2px;position:relative}
+.nr-route .leg::after{content:"";position:absolute;left:0;top:-2px;width:6px;height:6px;border-radius:50%;
+  background:var(--accent)}
+.nr-route .far{margin-left:auto;font-family:var(--num);font-variant-numeric:tabular-nums}
+
+/* Tidtakerpanelet: mørk innfelling med store tall, lånt fra måltavla. */
+.nr-timing{background:var(--night-2);color:#EAF1FB;padding:22px 20px;display:flex;flex-direction:column;
+  gap:15px;justify-content:center;border-left:1px solid var(--line)}
+.nr-timing .row{display:flex;flex-direction:column;gap:2px}
+.nr-timing .lab{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#8FA5C4}
+.nr-timing .big{font-family:var(--num);font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.nr-timing .big sup{font-size:14px;font-weight:700;vertical-align:super;color:#8FA5C4;margin-left:3px}
+.nr-timing .val{font-family:var(--num);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.nr-timing .sep{height:1px;background:rgba(255,255,255,.12)}
+.nr-timing .note{font-size:11.5px;color:#8FA5C4;line-height:1.4;margin:0}
+.nr-timing .drawn{color:#7FE0A8}
+
+/* Tre fliser under helten. */
+.nr-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.nr-tile{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-m);padding:18px 20px;
+  box-shadow:var(--lift-sm);display:flex;flex-direction:column;gap:9px}
+.nr-tile .lab{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.nr-tile .big{font-family:var(--num);font-size:29px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.nr-tile .big small{font-size:14px;font-weight:600;color:var(--faint);letter-spacing:0}
+.nr-tile .sub{font-size:12.5px;color:var(--mute);line-height:1.4}
+.nr-spark{width:100%;height:auto;aspect-ratio:164/32;overflow:visible}
+.nr-avs{display:flex}
+.nr-avs i{width:27px;height:27px;border-radius:50%;margin-left:-7px;border:2px solid var(--snow);
+  display:grid;place-items:center;font-size:10px;font-weight:800;font-style:normal;color:#fff;
+  background:var(--mute);font-family:var(--ui)}
+.nr-avs i:first-child{margin-left:0}
+.nr-avs i.n{background:var(--sunken);color:var(--mute)}
+
+.nr-empty{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-l);padding:38px 26px;
+  text-align:center;color:var(--mute);box-shadow:var(--lift-sm)}
+.nr-empty b{display:block;color:var(--slate);font-size:17px;margin-bottom:6px}
+
+@media (max-width:900px){
+  .nr-hero{grid-template-columns:1fr}
+  .nr-tiles{grid-template-columns:1fr}
+}
+
+/* ===========================================================================
+   Portlinja
+   Sesongen som en slalåmløype: blå og rød port annenhver, status i porten,
+   neste renn markert. Både bilde av sesongen og navigasjon.
+   =========================================================================== */
+.gateline{background:var(--snow);border:1px solid var(--line);border-radius:var(--r-m);
+  box-shadow:var(--lift-sm);padding:16px 20px 18px}
+.gateline-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.gateline-head h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.015em}
+.gateline-head .side{margin-left:auto;font-size:12.5px;color:var(--faint)}
+.gate-track{position:relative;overflow-x:auto;overflow-y:hidden;padding:24px 0 6px;
+  scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.gate-track::before{content:"";position:absolute;left:0;right:0;top:42px;height:2px;background:var(--line);
+  border-radius:2px}
+.gate-row{display:flex;min-width:max-content;position:relative}
+.gate{display:flex;flex-direction:column;align-items:center;gap:7px;width:98px;flex:0 0 98px;
+  background:transparent;border:0;font:inherit;cursor:pointer;padding:0;color:inherit}
+.gate .pole{width:3px;height:18px;border-radius:2px;background:var(--accent)}
+.gate:nth-child(even) .pole{background:var(--danger)}
+.gate .knob{width:13px;height:13px;border-radius:50%;background:var(--snow);border:2.5px solid var(--line);
+  transition:transform .16s,border-color .16s}
+.gate[data-s=entered] .knob{border-color:var(--st-entered);background:var(--st-entered)}
+.gate[data-s=planned] .knob{border-color:var(--accent)}
+.gate[data-s=wish] .knob{border-color:var(--st-wish)}
+.gate[data-s=unavailable] .knob{border-color:var(--st-none);background:var(--st-none)}
+.gate.next .knob{border-color:var(--danger);background:var(--danger);box-shadow:0 0 0 5px var(--danger-soft);
+  transform:scale(1.18)}
+.gate:hover .knob,.gate.on .knob{transform:scale(1.3)}
+.gate:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.gate .gd{font-family:var(--num);font-size:11px;font-weight:700;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.gate .gp{font-size:11.5px;font-weight:650;color:var(--mute);text-align:center;line-height:1.25;
+  max-width:92px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical}
+.gate.next .gp,.gate.on .gp{color:var(--slate)}
+.gate-empty{color:var(--faint);font-size:13px;padding:10px 0}
+
+/* Nasjonskode i rennraden. Erstatter fargestripa som betydning. */
+.nation{font-family:var(--num);font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 6px;
+  border-radius:var(--r-xs);background:var(--sunken);color:var(--mute);vertical-align:middle;
+  margin-left:6px}
+
+/* ===========================================================================
+   Mellomtider
+   Avvik fra beste seksjonstid i okta. Tallet er poenget, saa tabellen er
+   tabulaer og stram - fargen peker bare.
+   =========================================================================== */
+.tm-lead{margin:14px 0 4px;font-size:15px}
+.tm-bad{color:var(--danger-ink);font-family:var(--num);font-weight:700;font-variant-numeric:tabular-nums}
+.tm-wrap{overflow-x:auto;margin-top:10px}
+table.tm{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+table.tm th{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+  text-align:right;padding:6px 10px;white-space:nowrap}
+table.tm th:first-child{text-align:left}
+table.tm td{padding:8px 10px;border-top:1px solid var(--line);text-align:right;
+  font-family:var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.tm td:first-child{text-align:left;font-family:var(--ui);font-weight:650}
+table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;font-size:12.5px}
+.tm-ref td{color:var(--mute);font-weight:700;background:var(--sunken);border-top:0}
+.tm-best{color:var(--good);font-weight:700}
+.tm-lost{color:var(--mute)}
+.tm-worst{color:var(--danger-ink);font-weight:700;background:var(--danger-soft)}
+.tm-note{margin-top:10px}
+
+/* ===========================================================================
+   Gjeldende FIS-liste
+   Grafen viser seksti lister etter hverandre uten at noe sier hvor «naa» er.
+   Stripa svarer paa det i tekst, referanselinja i selve grafen.
+   =========================================================================== */
+.fis-period{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:14px 0 4px;
+  padding:12px 16px;background:var(--accent-soft);border-radius:var(--r-s);
+  border-left:3px solid var(--accent)}
+.fis-period .lab{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent)}
+.fis-period .now{font-family:var(--num);font-size:21px;font-weight:800;letter-spacing:-.02em;
+  color:var(--slate);line-height:1}
+.fis-period .when{margin-left:auto;font-size:12.5px;color:var(--mute);
+  font-variant-numeric:tabular-nums;text-align:right}
+.fis-period .miss{width:100%;font-size:12.5px;color:var(--mute);margin:0}
+@media (max-width:560px){
+  .fis-period .when{margin-left:0;text-align:left;width:100%}
+}
+
+/* ===========================================================================
+   Treningslogg
+   Skjemaet foelger appens egne felter; det som er nytt er bakkevelgeren og
+   loepefargen paa vanskelighetsgrad.
+   =========================================================================== */
+.tl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:0 14px}
+.tl-grid label{margin-top:12px}
+.tl-list{display:flex;flex-direction:column;margin-top:4px}
+.tl-row{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:3px 12px;align-items:baseline;
+  padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.tl-row .d{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--faint);font-size:12.5px}
+.tl-row .w i{font-style:normal;font-weight:650}
+.tl-row .n{color:var(--mute);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Loypefarge + ord. Fargen er aldri alene om aa si hva slags bakke det er. */
+.tl-diff{display:inline-flex;align-items:center;gap:5px;margin-left:8px;font-size:11.5px;color:var(--mute)}
+.tl-diff i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28)}
+.tl-credit{margin-top:14px;font-size:11.5px}
+@media (max-width:560px){
+  .tl-row{grid-template-columns:1fr}
+  .tl-row .n{white-space:normal}
+}
