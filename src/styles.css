@@ -903,3 +903,10 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .cs-kode{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:11px}
 .cs-kode code{background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-s);
   padding:8px 14px;font-family:var(--num);font-size:19px;letter-spacing:.09em}
+
+/* Hovedtrenerens rutenett: trenere ganger grupper. */
+.hc-h3{margin:22px 0 2px;font-size:16px}
+/* Globalt får input width:100%, som strekker avkrysningsboksene til hele
+   kolonnen. Her skal de være så store som de er. */
+.hc-rutenett input[type=checkbox]{width:19px;height:19px;margin:0;accent-color:var(--accent)}
+.hc-rutenett td.n,.hc-rutenett th.n{text-align:center}

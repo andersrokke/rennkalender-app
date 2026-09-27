@@ -18,6 +18,7 @@ begge deler går ut via `supabase db push` og `supabase functions deploy`.
 - [Hemmeligheter](#hemmeligheter)
 - [Datakildene](#datakildene)
 - [Når en kilde endrer format](#når-en-kilde-endrer-format)
+- [Lag, grupper og innsyn](#lag-grupper-og-innsyn)
 - [Administrator og invitasjoner](#administrator-og-invitasjoner)
 - [Tilbakemeldinger](#tilbakemeldinger)
 - [Testbrukere](#testbrukere)
@@ -460,6 +461,63 @@ Merk at `isonen-signups` legger inn en ny rad i `race_signups` hver gang den
 kjøres. Kjører du den ti ganger mens du feilsøker, får grafen over påmeldte ti
 punkter fra samme minutt. Det er stygt, men harmløst — `race_signup_latest`
 plukker bare den nyeste.
+
+---
+
+## Lag, grupper og innsyn
+
+Et lag kan ligge under et annet. NTG Lillehammer er laget; Fart, Teknikk og
+Juniorgruppa er grupper under det. Hovedtreneren eier laget øverst.
+
+**Ett nivå, ikke et tre.** En gruppe kan ikke ha grupper under seg. Regelen
+håndheves av triggeren `teams_ett_niva_trg`, ikke av disiplin. Et tre hadde
+vært mer generelt, men også noe ingen har bedt om.
+
+### Hvem ser hva
+
+Alt går gjennom `is_coach_of(t)`, som 26 RLS-regler kaller. Den svarer ja hvis:
+
+1. du er trener med `team_id = t`
+2. du eier laget `t`
+3. du eier laget som `t` ligger under - du er hovedtrener
+4. det finnes en rad i `team_access` for deg og `t`
+
+Punkt 3 og 4 er nye. Hovedtreneren ser alle gruppene sine automatisk, og kan
+gi enkelttrenere innsyn i hverandres grupper gjennom `head_set_access()`.
+
+**Innsyn gir samme rettigheter som å være gruppas egen trener, også til å
+endre.** Å skille lesing fra skriving ville betydd å skrive om alle 26 reglene,
+og innenfor ett trenerteam er ikke det problemet dette skal løse. Er det
+ønskelig senere, er `team_access` stedet å legge et `can_edit`-flagg.
+
+### Hvordan en gruppe havner under et lag
+
+Invitasjonen bærer det. `admin_invite_coach(epost, hilsen, lag)` lagrer
+`parent_team_id` på invitasjonen, og når treneren fullfører onboardingen kaller
+den `create_coach_team()`, som ser etter invitasjonen og henger gruppa på
+riktig sted med én gang.
+
+Før dette satte onboardingen inn et lag rett i tabellen, og hver ny trener ble
+et frittstående lag uansett hvem som inviterte henne.
+
+Er strukturen likevel feil, kan en administrator flytte et lag under et annet
+på Admin → Lag, eller med:
+
+```sql
+select public.admin_set_parent_team('<gruppe-uuid>', '<lag-uuid>');
+```
+
+Se hele strukturen:
+
+```sql
+select coalesce(p.name, t.name) as lag, case when p.id is null then null else t.name end as gruppe,
+       o.full_name as trener,
+       (select count(*) from profiles a where a.team_id = t.id and a.role = 'athlete') as lopere
+  from teams t
+  left join teams p on p.id = t.parent_team_id
+  left join profiles o on o.id = t.owner_id
+ order by 1, 2 nulls first;
+```
 
 ---
 

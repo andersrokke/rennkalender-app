@@ -1,0 +1,99 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../supabase'
+import { useT } from '../i18n'
+
+// Hovedtrenerens bilde: gruppene i laget, og hvem som ser hverandres.
+//
+// Vises bare for den som faktisk er hovedtrener - altså eier et lag som har
+// grupper under seg. For alle andre svarer head_overview() null, og da
+// rendrer denne ingenting. Ingen tom overskrift, ingen «du har ikke tilgang».
+//
+// Rutenettet er trenere ganger grupper. Egen gruppe står som et merke og ikke
+// som en avkrysning: at en trener ser sin egen gruppe er ikke noe noen skal
+// kunne skru av.
+
+export default function HeadCoach() {
+  const t = useT()
+  const [d, setD] = useState(undefined)
+  const [busy, setBusy] = useState(null)
+  const [feil, setFeil] = useState(null)
+
+  const last = () => supabase.rpc('head_overview').then(({ data }) => setD(data))
+  useEffect(() => { last() }, [])
+
+  if (d === undefined || d === null) return null
+
+  async function bytt(trener, gruppe, pa) {
+    setBusy(trener + gruppe); setFeil(null)
+    const { error } = await supabase.rpc('head_set_access', {
+      p_coach: trener, p_team: gruppe, p_on: pa
+    })
+    setBusy(null)
+    if (error) return setFeil(error.message)
+    last()
+  }
+
+  return (
+    <div className="card">
+      <h2>{t('hcTitle').replace('{lag}', d.lag?.navn || '')}</h2>
+      <p className="muted">{t('hcSub')}</p>
+
+      <div className="ad-scroll">
+        <table className="ad-table">
+          <thead>
+            <tr>
+              <th>{t('hcGroup')}</th><th>{t('hcCoach')}</th>
+              <th className="n">{t('hcAthletes')}</th><th className="n">{t('hcSessions30')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.grupper.map(g => (
+              <tr key={g.id}>
+                <td>{g.navn}</td>
+                <td>{g.trener || '–'}</td>
+                <td className="n">{g.lopere}</td>
+                <td className="n">{g.okter_30d}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 className="hc-h3">{t('hcAccess')}</h3>
+      <p className="muted">{t('hcAccessSub')}</p>
+      {feil && <p className="error">{feil}</p>}
+
+      <div className="ad-scroll">
+        <table className="ad-table hc-rutenett">
+          <thead>
+            <tr>
+              <th>{t('hcCoach')}</th>
+              {d.grupper.map(g => <th key={g.id} className="n">{g.navn}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {d.trenere.map(tr => (
+              <tr key={tr.id}>
+                <td>{tr.navn || '–'}</td>
+                {d.grupper.map(g => {
+                  const egen = tr.egen_gruppe === g.id
+                  const pa = egen || (tr.innsyn || []).includes(g.id)
+                  return (
+                    <td key={g.id} className="n">
+                      {egen
+                        ? <span className="ad-merke">{t('hcOwn')}</span>
+                        : <input type="checkbox" checked={pa}
+                            disabled={busy === tr.id + g.id}
+                            aria-label={`${tr.navn} – ${g.navn}`}
+                            onChange={e => bytt(tr.id, g.id, e.target.checked)} />}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

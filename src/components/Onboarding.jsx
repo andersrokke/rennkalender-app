@@ -75,11 +75,14 @@ export default function Onboarding({ profile, onDone }) {
     const name = f.get('name'), code = (f.get('code') || '').trim().toLowerCase()
     try {
       if (mode === 'coach') {
-        const { data: team, error } = await supabase.from('teams')
-          .insert({ name: f.get('team'), owner_id: profile.id }).select().single()
+        // Gjennom create_coach_team og ikke rett i tabellen: funksjonen ser
+        // etter en invitasjon først, og henger gruppa under riktig lag med én
+        // gang. Uten den ble hver ny trener et frittstående lag, uansett hvem
+        // som inviterte henne.
+        const { data: teamId, error } = await supabase.rpc('create_coach_team', { p_name: f.get('team') })
         if (error) throw error
         const { error: e2 } = await supabase.from('profiles')
-          .update({ full_name: name, role: 'coach', team_id: team.id, onboarded: true, lang }).eq('id', profile.id)
+          .update({ full_name: name, role: 'coach', team_id: teamId, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       } else if (mode === 'team') {
         const { error } = await supabase.rpc('join_team', { code })

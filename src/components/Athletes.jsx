@@ -4,6 +4,7 @@ import { STATUS, fmt, days } from '../util'
 import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
 import CoachStart from './CoachStart.jsx'
+import HeadCoach from './HeadCoach.jsx'
 
 // Coach: per-athlete overview and status editing.
 export default function Athletes({ team }) {
@@ -58,6 +59,7 @@ export default function Athletes({ team }) {
 
   return (
     <div className="page">
+      <HeadCoach />
       <CoachStart team={team} antall={athletes.length} />
 
       <div className="card">

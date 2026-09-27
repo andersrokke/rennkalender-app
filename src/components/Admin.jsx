@@ -60,7 +60,7 @@ export default function Admin({ profile }) {
       {fane === 'oversikt' && <Oversikt o={d.oversikt} t={t} />}
       {fane === 'trenere' && <Trenere rader={d.trenere} t={t} onEndret={last} />}
       {fane === 'brukere' && <Brukere rader={d.brukere} meg={profile.id} t={t} onEndret={last} />}
-      {fane === 'lag' && <Lag rader={d.lag} t={t} />}
+      {fane === 'lag' && <Lag rader={d.lag} t={t} onEndret={last} />}
       {fane === 'drift' && <Drift o={d.drift} t={t} />}
       {fane === 'aktivitet' && <Aktivitet o={d.aktivitet} t={t} />}
     </div>
@@ -108,13 +108,21 @@ function Oversikt({ o, t }) {
 function Trenere({ rader, t, onEndret }) {
   const [epost, setEpost] = useState('')
   const [notat, setNotat] = useState('')
+  const [lag, setLag] = useState('')
+  const [lagene, setLagene] = useState([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
+
+  // Bare lag som kan være forelder, altså de som ikke selv ligger under noe.
+  useEffect(() => {
+    supabase.rpc('admin_teams').then(({ data }) =>
+      setLagene((data || []).filter(l => !l.parent_team_id)))
+  }, [])
 
   async function inviter(e) {
     e.preventDefault(); setBusy(true); setMsg(null)
     const { error } = await supabase.rpc('admin_invite_coach', {
-      p_email: epost.trim(), p_note: notat.trim() || null
+      p_email: epost.trim(), p_note: notat.trim() || null, p_parent_team: lag || null
     })
     setBusy(false)
     if (error) return setMsg({ bad: true, text: error.message })
@@ -138,6 +146,13 @@ function Trenere({ rader, t, onEndret }) {
               <label htmlFor="ad-epost">{t('adEmail')}</label>
               <input id="ad-epost" type="email" required value={epost}
                 placeholder="trener@klubben.no" onChange={e => setEpost(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="ad-lag">{t('adInviteTeam')}</label>
+              <select id="ad-lag" value={lag} onChange={e => setLag(e.target.value)}>
+                <option value="">{t('adInviteTeamNone')}</option>
+                {lagene.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
             </div>
           </div>
           <label htmlFor="ad-notat">{t('adInviteNote')}</label>
@@ -257,22 +272,39 @@ function Brukere({ rader, meg, t, onEndret }) {
   )
 }
 
-function Lag({ rader, t }) {
+function Lag({ rader, t, onEndret }) {
   if (!rader) return <div className="card muted">{t('adLoading')}</div>
   if (!rader.length) return <div className="card"><p className="muted">{t('adNoTeams')}</p></div>
+  // Et lag som alt ligger under et annet kan ikke selv bli forelder - det er
+  // bare ett nivå - så de filtreres bort fra valgene.
+  const mulige = rader.filter(x => !x.parent_team_id)
+  const settForelder = async (lag, forelder) => {
+    const { error } = await supabase.rpc('admin_set_parent_team',
+      { p_team: lag, p_parent: forelder || null })
+    if (error) alert(error.message); else onEndret()
+  }
   return (
     <div className="card">
       <h2>{t('adTab_lag')} <span className="muted">({rader.length})</span></h2>
       <div className="ad-scroll">
         <table className="ad-table">
           <thead>
-            <tr><th>{t('adTeam')}</th><th>{t('adOwner')}</th><th className="n">{t('adAthletes')}</th>
+            <tr><th>{t('adTeam')}</th><th>{t('adParent')}</th><th>{t('adOwner')}</th>
+              <th className="n">{t('adAthletes')}</th>
               <th className="n">{t('adRaces')}</th><th>{t('adCode')}</th><th>{t('adCreated')}</th></tr>
           </thead>
           <tbody>
             {rader.map(l => (
               <tr key={l.id}>
                 <td>{l.name}{l.club && <><br /><span className="muted">{l.club}</span></>}</td>
+                <td>
+                  <select value={l.parent_team_id || ''} aria-label={t('adParent')}
+                    onChange={e => settForelder(l.id, e.target.value)}>
+                    <option value="">{t('adParentNone')}</option>
+                    {mulige.filter(x => x.id !== l.id).map(x =>
+                      <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </select>
+                </td>
                 <td>{l.owner_name || '–'}<br /><span className="muted">{l.owner_email}</span></td>
                 <td className="n">{l.lopere}</td>
                 <td className="n">{l.renn}</td>
