@@ -12,6 +12,7 @@ import MySeason from './components/MySeason.jsx'
 import NextRace from './components/NextRace.jsx'
 import TrainingLog from './components/TrainingLog.jsx'
 import Feedback from './components/Feedback.jsx'
+import Admin from './components/Admin.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
@@ -86,7 +87,7 @@ export default function App() {
   // A guardian has no season of their own, so they get the children view,
   // the race calendar (read-only) and their profile.
   const isParent = profile.role === 'parent' && !isCoach
-  const tabs = isParent
+  const baseTabs = isParent
     ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab], ['feedback', d.fbTab]]
     : isCoach
       // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
@@ -95,6 +96,9 @@ export default function App() {
       // Løperen lander på «Neste renn»: rennet som kommer, fristen og
       // antatt startnummer, i stedet for hele kalenderen sortert på dato.
       : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab], ['feedback', d.fbTab]]
+  // Admin-fanen er en snarvei, ikke en rettighet. Skjuler vi den, er dataene
+  // fortsatt stengt: admin_*-funksjonene sjekker is_admin() i basen selv.
+  const tabs = profile.is_admin ? [...baseTabs, ['admin', d.adTab]] : baseTabs
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
@@ -140,6 +144,7 @@ export default function App() {
       {active === 'children' && <Children profile={profile} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'feedback' && <Feedback profile={profile} />}
+      {active === 'admin' && <Admin profile={profile} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
       <div className="scrim" onClick={() => setSheet(false)} />
       <MobileNav active={navActive} onPick={pickPane} planCount={planCount} />

@@ -417,7 +417,7 @@ enabled = true
 # ---------------------------------------------------------------------------
 # Edge functions
 #
-# Alle seks krever en gyldig JWT. Cron-jobbene og feedback-triggeren sender
+# Alle sju krever en gyldig JWT. Cron-jobbene og feedback-triggeren sender
 # anon-noekkelen fra Vault; se docs/DRIFT.md. fis-debug ble slettet 2026-09-20
 # og skal ikke tilbake.
 #
@@ -428,6 +428,9 @@ enabled = true
 verify_jwt = true
 
 [functions.feedback-notify]
+verify_jwt = true
+
+[functions.invite-coach]
 verify_jwt = true
 
 [functions.fis-athlete]

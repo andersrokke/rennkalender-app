@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import { STATUS, fmt, days } from '../util'
 import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
+import CoachStart from './CoachStart.jsx'
 
 // Coach: per-athlete overview and status editing.
 export default function Athletes({ team }) {
@@ -57,9 +58,10 @@ export default function Athletes({ team }) {
 
   return (
     <div className="page">
+      <CoachStart team={team} antall={athletes.length} />
+
       <div className="card">
         <h2>Løpere</h2>
-        {athletes.length === 0 && <p className="muted">Ingen løpere ennå. Del invitasjonskoden under «Lag og profil».</p>}
         <table><thead><tr><th>Navn</th><th>Årgang</th><th>FIS-kode</th><th>Renn</th><th>Renndager</th><th></th></tr></thead>
           <tbody>{athletes.map(a => { const s = summary(a.id); return (
             <tr key={a.id}><td>{a.full_name}</td><td>{a.birth_year || '–'}</td><td>{a.fis_code || '–'}</td><td>{s.n}</td><td>{s.d}</td>
