@@ -244,22 +244,45 @@ To steder, med hver sin hensikt.
 Settes i dashbordet under **Edge Functions → Secrets**, eller med CLI:
 
 ```bash
-npx supabase secrets set RESEND_API_KEY=re_... REMINDER_FROM='Rennkalender <no-reply@rennkalender.app>' APP_URL=https://alpint-rennkalender.netlify.app
+npx supabase secrets set GMAIL_USER=deg@gmail.com GMAIL_APP_PASSWORD='xxxx xxxx xxxx xxxx' REMINDER_FROM='Rennkalender <deg@gmail.com>' APP_URL=https://alpint-rennkalender.netlify.app
 npx supabase secrets list
 ```
 
+All e-post går gjennom `supabase/functions/_shared/mail.ts`. Den velger kanal
+selv: Gmail hvis `GMAIL_USER` og `GMAIL_APP_PASSWORD` er satt, ellers Resend
+hvis `RESEND_API_KEY` er satt, ellers ingenting.
+
 | Navn | Brukes av | Hvis den mangler |
 | --- | --- | --- |
-| `RESEND_API_KEY` | `entry-reminders` | **Ingen e-post blir sendt.** Funksjonen kjører, logger hvem som skulle fått påminnelse, og markerer dem som ikke sendt. Ingen feilmelding — det ser ut som om alt går bra. |
-| `REMINDER_FROM` | `entry-reminders` | Faller tilbake på `Rennkalender <no-reply@rennkalender.app>`. Domenet må være verifisert hos Resend, ellers avviser de sendingen. |
-| `APP_URL` | `entry-reminders` | Faller tilbake på `https://alpint-rennkalender.netlify.app`. Brukes i «Åpne planen»-lenka nederst i e-posten. |
+| `GMAIL_USER` | all e-post | Faller tilbake til Resend. Er ingen av delene satt, blir ingenting sendt, og svaret sier det rett ut. |
+| `GMAIL_APP_PASSWORD` | all e-post | Som over. Dette er et **app-passord** fra Google-kontoen, ikke innloggingspassordet, og krever at totrinnsbekreftelse er på. |
+| `RESEND_API_KEY` | all e-post | Alternativ til Gmail. Krever verifisert domene for å sende til andre enn deg selv. |
+| `REMINDER_FROM` | all e-post | Faller tilbake på `Rennkalender <no-reply@rennkalender.app>`. Ved Gmail brukes bare visningsnavnet herfra; adressen settes til `GMAIL_USER`, siden Gmail uansett skriver om avsenderen til kontoen som logget inn. |
+| `APP_URL` | alle tre funksjonene | Faller tilbake på `https://alpint-rennkalender.netlify.app`. Brukes i lenkene i e-postene. |
 
 `SUPABASE_URL` og `SUPABASE_SERVICE_ROLE_KEY` settes av plattformen selv og
 skal ikke legges inn manuelt.
 
-Den stille feilen er verdt å merke seg: mangler `RESEND_API_KEY`, går
-`entry-reminders` rundt hver time uten å sende noe og uten å klage. Sjekk med
-`?dry=1` — svaret sier `"reason": "no RESEND_API_KEY"` når nøkkelen mangler.
+**Hvorfor Gmail og ikke Resend.** Uten eget domene kan ingen e-posttjeneste
+sende på dine vegne til andre enn deg selv. Resend krever verifisert domene.
+Å sende «fra» en gmail.com-adresse gjennom en tredjepart bryter Gmail sin egen
+autentisering, og havner i søppelpost. Sendes det derimot gjennom Gmail, er
+avsenderen faktisk Gmail, og alt stemmer. Den dagen det finnes et domene:
+sett `RESEND_API_KEY`, fjern `GMAIL_*`, og ingen kode endres.
+
+**App-passord** lages på `myaccount.google.com/apppasswords`. Det krever at
+totrinnsbekreftelse er slått på. Passordet er seksten tegn og vises én gang.
+
+Den stille feilen er verdt å merke seg: uten e-postkanal går `entry-reminders`
+rundt hver time uten å sende noe. Sjekk med `?dry=1`, eller les siste svar:
+
+```sql
+select id, status_code, left(content, 300)
+  from net._http_response order by id desc limit 5;
+```
+
+Der ser du hva funksjonene faktisk svarte da cron eller en trigger kalte dem -
+inkludert `"sent": false` med begrunnelse.
 
 ### Vault (cron-jobbene)
 

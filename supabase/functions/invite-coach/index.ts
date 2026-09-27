@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendMail } from "../_shared/mail.ts";
 
 // Inviterer en trener. Kalles av admin_invite_coach() med { id }.
 //
@@ -11,8 +12,6 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // i auth.users opprettes, så profilen er trener fra første sekund - treneren
 // slipper å velge rolle selv og kan ikke velge feil.
 
-const FROM = Deno.env.get("REMINDER_FROM") ?? "Rennkalender <no-reply@rennkalender.app>";
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = Deno.env.get("APP_URL") ?? "https://alpint-rennkalender.netlify.app";
 
 const esc = (s: string) =>
@@ -91,20 +90,13 @@ Deno.serve(async (req) => {
   if (linkErr || !link?.properties?.action_link) {
     return giUpp(linkErr?.message ?? "fikk ikke laget innloggingslenke");
   }
-  if (!RESEND_KEY) return giUpp("mangler RESEND_API_KEY");
-
   const fra = (inv as any).invited_by?.full_name ?? null;
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      from: FROM,
-      to: [inv.email],
-      subject: "Du er invitert som trener i Rennkalender",
-      html: html(link.properties.action_link, inv.note, fra),
-    }),
+  const r = await sendMail({
+    to: [inv.email],
+    subject: "Du er invitert som trener i Rennkalender",
+    html: html(link.properties.action_link, inv.note, fra),
   });
-  if (!r.ok) return giUpp(`Resend svarte ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) return giUpp(`${r.via}: ${r.error}`);
 
   await supabase.from("coach_invites")
     .update({ sent_at: new Date().toISOString(), send_error: null }).eq("id", inv.id);

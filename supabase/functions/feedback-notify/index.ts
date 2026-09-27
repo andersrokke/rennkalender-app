@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendMail } from "../_shared/mail.ts";
 
 // Varsler administratorene om en ny tilbakemelding. Kalles av en trigger på
 // public.feedback, med { id }.
@@ -9,8 +10,6 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // feedback-fanen. Derfor svarer vi 200 med en forklaring i stedet for å feile
 // hardt: en 500 ville bare fylt loggen med noe ingen kan gjøre noe med.
 
-const FROM = Deno.env.get("REMINDER_FROM") ?? "Rennkalender <no-reply@rennkalender.app>";
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = Deno.env.get("APP_URL") ?? "https://alpint-rennkalender.netlify.app";
 
 const KIND = { idea: "Forslag", bug: "Feil" } as const;
@@ -68,18 +67,12 @@ Deno.serve(async (req) => {
     if (data?.user?.email) to.push(data.user.email);
   }
   if (!to.length) return reply({ sent: false, reason: "ingen profil er merket is_admin" });
-  if (!RESEND_KEY) return reply({ sent: false, to, reason: "mangler RESEND_API_KEY" });
 
   const who = (f as any).author?.full_name ?? "en bruker";
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      from: FROM,
-      to,
-      subject: `${KIND[f.kind as keyof typeof KIND] ?? "Tilbakemelding"}: ${f.title}`,
-      html: html(f, who),
-    }),
+  const r = await sendMail({
+    to,
+    subject: `${KIND[f.kind as keyof typeof KIND] ?? "Tilbakemelding"}: ${f.title}`,
+    html: html(f, who),
   });
-  return reply({ sent: r.ok, status: r.status, to, id: f.id });
+  return reply({ sent: r.ok, via: r.via, reason: r.error, to, id: f.id });
 });

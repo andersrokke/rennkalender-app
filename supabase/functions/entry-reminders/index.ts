@@ -1,12 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendMail } from "../_shared/mail.ts";
 
 // Sends one reminder per athlete/race, 24h before the iSonen entry deadline,
 // when the athlete has the race in their plan but is not entered.
 // Runs hourly. ?dry=1 previews without sending.
 
-const FROM = Deno.env.get("REMINDER_FROM") ?? "Rennkalender <no-reply@rennkalender.app>";
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = Deno.env.get("APP_URL") ?? "https://alpint-rennkalender.netlify.app";
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString("nb-NO", { day: "numeric", month: "long" });
@@ -46,15 +45,10 @@ Deno.serve(async (req) => {
   for (const g of gaps ?? []) {
     const to = [g.email, ...(g.guardian_emails ?? [])].filter(Boolean);
     const subject = `Påmeldingsfrist i morgen: ${g.place}`;
-    if (dry || !RESEND_KEY) { log.push({ ...g, to, subject, sent: false, reason: dry ? "dry run" : "no RESEND_API_KEY" }); continue; }
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: FROM, to, subject, html: body(g) }),
-    });
-    const ok = r.ok;
-    if (ok) await supabase.from("entry_reminders").insert({ athlete_id: g.athlete_id, race_id: g.race_id, certainty: g.certainty, sent_to: to.join(", ") });
-    log.push({ athlete: g.athlete_name, race: g.place, to, certainty: g.certainty, sent: ok, status: r.status });
+    if (dry) { log.push({ ...g, to, subject, sent: false, reason: "dry run" }); continue; }
+    const r = await sendMail({ to, subject, html: body(g) });
+    if (r.ok) await supabase.from("entry_reminders").insert({ athlete_id: g.athlete_id, race_id: g.race_id, certainty: g.certainty, sent_to: to.join(", ") });
+    log.push({ athlete: g.athlete_name, race: g.place, to, certainty: g.certainty, sent: r.ok, via: r.via, reason: r.error });
   }
   return new Response(JSON.stringify({ found: gaps?.length ?? 0, log }, null, 1), { headers: { "content-type": "application/json" } });
 });
