@@ -806,3 +806,34 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
   .tp-block .tm{min-width:92px}
   .tp-row select{flex:1 1 100%}
 }
+
+/* Feedback: innsending, egne saker og triage-lista for administrator.
+   Merkelappene bruker de samme myke bakgrunnene som resten av appen, så
+   kontrastene er allerede målt mot AA i begge temaer. */
+.fb-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.fb-item{border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px;background:var(--panel-2)}
+.fb-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* Tittelen tar plassen som blir til overs, men får lov å brytes: en sak som
+   heter noe langt skal ikke skyve statusmerket ut av kortet. */
+.fb-head b{flex:1 1 12ch;min-width:0;font-size:15.5px;line-height:1.35}
+.fb-kind,.fb-status{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;white-space:nowrap}
+.fb-kind.idea{background:var(--accent-soft);color:var(--accent)}
+.fb-kind.bug{background:var(--danger-soft);color:var(--danger-ink)}
+.fb-status{background:var(--st-none);color:var(--st-none-fg)}
+.fb-status.planned{background:var(--warn-bg);color:var(--warn-fg)}
+.fb-status.doing{background:var(--accent-soft);color:var(--accent)}
+.fb-status.done{background:var(--good-soft);color:var(--good)}
+.fb-body{margin:8px 0 0;font-size:14.5px;line-height:1.5;white-space:pre-wrap}
+/* --faint gir 4.21:1 mot panelet, altså under AA for 12,5px. --mute er den
+   samme rollen, bare mørk nok. */
+.fb-meta{margin:8px 0 0;font-size:12.5px;color:var(--mute)}
+.fb-note{margin:10px 0 0;padding:8px 0 8px 11px;border-left:3px solid var(--accent);
+  font-size:14px;line-height:1.5;white-space:pre-wrap}
+.fb-note b{color:var(--accent)}
+.fb-triage{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:10px}
+.fb-triage select{width:auto}
+@media (max-width:620px){
+  .fb-triage{grid-template-columns:1fr}
+  .fb-triage select{width:100%}
+}

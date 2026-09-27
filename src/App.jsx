@@ -11,6 +11,7 @@ import Athletes from './components/Athletes.jsx'
 import MySeason from './components/MySeason.jsx'
 import NextRace from './components/NextRace.jsx'
 import TrainingLog from './components/TrainingLog.jsx'
+import Feedback from './components/Feedback.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
@@ -86,14 +87,14 @@ export default function App() {
   // the race calendar (read-only) and their profile.
   const isParent = profile.role === 'parent' && !isCoach
   const tabs = isParent
-    ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab]]
+    ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab], ['feedback', d.fbTab]]
     : isCoach
       // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
       // meaning here. For the athlete, season and plan are now the same tab.
-      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
+      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach], ['feedback', d.fbTab]]
       // Løperen lander på «Neste renn»: rennet som kommer, fristen og
       // antatt startnummer, i stedet for hele kalenderen sortert på dato.
-      : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab]]
+      : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab], ['feedback', d.fbTab]]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
@@ -138,6 +139,7 @@ export default function App() {
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
       {active === 'children' && <Children profile={profile} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
+      {active === 'feedback' && <Feedback profile={profile} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
       <div className="scrim" onClick={() => setSheet(false)} />
       <MobileNav active={navActive} onPick={pickPane} planCount={planCount} />

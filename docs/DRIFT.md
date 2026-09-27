@@ -18,6 +18,7 @@ begge deler går ut via `supabase db push` og `supabase functions deploy`.
 - [Hemmeligheter](#hemmeligheter)
 - [Datakildene](#datakildene)
 - [Når en kilde endrer format](#når-en-kilde-endrer-format)
+- [Tilbakemeldinger](#tilbakemeldinger)
 - [Testbrukere](#testbrukere)
 
 ---
@@ -113,7 +114,7 @@ tabeller uten RLS og views uten `security_invoker`.
 
 ## Edge-funksjoner
 
-Fem funksjoner, alle med `verify_jwt = true`. De kjører som `service_role`
+Seks funksjoner, alle med `verify_jwt = true`. De kjører som `service_role`
 gjennom `SUPABASE_SERVICE_ROLE_KEY`, og går derfor forbi RLS.
 
 | Funksjon | Kalles av | Gjør |
@@ -123,6 +124,7 @@ gjennom `SUPABASE_SERVICE_ROLE_KEY`, og går derfor forbi RLS.
 | `fis-cup-standings` | cron 05:15 | Henter cupstillinger (EC, ANC, NAC, FEC, SAC, WC) |
 | `fis-athlete` | cron 05:30 + appen | Henter FIS-profil, poenghistorikk og resultater per løper |
 | `entry-reminders` | cron :05 hver time | Sender e-post om påmeldingsfrist som går ut om under et døgn |
+| `feedback-notify` | trigger på `public.feedback` | Varsler administratorene på e-post når noen sender inn et forslag eller en feil |
 
 Deploy:
 
@@ -409,6 +411,58 @@ Merk at `isonen-signups` legger inn en ny rad i `race_signups` hver gang den
 kjøres. Kjører du den ti ganger mens du feilsøker, får grafen over påmeldte ti
 punkter fra samme minutt. Det er stygt, men harmløst — `race_signup_latest`
 plukker bare den nyeste.
+
+---
+
+## Tilbakemeldinger
+
+Brukerne sender forslag og feilmeldinger fra Feedback-fanen. De havner i
+`public.feedback`, ikke i en innboks.
+
+Valget er med vilje: en e-post kan bli liggende ulest, kan ikke søkes i, og kan
+ikke vise den som meldte fra at noen har sett på det. Raden kan alt dette.
+E-posten kommer i tillegg, som varsling.
+
+### Flyten
+
+1. Brukeren sender inn. Raden lagres med `status = 'new'`.
+2. Triggeren `feedback_notify_trg` kaller `feedback-notify` gjennom
+   `invoke_edge_function`, asynkront via pg_net.
+3. Funksjonen slår opp alle profiler med `is_admin = true`, henter e-postene
+   deres fra `auth.users` og sender én e-post via Resend.
+4. Administratoren setter status og skriver et kort svar i samme fane.
+   Innsenderen ser begge deler på sin egen sak.
+
+Feiler steg 2 eller 3 - Vault mangler hemmeligheter, funksjonen er nede, ingen
+er merket `is_admin` - er raden fortsatt lagret. `notify_feedback()` fanger alt
+og logger en warning. Varselet haster, raden er det som betyr noe.
+
+### Hvem er administrator
+
+```sql
+-- Se hvem som får varslene
+select p.full_name, u.email
+  from profiles p join auth.users u on u.id = p.id
+ where p.is_admin;
+
+-- Legg til en
+update profiles set is_admin = true where id = '<uuid>';
+```
+
+`is_admin` er et eget flagg og ikke en fjerde verdi i `user_role`. Rollene
+(coach/athlete/parent) beskriver hva folk gjør i idretten; en fjerde verdi der
+ville tvunget seg inn i hver RLS-regel som i dag sier `role = 'athlete'`.
+
+### Hva den enkelte får lov til
+
+| | Sende inn | Se egne | Se alle | Endre status og notat |
+| --- | --- | --- | --- | --- |
+| Innlogget bruker | ja | ja | nei | nei |
+| `is_admin` | ja | ja | ja | ja |
+| `anon` | nei | nei | nei | nei |
+
+Innsenderen kan ikke rette sin egen sak etterpå. Teksten er et dokument på hva
+som faktisk ble meldt.
 
 ---
 
