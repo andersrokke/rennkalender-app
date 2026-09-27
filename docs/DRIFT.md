@@ -475,6 +475,19 @@ vært mer generelt, men også noe ingen har bedt om.
 
 ### Hvem ser hva
 
+Hovedtreneren har to måter å styre innsynet på, og de dekker hvert sitt behov:
+
+- **Rutenettet** under «Løpere» gir presis styring, trener for trener og
+  gruppe for gruppe. Rader i `team_access`.
+- **Bryteren «alle trenere ser alle gruppene»** er en regel i stedet, lagret
+  som `teams.coaches_see_all` på laget øverst. Den gjelder også trenere som
+  kommer til senere, og det er hele poenget: med rutenettet må noen huske å
+  krysse av for hver nye trener, og en tilstand man må vedlikeholde er en
+  tilstand som før eller siden er feil.
+
+Står bryteren på, overstyrer den rutenettet, og rutenettet vises låst.
+
+
 Alt går gjennom `is_coach_of(t)`, som 26 RLS-regler kaller. Den svarer ja hvis:
 
 1. du er trener med `team_id = t`
@@ -489,6 +502,25 @@ gi enkelttrenere innsyn i hverandres grupper gjennom `head_set_access()`.
 endre.** Å skille lesing fra skriving ville betydd å skrive om alle 26 reglene,
 og innenfor ett trenerteam er ikke det problemet dette skal løse. Er det
 ønskelig senere, er `team_access` stedet å legge et `can_edit`-flagg.
+
+### Hvem kan invitere trenere
+
+Både administrator og hovedtrener. Hvem som får lov følger av strukturen og
+trenger ingen ny rolle:
+
+| | Kan invitere | Gruppa havner under |
+| --- | --- | --- |
+| Administrator | ja, `admin_invite_coach()` | laget hun velger, eller ingen |
+| Eier et lag uten forelder | ja, `head_invite_coach()` | sitt eget lag |
+| Eier en gruppe under et lag | nei | – |
+
+Den siste raden er ikke en sperre som er lagt inn, den faller ut av
+`parent_team_id`: `my_top_team()` finner bare lag uten forelder.
+
+Hver invitasjon oppretter en bruker, og registrering er åpen. Derfor har
+`head_invite_coach()` et tak på **ti ubrukte invitasjoner per trener** - uten
+det kunne hvem som helst meldt seg som trener og laget kontoer i andres navn.
+Administrator har ikke taket.
 
 ### Hvordan en gruppe havner under et lag
 

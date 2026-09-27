@@ -910,3 +910,25 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
    kolonnen. Her skal de være så store som de er. */
 .hc-rutenett input[type=checkbox]{width:19px;height:19px;margin:0;accent-color:var(--accent)}
 .hc-rutenett td.n,.hc-rutenett th.n{text-align:center}
+
+/* Hovedtrenerens invitasjonsskjema og bryteren for «alle ser alt». */
+.cs-inviter{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.cs-inviter input{flex:1 1 200px;width:auto}
+.cs-liste{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.cs-liste li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.cs-epost{flex:1 1 160px;min-width:0;word-break:break-all}
+.cs-nar,.cs-feil{font-size:12.5px;color:var(--mute);flex-basis:100%}
+.cs-feil{color:var(--danger-ink)}
+.cs-egne{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.cs-egne b{font-size:15px}
+.cs-egne p{margin:2px 0 0}
+
+.hc-bryter{display:flex;gap:11px;align-items:flex-start;margin:14px 0 4px;
+  padding:13px 15px;background:var(--sunken);border:1px solid var(--line);
+  border-radius:var(--r-m);cursor:pointer}
+.hc-bryter input{width:19px;height:19px;margin:2px 0 0;flex:0 0 auto;accent-color:var(--accent)}
+.hc-bryter b{display:block;font-size:15px}
+.hc-bryter em{display:block;font-style:normal;font-size:13.5px;color:var(--mute);margin-top:2px}
+/* Står regelen på, er rutenettet en visning og ikke noe å klikke i. */
+.hc-laast{opacity:.6}

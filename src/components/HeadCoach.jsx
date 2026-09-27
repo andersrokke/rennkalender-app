@@ -22,6 +22,17 @@ export default function HeadCoach() {
   useEffect(() => { last() }, [])
 
   if (d === undefined || d === null) return null
+  // Står bryteren på, gjelder den alle - også trenere som kommer senere.
+  // Da er rutenettet bare en visning, ikke noe å klikke i.
+  const alle = d.lag?.alle_ser_alt
+
+  async function byttAlle(pa) {
+    setBusy('alle'); setFeil(null)
+    const { error } = await supabase.rpc('head_set_open', { p_on: pa })
+    setBusy(null)
+    if (error) return setFeil(error.message)
+    last()
+  }
 
   async function bytt(trener, gruppe, pa) {
     setBusy(trener + gruppe); setFeil(null)
@@ -63,6 +74,15 @@ export default function HeadCoach() {
       <p className="muted">{t('hcAccessSub')}</p>
       {feil && <p className="error">{feil}</p>}
 
+      <label className="hc-bryter">
+        <input type="checkbox" checked={!!alle} disabled={busy === 'alle'}
+          onChange={e => byttAlle(e.target.checked)} />
+        <span>
+          <b>{t('hcOpen')}</b>
+          <em>{t('hcOpenSub')}</em>
+        </span>
+      </label>
+
       <div className="ad-scroll">
         <table className="ad-table hc-rutenett">
           <thead>
@@ -71,19 +91,19 @@ export default function HeadCoach() {
               {d.grupper.map(g => <th key={g.id} className="n">{g.navn}</th>)}
             </tr>
           </thead>
-          <tbody>
+          <tbody className={alle ? 'hc-laast' : ''}>
             {d.trenere.map(tr => (
               <tr key={tr.id}>
                 <td>{tr.navn || '–'}</td>
                 {d.grupper.map(g => {
                   const egen = tr.egen_gruppe === g.id
-                  const pa = egen || (tr.innsyn || []).includes(g.id)
+                  const pa = egen || alle || (tr.innsyn || []).includes(g.id)
                   return (
                     <td key={g.id} className="n">
                       {egen
                         ? <span className="ad-merke">{t('hcOwn')}</span>
                         : <input type="checkbox" checked={pa}
-                            disabled={busy === tr.id + g.id}
+                            disabled={alle || busy === tr.id + g.id}
                             aria-label={`${tr.navn} – ${g.navn}`}
                             onChange={e => bytt(tr.id, g.id, e.target.checked)} />}
                     </td>
