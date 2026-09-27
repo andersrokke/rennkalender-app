@@ -18,6 +18,7 @@ begge deler går ut via `supabase db push` og `supabase functions deploy`.
 - [Hemmeligheter](#hemmeligheter)
 - [Datakildene](#datakildene)
 - [Når en kilde endrer format](#når-en-kilde-endrer-format)
+- [Administrator og invitasjoner](#administrator-og-invitasjoner)
 - [Tilbakemeldinger](#tilbakemeldinger)
 - [Testbrukere](#testbrukere)
 
@@ -138,7 +139,7 @@ tabeller uten RLS og views uten `security_invoker`.
 
 ## Edge-funksjoner
 
-Seks funksjoner, alle med `verify_jwt = true`. De kjører som `service_role`
+Sju funksjoner, alle med `verify_jwt = true`. De kjører som `service_role`
 gjennom `SUPABASE_SERVICE_ROLE_KEY`, og går derfor forbi RLS.
 
 | Funksjon | Kalles av | Gjør |
@@ -149,6 +150,7 @@ gjennom `SUPABASE_SERVICE_ROLE_KEY`, og går derfor forbi RLS.
 | `fis-athlete` | cron 05:30 + appen | Henter FIS-profil, poenghistorikk og resultater per løper |
 | `entry-reminders` | cron :05 hver time | Sender e-post om påmeldingsfrist som går ut om under et døgn |
 | `feedback-notify` | trigger på `public.feedback` | Varsler administratorene på e-post når noen sender inn et forslag eller en feil |
+| `invite-coach` | `admin_invite_coach()` | Lager innloggingslenke og sender velkomstmail til en ny trener |
 
 Deploy:
 
@@ -435,6 +437,70 @@ Merk at `isonen-signups` legger inn en ny rad i `race_signups` hver gang den
 kjøres. Kjører du den ti ganger mens du feilsøker, får grafen over påmeldte ti
 punkter fra samme minutt. Det er stygt, men harmløst — `race_signup_latest`
 plukker bare den nyeste.
+
+---
+
+## Administrator og invitasjoner
+
+Administratorsiden er en egen fane som bare vises når `profiles.is_admin` er
+sann. Fanen er en snarvei, ikke en rettighet: alt den viser hentes gjennom
+`admin_*`-funksjoner som sjekker `is_admin()` selv. Skjuler du fanen, er
+dataene fortsatt stengt.
+
+Funksjonene er `security definer` fordi oversikten må lese ting en vanlig
+bruker ikke skal komme til - e-postadresser i `auth.users`, cron-historikken,
+alle lag på tvers. Én dør med en vakt foran er tryggere enn å gi
+`authenticated` leserett på auth-skjemaet.
+
+| Funksjon | Gir |
+| --- | --- |
+| `admin_overview()` | Nøkkeltall: folk, lag, ubehandlet feedback, aktivitet |
+| `admin_users()` | Alle brukere med e-post, rolle, lag, innloggingsmetode |
+| `admin_teams()` | Lag med eier, antall løpere og lagkode |
+| `admin_activity()` | Økter per uke siste åtte uker, renn i planer |
+| `admin_ops()` | Cron-jobbenes siste kjøring, og alder på hver datakilde |
+| `admin_set_role()` | Endrer rolle |
+| `admin_set_admin()` | Gir eller tar administratorrettighet |
+| `admin_delete_user()` | Sletter en bruker |
+| `admin_invite_coach()` | Inviterer en trener |
+| `admin_invites()` | Invitasjonene og statusen deres |
+| `admin_cancel_invite()` | Trekker en invitasjon tilbake |
+
+To sperrer er lagt inn med vilje: den siste administratoren kan ikke fjerne
+seg selv, og ingen kan slette seg selv. Begge deler ville låst deg ute av din
+egen side, og da må flagget settes med SQL mot produksjon for å komme inn
+igjen.
+
+### Slik gjøres noen til administrator
+
+```sql
+select p.full_name, u.email
+  from profiles p join auth.users u on u.id = p.id
+ where p.is_admin;
+
+update profiles set is_admin = true where id = '<uuid>';
+```
+
+### Invitasjon av trener
+
+1. Administrator skriver inn en e-postadresse under Trenere.
+2. `admin_invite_coach()` lagrer raden og kaller `invite-coach`.
+3. Funksjonen bruker `auth.admin.generateLink({ type: 'invite' })`. Den lager
+   brukeren med én gang og legger `role: 'coach'` i metadataene, som
+   `handle_new_user()` leser - treneren slipper å velge rolle og kan ikke
+   velge feil.
+4. Velkomstmailen går via Resend, ikke Supabase sin egen invite-mal. Da kan
+   teksten være norsk og faktisk forklare hva treneren skal gjøre etterpå.
+
+Om invitasjonen er tatt i bruk lagres ikke. Det leses av at brukeren har
+logget inn, så ingen status kan bli hengende igjen og lyve. Siden
+`generateLink` oppretter brukeren med én gang, blokkeres bare adresser som
+faktisk er i bruk - ellers ville det vært umulig å sende invitasjonen på nytt
+til en som aldri kom seg inn.
+
+Feiler utsendingen, står grunnen i `coach_invites.send_error` og vises i
+lista. Send da invitasjonen på nytt til samme adresse; raden oppdateres i
+stedet for at det vokser fram duplikater.
 
 ---
 
