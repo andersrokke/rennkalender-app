@@ -6,9 +6,9 @@ import TrainingPlan from './TrainingPlan.jsx'
 // Treningslogg. Tabellen training_sessions fantes i basen fra før uten noen
 // skjerm; dette er skjermen.
 //
-// Det treneren spør om er føret og bakken, ikke antall porter. Derfor ligger
-// dato, bakke, gren, runs og føre i hovedraden, mens porter, temperatur,
-// minutter og RPE er foldet bort under «flere detaljer».
+// Alle feltene står framme. De var en stund foldet bort under «flere
+// detaljer», men et felt man ikke ser, er et felt ingen fyller ut - og da blir
+// tallene i sammendraget bygget på halve økter.
 
 const DISCIPLINES = ['SL', 'GS', 'SG', 'DH', 'FREE', 'COND']
 const SNOW = ['ice', 'salted', 'hard', 'grippy', 'soft', 'slush', 'powder', 'artificial']
@@ -48,7 +48,6 @@ export default function TrainingLog({ profile, team, isCoach }) {
   const [mates, setMates] = useState([])
   const [who, setWho] = useState(profile.id)
   const [form, setForm] = useState(blank)
-  const [more, setMore] = useState(false)
   const [recent, setRecent] = useState([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
@@ -168,7 +167,7 @@ export default function TrainingLog({ profile, team, isCoach }) {
     })
     setBusy(false)
     if (error) return setMsg({ bad: true, text: error.message })
-    setForm(blank()); setMore(false); setMsg({ text: t('tlSaved') })
+    setForm(blank()); setMsg({ text: t('tlSaved') })
     loadRecent()
   }
 
@@ -299,35 +298,28 @@ export default function TrainingLog({ profile, team, isCoach }) {
         <Chips t={t} options={WEATHER} prefix="wx_" value={form.weather}
           onPick={v => set({ weather: v })} />
 
-        <button type="button" className="btn link" style={{ marginTop: 14 }}
-          aria-expanded={more} onClick={() => setMore(m => !m)}>
-          {more ? t('tlLessDetail') : t('tlMoreDetail')}
-        </button>
-
-        {more && (
-          <div className="tl-grid">
-            <div>
-              <label htmlFor="tl-gates">{t('tlGates')}</label>
-              <input id="tl-gates" type="number" min="0" value={form.gates}
-                onChange={e => set({ gates: e.target.value })} />
-            </div>
-            <div>
-              <label htmlFor="tl-temp">{t('tlTemp')}</label>
-              <input id="tl-temp" type="number" step="0.5" value={form.temp_c}
-                onChange={e => set({ temp_c: e.target.value })} />
-            </div>
-            <div>
-              <label htmlFor="tl-min">{t('tlMinutes')}</label>
-              <input id="tl-min" type="number" min="0" value={form.minutes}
-                onChange={e => set({ minutes: e.target.value })} />
-            </div>
-            <div>
-              <label htmlFor="tl-rpe">{t('tlRpe')}</label>
-              <input id="tl-rpe" type="number" min="1" max="10" value={form.rpe}
-                onChange={e => set({ rpe: e.target.value })} />
-            </div>
+        <div className="tl-grid">
+          <div>
+            <label htmlFor="tl-gates">{t('tlGates')}</label>
+            <input id="tl-gates" type="number" min="0" value={form.gates}
+              onChange={e => set({ gates: e.target.value })} />
           </div>
-        )}
+          <div>
+            <label htmlFor="tl-temp">{t('tlTemp')}</label>
+            <input id="tl-temp" type="number" step="0.5" value={form.temp_c}
+              onChange={e => set({ temp_c: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="tl-min">{t('tlMinutes')}</label>
+            <input id="tl-min" type="number" min="0" value={form.minutes}
+              onChange={e => set({ minutes: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="tl-rpe">{t('tlRpe')}</label>
+            <input id="tl-rpe" type="number" min="1" max="10" value={form.rpe}
+              onChange={e => set({ rpe: e.target.value })} />
+          </div>
+        </div>
 
         <label htmlFor="tl-note">{t('tlNote')}</label>
         <textarea id="tl-note" value={form.note} onChange={e => set({ note: e.target.value })} />
