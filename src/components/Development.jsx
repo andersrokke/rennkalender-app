@@ -8,6 +8,7 @@ import { fetchFromFis, fisSummary } from '../fis'
 import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
 import Timing from './Timing.jsx'
+import TrainingLog from './TrainingLog.jsx'
 import {
   DISC, COUNT_DISC, DISC_COLOR, useDevelopment, useCurrentList, toChartRows, countingResults,
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish, shortLabel
@@ -235,6 +236,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           </div>
         )
       })}
+      {/* Loggen ligger sammen med mellomtidene: begge handler om økta,
+          ikke om renn. En foresatt ser, men fører ikke. */}
+      {!readOnly && <TrainingLog profile={profile} team={team} isCoach={isCoach} />}
       <Timing profile={profile} team={team} isCoach={isCoach} />
     </div>
   )

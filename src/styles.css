@@ -748,3 +748,25 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 @media (max-width:560px){
   .fis-period .when{margin-left:0;text-align:left;width:100%}
 }
+
+/* ===========================================================================
+   Treningslogg
+   Skjemaet foelger appens egne felter; det som er nytt er bakkevelgeren og
+   loepefargen paa vanskelighetsgrad.
+   =========================================================================== */
+.tl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:0 14px}
+.tl-grid label{margin-top:12px}
+.tl-list{display:flex;flex-direction:column;margin-top:4px}
+.tl-row{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:3px 12px;align-items:baseline;
+  padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.tl-row .d{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--faint);font-size:12.5px}
+.tl-row .w i{font-style:normal;font-weight:650}
+.tl-row .n{color:var(--mute);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Loypefarge + ord. Fargen er aldri alene om aa si hva slags bakke det er. */
+.tl-diff{display:inline-flex;align-items:center;gap:5px;margin-left:8px;font-size:11.5px;color:var(--mute)}
+.tl-diff i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28)}
+.tl-credit{margin-top:14px;font-size:11.5px}
+@media (max-width:560px){
+  .tl-row{grid-template-columns:1fr}
+  .tl-row .n{white-space:normal}
+}

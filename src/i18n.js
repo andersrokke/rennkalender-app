@@ -3,6 +3,23 @@ import { createContext, useContext } from 'react'
 // Dictionary for the signed-in app. Race-list wording follows the prototype.
 export const I18N = {
   no: {
+    // treningslogg
+    tlTitle: 'Treningslogg', tlSub: 'Før opp økta: hvor du kjørte, hvilket føre det var og hvor mange runs.',
+    tlFor: 'Fører for', tlYou: 'deg', tlDate: 'Dato', tlSlope: 'Bakke',
+    tlSlopeOther: 'Annet sted …', tlVenue: 'Sted', tlVenuePh: 'f.eks. Reiteralm, Østerrike',
+    tlRuns: 'Antall runs', tlRunsShort: 'runs', tlDiscipline: 'Gren', tlSnow: 'Føre', tlWeather: 'Vær',
+    tlGates: 'Porter', tlTemp: 'Temperatur °C', tlMinutes: 'Minutter', tlRpe: 'Anstrengelse 1–10',
+    tlNote: 'Notat', tlMoreDetail: 'Flere detaljer', tlLessDetail: 'Færre detaljer',
+    tlSave: 'Lagre økt', tlSaving: 'Lagrer …', tlSaved: 'Økta er lagret.', tlRecent: 'Siste økter',
+    tlOsmCredit: 'Bakkedata fra © OpenStreetMap-bidragsytere (ODbL).',
+    disc_SL: 'Slalåm', disc_GS: 'Storslalåm', disc_SG: 'Super-G', disc_DH: 'Utfor',
+    disc_FREE: 'Fri kjøring', disc_COND: 'Basistrening',
+    snow_ice: 'Is', snow_salted: 'Saltet', snow_hard: 'Hardt', snow_grippy: 'Grepent',
+    snow_soft: 'Løst', snow_slush: 'Slush', snow_powder: 'Nysnø', snow_artificial: 'Kunstsnø',
+    wx_sun: 'Sol', wx_cloudy: 'Overskyet', wx_flat_light: 'Flatt lys', wx_snow: 'Snø',
+    wx_fog: 'Tåke', wx_rain: 'Regn', wx_wind: 'Vind',
+    diff_novice: 'Grønn', diff_easy: 'Blå', diff_intermediate: 'Rød', diff_advanced: 'Svart',
+    diff_expert: 'Ekspert', diff_freeride: 'Offpist',
     // gjeldende FIS-liste
     fisPeriod: 'Gjeldende FIS-liste', fisFetchedList: 'Hentet', fisToday: 'I dag', fisNowMark: 'Nå',
     fisNotOnList: 'Du har ingen poeng på denne lista ennå. Grafen stopper på den siste lista du står på.',
@@ -146,6 +163,23 @@ export const I18N = {
     noTeamBody: 'Opprett et lag for å planlegge sesongen, invitere løpere med en kode og sette status per renn. Du kan fortsatt se «Alle renn» uten lag.'
   },
   en: {
+    // training log
+    tlTitle: 'Training log', tlSub: 'Log the session: where you skied, the snow, and how many runs.',
+    tlFor: 'Logging for', tlYou: 'you', tlDate: 'Date', tlSlope: 'Slope',
+    tlSlopeOther: 'Somewhere else …', tlVenue: 'Place', tlVenuePh: 'e.g. Reiteralm, Austria',
+    tlRuns: 'Runs', tlRunsShort: 'runs', tlDiscipline: 'Discipline', tlSnow: 'Snow', tlWeather: 'Weather',
+    tlGates: 'Gates', tlTemp: 'Temperature °C', tlMinutes: 'Minutes', tlRpe: 'Effort 1-10',
+    tlNote: 'Note', tlMoreDetail: 'More detail', tlLessDetail: 'Less detail',
+    tlSave: 'Save session', tlSaving: 'Saving …', tlSaved: 'Session saved.', tlRecent: 'Recent sessions',
+    tlOsmCredit: 'Slope data from © OpenStreetMap contributors (ODbL).',
+    disc_SL: 'Slalom', disc_GS: 'Giant slalom', disc_SG: 'Super-G', disc_DH: 'Downhill',
+    disc_FREE: 'Free skiing', disc_COND: 'Conditioning',
+    snow_ice: 'Ice', snow_salted: 'Salted', snow_hard: 'Hard', snow_grippy: 'Grippy',
+    snow_soft: 'Soft', snow_slush: 'Slush', snow_powder: 'Fresh snow', snow_artificial: 'Man-made',
+    wx_sun: 'Sun', wx_cloudy: 'Cloudy', wx_flat_light: 'Flat light', wx_snow: 'Snow',
+    wx_fog: 'Fog', wx_rain: 'Rain', wx_wind: 'Wind',
+    diff_novice: 'Green', diff_easy: 'Blue', diff_intermediate: 'Red', diff_advanced: 'Black',
+    diff_expert: 'Expert', diff_freeride: 'Off-piste',
     // current FIS list
     fisPeriod: 'Current FIS list', fisFetchedList: 'Fetched', fisToday: 'Today', fisNowMark: 'Now',
     fisNotOnList: 'You have no points on this list yet. The chart ends at the last list you appear on.',
