@@ -20,9 +20,18 @@ const DIFF_COLOR = {
   advanced: '#14181F', expert: '#14181F', freeride: '#E0862F'
 }
 
+// Egen verdi for «et sted som ikke er i registeret», saa den ikke forveksles
+// med «ingen destinasjon valgt ennaa».
+const OTHER = '__other'
+// Egne verdier for «legg til», saa de ikke kan forveksles med en destinasjon
+// eller bakke som faktisk heter noe.
+const ADD = '__add'
+
+const DIFFICULTIES = Object.keys(DIFF_COLOR)
+
 const today = () => new Date().toISOString().slice(0, 10)
 const blank = () => ({
-  date: today(), slope_id: '', venue: '', discipline: 'GS', runs: '',
+  date: today(), resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
   gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', note: ''
 })
 const num = v => (v === '' || v == null ? null : Number(v))
@@ -37,6 +46,10 @@ export default function TrainingLog({ profile, team, isCoach }) {
   const [recent, setRecent] = useState([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [adding, setAdding] = useState(null)   // 'resort' | 'slope' | null
+  const [draft, setDraft] = useState({ resort: '', name: '', difficulty: '' })
+  const [addBusy, setAddBusy] = useState(false)
+  const [addErr, setAddErr] = useState(null)
 
   useEffect(() => {
     supabase.from('slopes').select('id, resort, name, difficulty')
@@ -57,16 +70,54 @@ export default function TrainingLog({ profile, team, isCoach }) {
     .then(({ data }) => setRecent(data || []))
   useEffect(() => { loadRecent() }, [who])
 
-  const byResort = useMemo(() => {
-    const m = new Map()
-    slopes.forEach(s => {
-      if (!m.has(s.resort)) m.set(s.resort, [])
-      m.get(s.resort).push(s)
-    })
-    return [...m.entries()]
-  }, [slopes])
+  // To steg: destinasjon foerst, saa bakke. Med flere hundre nedfarter i
+  // registeret blir én lang liste ubrukelig paa telefon.
+  const resorts = useMemo(
+    () => [...new Set(slopes.map(s => s.resort))].sort((a, b) => a.localeCompare(b, 'nb')),
+    [slopes])
+  const inResort = useMemo(
+    () => slopes.filter(s => s.resort === form.resort),
+    [slopes, form.resort])
 
   const set = patch => setForm(f => ({ ...f, ...patch }))
+
+  // Legger til en bakke - og dermed destinasjonen, siden en destinasjon bare
+  // finnes i kraft av bakkene sine. Finnes den alt, brukes den som står der:
+  // det er ikke en feil å legge inn noe to ganger.
+  async function addSlope(e) {
+    e.preventDefault()
+    const resort = (adding === 'resort' ? draft.resort : form.resort).trim()
+    const name = draft.name.trim()
+    if (!resort || !name) return
+    setAddBusy(true); setAddErr(null)
+    const row = {
+      resort, name, difficulty: draft.difficulty || null,
+      source: 'user', created_by: profile.id
+    }
+    let { data, error } = await supabase.from('slopes').insert(row)
+      .select('id, resort, name, difficulty').single()
+    if (error?.code === '23505') {
+      ({ data, error } = await supabase.from('slopes')
+        .select('id, resort, name, difficulty')
+        .eq('resort', resort).eq('name', name).single())
+    }
+    setAddBusy(false)
+    if (error) return setAddErr(error.message)
+    setSlopes(list => [...list.filter(x => x.id !== data.id), data])
+    set({ resort: data.resort, slope_id: String(data.id) })
+    setAdding(null); setDraft({ resort: '', name: '', difficulty: '' })
+  }
+
+  function pickResort(v) {
+    if (v === ADD) { setAdding('resort'); setAddErr(null); return }
+    setAdding(null)
+    set({ resort: v, slope_id: '' })
+  }
+  function pickSlope(v) {
+    if (v === ADD) { setAdding('slope'); setAddErr(null); return }
+    setAdding(null)
+    set({ slope_id: v })
+  }
 
   async function save(e) {
     e.preventDefault()
@@ -78,8 +129,11 @@ export default function TrainingLog({ profile, team, isCoach }) {
       discipline: form.discipline,
       slope_id: form.slope_id ? Number(form.slope_id) : null,
       // Fritekst brukes bare når bakken ikke er i registeret, så de to aldri
-      // sier hver sin ting om samme økt.
-      venue: form.slope_id ? null : (form.venue.trim() || null),
+      // sier hver sin ting om samme økt. Er destinasjonen valgt uten bakke,
+      // lagres destinasjonen - da vet vi hvor, bare ikke nøyaktig hvilken.
+      venue: form.slope_id ? null
+        : form.resort && form.resort !== OTHER ? form.resort
+          : (form.venue.trim() || null),
       runs: num(form.runs), gates: num(form.gates),
       snow: form.snow || null, weather: form.weather || null,
       temp_c: num(form.temp_c), minutes: num(form.minutes), rpe: num(form.rpe),
@@ -115,20 +169,31 @@ export default function TrainingLog({ profile, team, isCoach }) {
               max={today()} onChange={e => set({ date: e.target.value })} />
           </div>
           <div>
-            <label htmlFor="tl-slope">{t('tlSlope')}</label>
-            <select id="tl-slope" value={form.slope_id} onChange={e => set({ slope_id: e.target.value })}>
-              <option value="">{t('tlSlopeOther')}</option>
-              {byResort.map(([resort, list]) => (
-                <optgroup key={resort} label={resort}>
-                  {list.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}{s.difficulty ? ` — ${t('diff_' + s.difficulty)}` : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
+            <label htmlFor="tl-resort">{t('tlResort')}</label>
+            <select id="tl-resort" value={adding === 'resort' ? ADD : form.resort}
+              onChange={e => pickResort(e.target.value)}>
+              <option value="">{t('tlPickResort')}</option>
+              {resorts.map(r => <option key={r} value={r}>{r}</option>)}
+              <option value={ADD}>{t('tlAddResort')}</option>
+              <option value={OTHER}>{t('tlSlopeOther')}</option>
             </select>
           </div>
+          {/* Skjules helt ved «annet sted»: en låst velger som sier «velg
+              destinasjon først» er feil når destinasjonen nettopp er valgt. */}
+          {form.resort !== OTHER && <div>
+            <label htmlFor="tl-slope">{t('tlSlope')}</label>
+            <select id="tl-slope" value={adding === 'slope' ? ADD : form.slope_id}
+              disabled={!form.resort || form.resort === OTHER}
+              onChange={e => pickSlope(e.target.value)}>
+              <option value="">{form.resort ? t('tlWholeResort') : t('tlPickResortFirst')}</option>
+              {inResort.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.name}{s.difficulty ? ` — ${t('diff_' + s.difficulty)}` : ''}
+                </option>
+              ))}
+              {form.resort && <option value={ADD}>{t('tlAddSlope')}</option>}
+            </select>
+          </div>}
           <div>
             <label htmlFor="tl-runs">{t('tlRuns')}</label>
             <input id="tl-runs" type="number" min="0" max="99" inputMode="numeric"
@@ -136,7 +201,47 @@ export default function TrainingLog({ profile, team, isCoach }) {
           </div>
         </div>
 
-        {!form.slope_id && (
+        {adding && (
+          <div className="tl-add">
+            <p className="tl-add-lead">
+              {adding === 'resort' ? t('tlAddResortLead')
+                : t('tlAddSlopeLead').replace('{r}', form.resort)}
+            </p>
+            <div className="tl-grid">
+              {adding === 'resort' && (
+                <div>
+                  <label htmlFor="tl-new-resort">{t('tlNewResort')}</label>
+                  <input id="tl-new-resort" value={draft.resort} autoFocus
+                    onChange={e => setDraft(d => ({ ...d, resort: e.target.value }))} />
+                </div>
+              )}
+              <div>
+                <label htmlFor="tl-new-slope">{t('tlNewSlope')}</label>
+                <input id="tl-new-slope" value={draft.name} autoFocus={adding === 'slope'}
+                  onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
+              </div>
+              <div>
+                <label htmlFor="tl-new-diff">{t('tlNewDiff')}</label>
+                <select id="tl-new-diff" value={draft.difficulty}
+                  onChange={e => setDraft(d => ({ ...d, difficulty: e.target.value }))}>
+                  <option value="">{t('tlNewDiffNone')}</option>
+                  {DIFFICULTIES.map(d => <option key={d} value={d}>{t('diff_' + d)}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button type="button" className="btn primary small" disabled={addBusy} onClick={addSlope}>
+                {addBusy ? t('tlSaving') : t('tlAdd')}
+              </button>
+              <button type="button" className="btn small"
+                onClick={() => { setAdding(null); setAddErr(null) }}>{t('cancel')}</button>
+              <span className="muted">{t('tlAddHelp')}</span>
+            </div>
+            {addErr && <div className="error">{addErr}</div>}
+          </div>
+        )}
+
+        {form.resort === OTHER && (
           <>
             <label htmlFor="tl-venue">{t('tlVenue')}</label>
             <input id="tl-venue" value={form.venue} placeholder={t('tlVenuePh')}

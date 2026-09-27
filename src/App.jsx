@@ -10,6 +10,7 @@ import CoachSeason from './components/CoachSeason.jsx'
 import Athletes from './components/Athletes.jsx'
 import MySeason from './components/MySeason.jsx'
 import NextRace from './components/NextRace.jsx'
+import TrainingLog from './components/TrainingLog.jsx'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
@@ -89,10 +90,10 @@ export default function App() {
     : isCoach
       // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
       // meaning here. For the athlete, season and plan are now the same tab.
-      ? [['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
+      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach]]
       // Løperen lander på «Neste renn»: rennet som kommer, fristen og
       // antatt startnummer, i stedet for hele kalenderen sortert på dato.
-      : [['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab]]
+      : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab]]
   const active = tab || tabs[0][0]
 
   const pickPane = k => {
@@ -129,6 +130,9 @@ export default function App() {
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'matrix' && (team ? <SeasonMatrix team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
+      {/* Egen fane, oeverst: loggen foeres ofte, og laa foer tre skjermlengder
+          nede i «Min utvikling». En foresatt ser oekter, men foerer ingen. */}
+      {active === 'training' && <div className="page"><TrainingLog profile={profile} team={team} isCoach={isCoach} /></div>}
       {active === 'next' && <NextRace profile={profile} team={team} onOpenRace={() => setTab('mine')} />}
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}

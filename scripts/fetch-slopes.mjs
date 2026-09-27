@@ -19,7 +19,7 @@
 //
 // Data: © OpenStreetMap-bidragsytere, ODbL. Attribusjonen må stå i appen.
 
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 
 // Flere instanser: den offentlige hovedinstansen svarer med jevne mellomrom
 // «Dispatcher_Client ... timeout» på helt gyldige spørringer. Da byttes det
@@ -34,7 +34,9 @@ const PAUSE_MS = 2500
 const TIMEOUT_MS = 60000
 const TRIES = ENDPOINTS.length
 
-// Anlegg vi henter fra. Koordinaten er omtrentlig - radien tar resten.
+// Anlegg vi henter fra. Koordinatene er slått opp i Nominatim, OSM sin egen
+// geokoder, og ikke gjettet: halvparten av de første gjetningene lå 5-9 km
+// unna anlegget, og ga da tomme eller tynne treff.
 // Legg til nye her og kjør skriptet på nytt; det er idempotent.
 const RESORTS = [
   ['Hafjell', 61.225, 10.448, 6000],
@@ -42,25 +44,25 @@ const RESORTS = [
   ['Trysil', 61.300, 12.270, 9000],
   ['Hemsedal', 60.870, 8.550, 6000],
   ['Geilo', 60.534, 8.206, 6000],
-  ['Norefjell', 60.300, 9.530, 6000],
+  ['Norefjell', 60.2177, 9.5655, 6000],
   ['Oppdal', 62.600, 9.700, 7000],
   ['Myrkdalen', 60.905, 6.510, 5000],
-  ['Voss Resort', 60.632, 6.430, 5000],
-  ['Gaustablikk', 59.867, 8.637, 5000],
+  ['Voss Resort', 60.6535, 6.4199, 5000],
+  ['Gaustablikk', 59.8802, 8.7338, 5000],
   ['Vassfjellet', 63.233, 10.350, 4000],
-  ['Skeikampen', 61.364, 10.041, 5000],
-  ['Beitostølen', 61.250, 8.900, 5000],
+  ['Skeikampen', 61.3505, 10.0852, 5000],
+  ['Beitostølen', 61.2487, 8.9063, 5000],
   ['Ål skisenter', 60.640, 8.560, 4000],
   ['Oslo Vinterpark', 59.985, 10.670, 4000],
   ['Kongsberg skisenter', 59.640, 9.620, 4000],
   ['Bjorli', 62.258, 8.200, 5000],
-  ['Stranda', 62.283, 6.966, 5000],
+  ['Strandafjellet', 62.2880, 6.8277, 5000],
   ['Hovden', 59.550, 7.360, 5000],
   ['Rauland', 59.720, 8.090, 5000],
-  ['Røldal', 59.832, 6.816, 5000],
-  ['Narvikfjellet', 68.436, 17.430, 5000],
-  ['Hodlekve', 61.236, 7.272, 5000],
-  ['Sirdal', 58.977, 6.944, 6000]
+  ['Røldal', 59.8265, 6.7327, 5000],
+  ['Narvikfjellet', 68.4283, 17.4562, 5000],
+  ['Sogndal skisenter', 61.2903, 6.9839, 5000],
+  ['Sirdal', 58.9153, 6.8656, 6000]
 ]
 
 const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'freeride']
@@ -169,16 +171,34 @@ for (const [name, lat, lon, radius] of todo) {
   await sleep(PAUSE_MS)
 }
 
+// Et delvis uttrekk skal legge seg til, ikke erstatte. Uten dette ville
+// «hent Norefjell» skrevet en slopes.sql med bare Norefjell i, og de andre
+// anleggene forsvunnet fra repoet selv om de står trygt i databasen.
+const OUT = new URL('../supabase/slopes.sql', import.meta.url)
+function keepOthers(fetched) {
+  if (!only.length || !existsSync(OUT)) return []
+  const skip = new Set(fetched)
+  return readFileSync(OUT, 'utf8').split('\n')
+    .filter(l => l.startsWith('  ('))
+    .map(l => l.replace(/,$/, ''))
+    .filter(l => {
+      const m = /^ {2}\(\d+, '((?:[^']|'')*)'/.exec(l)
+      return m && !skip.has(m[1].replace(/''/g, "'"))
+    })
+}
+
 const rows = merge(all)
-const lines = rows.map(r =>
+const fresh = rows.map(r =>
   `  (${r.osm_way_id}, ${q(r.resort)}, ${q(r.name)}, ${r.difficulty ? q(r.difficulty) : 'null'}, ` +
   `${r.lat?.toFixed(6) ?? 'null'}, ${r.lng?.toFixed(6) ?? 'null'}, ${r.segments})`)
+const lines = [...keepOthers(todo.map(r => r[0])), ...fresh]
+  .sort((a, b) => a.localeCompare(b, 'nb'))
 
 const sql = `-- Bakkeregister, generert av scripts/fetch-slopes.mjs ${new Date().toISOString().slice(0, 10)}.
 -- Ikke rediger for hånd: kjør skriptet på nytt.
 --
 -- Data: © OpenStreetMap-bidragsytere, ODbL (opendatacommons.org/licenses/odbl).
--- ${rows.length} nedfarter fra ${todo.length - failed.length} anlegg.
+-- ${lines.length} nedfarter. Sist hentet: ${todo.map(r => r[0]).join(', ')}.
 
 insert into public.slopes (osm_way_id, resort, name, difficulty, lat, lng, segments) values
 ${lines.join(',\n')}
@@ -190,6 +210,6 @@ on conflict (resort, name) do update set
   segments = excluded.segments,
   updated_at = now();
 `
-writeFileSync(new URL('../supabase/slopes.sql', import.meta.url), sql)
-console.log(`\n${rows.length} bakker fra ${all.length} OSM-ways -> supabase/slopes.sql`)
+writeFileSync(OUT, sql)
+console.log(`\n${rows.length} nye bakker fra ${all.length} OSM-ways, ${lines.length} totalt -> supabase/slopes.sql`)
 if (failed.length) console.log(`Hentet ikke: ${failed.join(', ')} - kjør på nytt for disse.`)

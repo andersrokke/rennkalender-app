@@ -4,6 +4,14 @@ import { createContext, useContext } from 'react'
 export const I18N = {
   no: {
     // treningslogg
+    tlAddResort: '+ Legg til destinasjon …', tlAddSlope: '+ Legg til bakke …',
+    tlAddResortLead: 'Legg til et sted som ikke står i lista. Du må oppgi minst én bakke — en destinasjon finnes bare i kraft av bakkene sine.',
+    tlAddSlopeLead: 'Legg til en bakke i {r}.',
+    tlNewResort: 'Navn på destinasjon', tlNewSlope: 'Navn på bakke',
+    tlNewDiff: 'Vanskelighetsgrad', tlNewDiffNone: 'Vet ikke', tlAdd: 'Legg til',
+    tlAddHelp: 'Den blir liggende for hele laget.',
+    tlResort: 'Destinasjon', tlPickResort: 'Velg destinasjon …',
+    tlPickResortFirst: 'Velg destinasjon først', tlWholeResort: 'Hele anlegget',
     tlTitle: 'Treningslogg', tlSub: 'Før opp økta: hvor du kjørte, hvilket føre det var og hvor mange runs.',
     tlFor: 'Fører for', tlYou: 'deg', tlDate: 'Dato', tlSlope: 'Bakke',
     tlSlopeOther: 'Annet sted …', tlVenue: 'Sted', tlVenuePh: 'f.eks. Reiteralm, Østerrike',
@@ -164,6 +172,14 @@ export const I18N = {
   },
   en: {
     // training log
+    tlAddResort: '+ Add a destination …', tlAddSlope: '+ Add a slope …',
+    tlAddResortLead: 'Add a place that is not in the list. You need at least one slope — a destination only exists through its slopes.',
+    tlAddSlopeLead: 'Add a slope at {r}.',
+    tlNewResort: 'Destination name', tlNewSlope: 'Slope name',
+    tlNewDiff: 'Difficulty', tlNewDiffNone: 'Not sure', tlAdd: 'Add',
+    tlAddHelp: 'It stays available for the whole team.',
+    tlResort: 'Destination', tlPickResort: 'Pick a destination …',
+    tlPickResortFirst: 'Pick a destination first', tlWholeResort: 'Whole resort',
     tlTitle: 'Training log', tlSub: 'Log the session: where you skied, the snow, and how many runs.',
     tlFor: 'Logging for', tlYou: 'you', tlDate: 'Date', tlSlope: 'Slope',
     tlSlopeOther: 'Somewhere else …', tlVenue: 'Place', tlVenuePh: 'e.g. Reiteralm, Austria',

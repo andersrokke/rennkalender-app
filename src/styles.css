@@ -770,3 +770,10 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
   .tl-row{grid-template-columns:1fr}
   .tl-row .n{white-space:normal}
 }
+
+/* Innfelt skjema for aa legge til destinasjon eller bakke. Tonet ned med
+   vilje: det er en sidevei, ikke hovedveien gjennom loggen. */
+.tl-add{background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:14px 16px 16px;margin-top:14px}
+.tl-add-lead{margin:0;font-size:13px;color:var(--mute);line-height:1.45;max-width:62ch}
+.tl-add .tl-grid label:first-child{margin-top:10px}

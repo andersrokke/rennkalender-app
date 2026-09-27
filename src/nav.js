@@ -15,6 +15,7 @@ export function tabForNav(key, { isParent = false } = {}) {
 // Which bottom-bar button should read as active for a given tab and pane.
 export function navForState(activeTab, pane, { isParent = false } = {}) {
   if (pane === 'map') return 'map'
-  if (activeTab === 'mine' || activeTab === 'next' || (isParent && activeTab === 'children')) return 'plan'
+  if (activeTab === 'mine' || activeTab === 'next' || activeTab === 'training'
+    || (isParent && activeTab === 'children')) return 'plan'
   return 'list'
 }

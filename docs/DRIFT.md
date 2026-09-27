@@ -48,23 +48,25 @@ Tom utskrift betyr at lokalt og produksjon er like.
 
 ### Migrasjonshistorikken
 
-Produksjonsdatabasen har 19 migrasjoner registrert i
+Produksjonsdatabasen hadde 19 migrasjoner registrert i
 `supabase_migrations.schema_migrations` som aldri fantes som filer. De er
-squashet til én baseline:
+squashet til én baseline, og historikken er ryddet slik at hver registrerte
+versjon har en fil i repoet:
 
 | Fil | Innhold |
 | --- | --- |
 | `20260906144029_baseline_remote_schema.sql` | Hele skjemaet slik det så ut 2026-09-20 |
 | `20260920095646_cron_jobs_via_vault.sql` | Cron-jobbene, med nøkkelen flyttet til Vault |
+| `20260927114028_slopes_and_salted_snow.sql` | Bakkeregisteret og salteføre |
 
-Baseline har med vilje samme versjonsnummer som den første av de 19. Produksjon
-har allerede den versjonen registrert, så `db push` hopper over den i stedet for
-å prøve å kjøre hele skjemaet på nytt.
+Baseline har med vilje samme versjonsnummer som den første av de 19, slik at
+produksjon alt hadde den registrert og `db push` hopper over den i stedet for
+å prøve å kjøre hele skjemaet på nytt. De 18 andre radene er slettet fra
+historikken — innholdet deres ligger i baseline, som er verifisert felt for
+felt mot produksjon.
 
-De 18 andre versjonene ligger fortsatt igjen i produksjonens historikk uten
-tilhørende fil. Det er harmløst — `db push` bryr seg bare om lokale filer som
-mangler i produksjon — men `supabase migration list` vil vise dem som
-uparede. Vil du rydde det bort, kjør `supabase migration squash --linked`.
+`supabase migration list --linked` skal derfor vise tre versjoner på begge
+sider, uten uparede rader.
 
 ---
 
