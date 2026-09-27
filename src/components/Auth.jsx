@@ -57,6 +57,17 @@ const Hero = () => (
   </svg>
 )
 
+// Googles «G». Egen markup og ikke en bildefil, saa den foelger med i bunten
+// og ikke kan bli borte bak en blokkert CDN.
+const GoogleMark = () => (
+  <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-4H24v7.3h12.1c-.2 1.8-1.6 4.6-4.5 6.5l6.9 5.4c4.1-3.8 6.6-9.4 6.6-15.2z" />
+    <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C7.1 41 14.9 46 24 46z" />
+    <path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9l7.1-5.5z" />
+    <path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 14.9 2 7.1 7 4.4 14.1l7.1 5.5c1.8-5.3 6.7-9.1 12.5-9.1z" />
+  </svg>
+)
+
 export default function Auth() {
   const [lang, setLang] = useState(detectLang())
   const L = t(lang)
@@ -93,6 +104,15 @@ export default function Auth() {
       email, token, type: sentKind === 'signup' ? 'signup' : 'email' })
     setVerifying(false)
     if (error) setCodeErr(error.message.includes('rate limit') ? L.rateLimit : L.codeBad)
+  }
+
+  async function withGoogle() {
+    setBusy(true); setErr(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google', options: { redirectTo: window.location.origin }
+    })
+    // Går det bra, forlater nettleseren siden; da skal knappen bli stående.
+    if (error) { setBusy(false); setErr(L.googleFailed) }
   }
 
   async function submitPw(e) {
@@ -168,6 +188,11 @@ export default function Auth() {
             <form onSubmit={submitPw}>
               <h2>{mode === 'up' ? L.signUp : L.signIn}</h2>
               <p>{mode === 'up' ? L.signUpLead : L.signInLead}</p>
+
+              <button type="button" className="btn google" disabled={busy} onClick={withGoogle}>
+                <GoogleMark />{L.withGoogle}
+              </button>
+              <div className="or"><span>{L.orEmail}</span></div>
 
               <label htmlFor="au-email">{L.email}</label>
               <input id="au-email" type="email" required inputMode="email" autoComplete="email"

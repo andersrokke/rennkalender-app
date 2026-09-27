@@ -778,7 +778,16 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .tl-add-lead{margin:0;font-size:13px;color:var(--mute);line-height:1.45;max-width:62ch}
 .tl-add .tl-grid label:first-child{margin-top:10px}
 
-/* Lenkene under innloggingsskjemaet: bytt modus, eller glemt passord. */
+/* Google-knapp og skillelinje paa innloggingsskjermen. Hvit med ramme, ikke
+   fylt: den skal staa ved siden av den blaa hovedknappen uten aa slaass. */
+.auth .btn.google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:8px;padding:12px;border-radius:12px;font-weight:650;font-size:15px;
+  background:var(--snow);border:1px solid var(--line);color:var(--slate)}
+.auth .btn.google:hover{border-color:var(--mute)}
+.auth .btn.google svg{width:18px;height:18px;flex:0 0 auto}
+.auth .or{display:flex;align-items:center;gap:12px;margin:18px 0 2px;
+  color:var(--mute);font-size:12.5px}
+.auth .or::before,.auth .or::after{content:"";flex:1;height:1px;background:var(--line)}
 .auth-alt{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px}
 
 /* ===========================================================================
