@@ -417,10 +417,17 @@ enabled = true
 # ---------------------------------------------------------------------------
 # Edge functions
 #
-# Alle fem krever en gyldig JWT. Cron-jobbene sender anon-noekkelen fra Vault;
-# se docs/DRIFT.md. fis-debug ble slettet 2026-09-20 og skal ikke tilbake.
+# Alle seks krever en gyldig JWT. Cron-jobbene og feedback-triggeren sender
+# anon-noekkelen fra Vault; se docs/DRIFT.md. fis-debug ble slettet 2026-09-20
+# og skal ikke tilbake.
+#
+# En funksjon som ikke staar her blir heller ikke rullet ut av
+# GitHub-koblingen, selv om koden ligger i supabase/functions.
 # ---------------------------------------------------------------------------
 [functions.entry-reminders]
+verify_jwt = true
+
+[functions.feedback-notify]
 verify_jwt = true
 
 [functions.fis-athlete]
