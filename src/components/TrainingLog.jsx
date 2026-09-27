@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import TrainingPlan from './TrainingPlan.jsx'
 
 // Treningslogg. Tabellen training_sessions fantes i basen fra før uten noen
 // skjerm; dette er skjermen.
@@ -30,6 +31,11 @@ const ADD = '__add'
 const DIFFICULTIES = Object.keys(DIFF_COLOR)
 
 const today = () => new Date().toISOString().slice(0, 10)
+// Sesongen foelger FIS: 1. juli til 30. juni.
+const seasonStart = () => {
+  const n = new Date()
+  return `${n.getMonth() + 1 >= 7 ? n.getFullYear() : n.getFullYear() - 1}-07-01`
+}
 const blank = () => ({
   date: today(), resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
   gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', note: ''
@@ -50,6 +56,7 @@ export default function TrainingLog({ profile, team, isCoach }) {
   const [draft, setDraft] = useState({ resort: '', name: '', difficulty: '' })
   const [addBusy, setAddBusy] = useState(false)
   const [addErr, setAddErr] = useState(null)
+  const [season, setSeason] = useState([])
 
   useEffect(() => {
     supabase.from('slopes').select('id, resort, name, difficulty')
@@ -64,11 +71,30 @@ export default function TrainingLog({ profile, team, isCoach }) {
       .then(({ data }) => setMates(data || []))
   }, [isCoach, team?.id])
 
-  const loadRecent = () => supabase.from('training_sessions')
-    .select('id, date, discipline, runs, gates, snow, weather, minutes, note, venue, slope:slopes(resort, name, difficulty)')
-    .eq('athlete_id', who).order('date', { ascending: false }).limit(8)
-    .then(({ data }) => setRecent(data || []))
+  const loadRecent = () => {
+    supabase.from('training_sessions')
+      .select('id, date, discipline, runs, gates, snow, weather, minutes, note, venue, slope:slopes(resort, name, difficulty)')
+      .eq('athlete_id', who).eq('planned', false)
+      .order('date', { ascending: false }).limit(8)
+      .then(({ data }) => setRecent(data || []))
+    // Hele sesongen, men bare datoen og grenen: nok til å telle skidager
+    // uten å dra ned alt.
+    supabase.from('training_sessions').select('date, discipline, runs')
+      .eq('athlete_id', who).eq('planned', false).gte('date', seasonStart())
+      .then(({ data }) => setSeason(data || []))
+  }
   useEffect(() => { loadRecent() }, [who])
+
+  // Skidager teller dager på ski, ikke økter. To bolker samme dag er én dag,
+  // og basistrening teller ikke - den foregår ikke i bakken.
+  const tall = useMemo(() => {
+    const ski = season.filter(s => s.discipline !== 'COND')
+    return {
+      dager: new Set(ski.map(s => s.date)).size,
+      runs: ski.reduce((a, s) => a + (s.runs || 0), 0),
+      okter: ski.length
+    }
+  }, [season])
 
   // To steg: destinasjon foerst, saa bakke. Med flere hundre nedfarter i
   // registeret blir én lang liste ubrukelig paa telefon.
@@ -147,9 +173,21 @@ export default function TrainingLog({ profile, team, isCoach }) {
   }
 
   return (
-    <div className="card">
+    <>
+      <TrainingPlan profile={profile} team={team} isCoach={isCoach} slopes={slopes}
+        onPlanned={loadRecent} />
+
+      <div className="card">
       <h2>{t('tlTitle')}</h2>
       <p className="muted">{t('tlSub')}</p>
+
+      {tall.okter > 0 && (
+        <div className="kpis">
+          <div className="kpi"><b>{tall.dager}</b><span>{t('tsDays')}</span></div>
+          <div className="kpi"><b>{tall.runs}</b><span>{t('tsRuns')}</span></div>
+          <div className="kpi"><b>{tall.okter}</b><span>{t('tsSessions')}</span></div>
+        </div>
+      )}
 
       <form onSubmit={save}>
         {isCoach && mates.length > 0 && (
@@ -330,7 +368,8 @@ export default function TrainingLog({ profile, team, isCoach }) {
           <p className="muted tl-credit">{t('tlOsmCredit')}</p>
         </>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
