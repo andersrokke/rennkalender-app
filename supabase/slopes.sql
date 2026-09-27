@@ -2,7 +2,7 @@
 -- Ikke rediger for hånd: kjør skriptet på nytt.
 --
 -- Data: © OpenStreetMap-bidragsytere, ODbL (opendatacommons.org/licenses/odbl).
--- 450 nedfarter. Sist hentet: Norefjell, Voss Resort, Gaustablikk, Skeikampen, Beitostølen, Strandafjellet, Røldal, Narvikfjellet, Sogndal skisenter, Sirdal.
+-- 454 nedfarter. Sist hentet: SNØ Lørenskog.
 
 insert into public.slopes (osm_way_id, resort, name, difficulty, lat, lng, segments) values
   (1007026041, 'Geilo', '47', 'easy', 60.550710, 8.190750, 1),
@@ -68,6 +68,10 @@ insert into public.slopes (osm_way_id, resort, name, difficulty, lat, lng, segme
   (1365004302, 'Vassfjellet', 'Midtløypa', 'intermediate', 63.266056, 10.388022, 1),
   (1365004306, 'Vassfjellet', 'Vasses skicross', 'novice', 63.266510, 10.401807, 1),
   (1365004307, 'Vassfjellet', 'Vasseland', 'novice', 63.265716, 10.401837, 1),
+  (1375032339, 'SNØ Lørenskog', 'Racing', 'intermediate', 59.949079, 10.955012, 2),
+  (1375032342, 'SNØ Lørenskog', 'Nybegynnerområde', 'novice', 59.947605, 10.952758, 1),
+  (1375032343, 'SNØ Lørenskog', 'Familiebakke', 'novice', 59.949049, 10.955440, 1),
+  (1375032346, 'SNØ Lørenskog', 'Fjon-bakken', 'easy', 59.948109, 10.954054, 1),
   (1418374470, 'Hemsedal', 'Transport run downhill', 'novice', 60.862228, 8.521696, 1),
   (1424869678, 'Trysil', 'Transport', 'novice', 61.318164, 12.152863, 2),
   (1455113699, 'Kvitfjell', 'Pudderskogen', null, 61.441843, 10.101063, 2),

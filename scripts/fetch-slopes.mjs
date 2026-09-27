@@ -31,7 +31,10 @@ const ENDPOINTS = [
 ]
 const UA = 'Rennkalender/0.1 (bakkeregister for treningslogg)'
 const PAUSE_MS = 2500
-const TIMEOUT_MS = 60000
+// Overpass sin svartid svinger kraftig. 60 s holder til vanlig, men når
+// instansene er tunge trengs mer:
+//   OVERPASS_TIMEOUT_MS=240000 node scripts/fetch-slopes.mjs "SNØ Lørenskog"
+const TIMEOUT_MS = Number(process.env.OVERPASS_TIMEOUT_MS) || 60000
 const TRIES = ENDPOINTS.length
 
 // Anlegg vi henter fra. Koordinatene er slått opp i Nominatim, OSM sin egen
@@ -62,7 +65,10 @@ const RESORTS = [
   ['Røldal', 59.8265, 6.7327, 5000],
   ['Narvikfjellet', 68.4283, 17.4562, 5000],
   ['Sogndal skisenter', 61.2903, 6.9839, 5000],
-  ['Sirdal', 58.9153, 6.8656, 6000]
+  ['Sirdal', 58.9153, 6.8656, 6000],
+  // Innendørs. Liten radius: hallen er noen hundre meter, og en vid boks her
+  // drar inn turstier og skiløyper fra marka rundt.
+  ['SNØ Lørenskog', 59.94889, 10.95490, 1500]
 ]
 
 const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'freeride']
@@ -107,6 +113,11 @@ async function fetchResort(name, lat, lon, radius) {
 // OSM deler ofte én nedfart i flere ways med samme navn. For en nedtrekksliste
 // vil vi ha én rad per bakke, så de slås sammen: midtpunktet er snittet, og
 // vanskelighetsgraden er den som går igjen oftest.
+//
+// Står det likt, vinner den vanskeligste. En bakke er i praksis så hard som
+// sitt hardeste parti, og det er den veien en feil gjør minst skade: å tro at
+// en lett bakke er hard er ubehagelig, å tro det motsatte er verre.
+// SNØ sin racingløype er nettopp dette - halve er novice, halve intermediate.
 function merge(rows) {
   const by = new Map()
   for (const r of rows) {
@@ -120,7 +131,9 @@ function merge(rows) {
   return [...by.values()].map(g => {
     const counts = {}
     g.diffs.forEach(d => { counts[d] = (counts[d] || 0) + 1 })
-    const difficulty = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+    const difficulty = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1]
+        || DIFFICULTIES.indexOf(b[0]) - DIFFICULTIES.indexOf(a[0]))[0]?.[0] || null
     const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null
     return {
       resort: g.resort,
@@ -148,6 +161,9 @@ if (only.length && !todo.length) {
 
 const all = []
 const failed = []
+// Bare anlegg som faktisk svarte. Headeren i slopes.sql skal ikke påstå at
+// noe ble hentet når spørringen tidsavbrøt.
+const hentet = []
 for (const [name, lat, lon, radius] of todo) {
   try {
     const els = await fetchResort(name, lat, lon, radius)
@@ -163,6 +179,7 @@ for (const [name, lat, lon, radius] of todo) {
         osm_way_id: e.id
       })
     }
+    hentet.push(name)
     console.log(`${name.padEnd(22)} ${String(els.length).padStart(4)} nedfarter`)
   } catch (err) {
     failed.push(name)
@@ -198,7 +215,7 @@ const sql = `-- Bakkeregister, generert av scripts/fetch-slopes.mjs ${new Date()
 -- Ikke rediger for hånd: kjør skriptet på nytt.
 --
 -- Data: © OpenStreetMap-bidragsytere, ODbL (opendatacommons.org/licenses/odbl).
--- ${lines.length} nedfarter. Sist hentet: ${todo.map(r => r[0]).join(', ')}.
+-- ${lines.length} nedfarter. Sist hentet: ${hentet.join(', ') || 'ingen'}.
 
 insert into public.slopes (osm_way_id, resort, name, difficulty, lat, lng, segments) values
 ${lines.join(',\n')}
