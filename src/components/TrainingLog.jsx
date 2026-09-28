@@ -17,6 +17,13 @@ const WEATHER = ['sun', 'cloudy', 'flat_light', 'snow', 'fog', 'rain', 'wind']
 
 // Vanskelighetsgrad vises i løypefargene en skikjører allerede leser. Fargen
 // står alltid sammen med ordet, så den er aldri det eneste kjennetegnet.
+// Egen verdi for «et sted som ikke er i registeret», så den ikke forveksles
+// med «ingen destinasjon valgt ennå».
+const OTHER = '__other'
+// Egne verdier for «legg til», så de ikke kan forveksles med en destinasjon
+// eller bakke som faktisk heter noe.
+const ADD = '__add'
+
 const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'freeride']
 
 const today = () => new Date().toISOString().slice(0, 10)
