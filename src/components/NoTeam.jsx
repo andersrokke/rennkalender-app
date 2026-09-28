@@ -13,9 +13,15 @@ export default function NoTeam({ profile, onDone }) {
 
   async function createTeam(e) {
     e.preventDefault(); setBusy(true); setErr(null)
-    const { data: t, error } = await supabase.from('teams').insert({ name: teamName, club, owner_id: profile.id }).select().single()
+    // Gjennom create_coach_team og ikke rett i tabellen, samme vei som
+    // onboardingen: funksjonen ser etter en invitasjon først og henger gruppa
+    // under riktig lag med én gang. To veier inn til det samme betød at bare
+    // den ene gjorde det.
+    const { data: teamId, error } = await supabase.rpc('create_coach_team', {
+      p_name: teamName, p_club: club
+    })
     if (error) { setErr(error.message); setBusy(false); return }
-    const { error: e2 } = await supabase.from('profiles').update({ role: 'coach', team_id: t.id }).eq('id', profile.id)
+    const { error: e2 } = await supabase.from('profiles').update({ role: 'coach', team_id: teamId }).eq('id', profile.id)
     setBusy(false)
     if (e2) setErr(e2.message); else onDone()
   }
