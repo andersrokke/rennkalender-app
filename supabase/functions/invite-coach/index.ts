@@ -37,7 +37,7 @@ function html(link: string, note: string | null, fra: string | null) {
       </p>
       ${note ? `<p style="margin:0 0 16px;padding:12px 14px;background:#EBF1FE;border-radius:10px;font-size:14.5px;line-height:1.5">${esc(note)}</p>` : ""}
       <a href="${link}" style="display:inline-block;background:#0F1B2D;color:#fff;text-decoration:none;padding:13px 22px;border-radius:10px;font-weight:700;font-size:15px">Kom i gang</a>
-      <p style="margin:18px 0 8px;font-size:13px;color:#6B7A8C">Lenken virker én gang, og gjelder i 24 timer.</p>
+      <p style="margin:18px 0 8px;font-size:13px;color:#6B7A8C">Lenken virker én gang, og har kort levetid. Har den gått ut, be om en ny.</p>
 
       <div style="margin-top:22px;border-top:1px solid #E2E8F0;padding-top:18px">
         <p style="margin:0 0 14px;font-size:15px;font-weight:700">Slik kommer du i gang</p>
