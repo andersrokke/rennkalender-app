@@ -50,7 +50,13 @@ export default function MySeason({ profile, team, readOnly = false }) {
   const races = merged.map(x => x.race)
   // Everything you have not ruled out costs money to plan for — a race you
   // wish for is planned for just like one you have committed to.
-  const planned = merged.filter(x => x.mine?.status !== 'unavailable').map(x => x.race)
+  // useMemo er ikke pynt her. TripPlan sender ruter opp med setRoutes hver
+  // gang races-propen endrer seg; uten memo var planned et nytt array per
+  // render, så hver rute-oppdatering utløste en ny beregning som utløste en
+  // ny oppdatering. React stopper det etter femti runder - som en advarsel i
+  // utvikling, som et kast i produksjon.
+  const planned = useMemo(
+    () => merged.filter(x => x.mine?.status !== 'unavailable').map(x => x.race), [merged])
 
   const counts = {
     total: merged.length,
