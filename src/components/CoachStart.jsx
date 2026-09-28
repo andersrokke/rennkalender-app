@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import Lagkode from './Lagkode.jsx'
 
 // Steg-for-steg for en fersk trener. To ulike veier, fordi det er to ulike
 // spørsmål:
@@ -19,42 +20,6 @@ export default function CoachStart({ team, antall }) {
   return team.parent_team_id
     ? <Gruppetrener team={team} antall={antall} />
     : <Hovedtrener team={team} antall={antall} />
-}
-
-// Koden og de to kopieringsknappene. Brukes begge steder, med ulik tekst
-// rundt, fordi det er den samme handlingen: gi noen nøkkelen til laget ditt.
-function Kode({ team, t }) {
-  const [kopiert, setKopiert] = useState(null)
-  // En kode alene er ikke noe man kan sende. Lenken velger laget for dem, og
-  // koden blir stående for den som må skrive den inn for hånd.
-  const lenke = `${window.location.origin}/?lag=${encodeURIComponent(team.invite_code)}`
-  const invitasjon = t('csInviteText')
-    .replace('{lag}', team.name)
-    .replace('{lenke}', lenke)
-    .replace('{kode}', team.invite_code)
-
-  const kopier = async (tekst, hva) => {
-    try {
-      await navigator.clipboard.writeText(tekst)
-      setKopiert(hva); setTimeout(() => setKopiert(null), 2000)
-    } catch {
-      // Uten tilgang til utklippstavla står koden fortsatt på skjermen.
-      setKopiert('feil'); setTimeout(() => setKopiert(null), 2500)
-    }
-  }
-
-  return (
-    <div className="cs-kode">
-      <code>{team.invite_code}</code>
-      <button type="button" className="btn small primary" onClick={() => kopier(lenke, 'lenke')}>
-        {kopiert === 'lenke' ? t('csCopied') : t('csCopyLink')}
-      </button>
-      <button type="button" className="btn small" onClick={() => kopier(invitasjon, 'tekst')}>
-        {kopiert === 'tekst' ? t('csCopied') : t('csCopyText')}
-      </button>
-      {kopiert === 'feil' && <span className="error" style={{ margin: 0 }}>{t('csCopyFailed')}</span>}
-    </div>
-  )
 }
 
 function Steg({ nr, gjort, tittel, tekst, children }) {
@@ -134,15 +99,14 @@ function Hovedtrener({ team, antall }) {
           )}
         </Steg>
 
-        <Steg nr={3} tittel={t('csHeadStep3')} tekst={t('csHeadStep3b')} />
+        {/* Løperne sto nederst, under «skal du ha løpere også?», som om det
+            var en ettertanke. For en hovedtrener uten grupper er det den
+            eneste veien løpere kommer inn i det hele tatt. */}
+        <Steg nr={3} tittel={t('csHeadStep3')} tekst={t('csHeadStep3b').replace('{n}', antall)}>
+          <Lagkode team={team} />
+        </Steg>
         <Steg nr={4} tittel={t('csHeadStep4')} tekst={t('csHeadStep4b')} />
       </ol>
-
-      <div className="cs-egne">
-        <b>{t('csOwnAthletes')}</b>
-        <p className="muted">{t('csOwnAthletesB').replace('{n}', antall)}</p>
-        <Kode team={team} t={t} />
-      </div>
     </div>
   )
 }
@@ -158,7 +122,7 @@ function Gruppetrener({ team, antall }) {
       <div className="card cs-kort">
         <h2>{t('csShareTitle')}</h2>
         <p className="muted">{t('csShareSub').replace('{n}', antall)}</p>
-        <Kode team={team} t={t} />
+        <Lagkode team={team} />
       </div>
     )
   }
@@ -170,7 +134,7 @@ function Gruppetrener({ team, antall }) {
       <ol className="cs-steg">
         <Steg nr={1} gjort tittel={t('csStep1')} tekst={t('csStep1b').replace('{lag}', team.name)} />
         <Steg nr={2} tittel={t('csStep2')} tekst={t('csStep2b')}>
-          <Kode team={team} t={t} />
+          <Lagkode team={team} />
         </Steg>
         <Steg nr={3} tittel={t('csStep3')} tekst={t('csStep3b')} />
         <Steg nr={4} tittel={t('csStep4')} tekst={t('csStep4b')} />

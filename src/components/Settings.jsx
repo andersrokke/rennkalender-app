@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import PassordKort from './Passord.jsx'
+import Lagkode from './Lagkode.jsx'
 import { fetchFromFis, fetchFromFisInBackground, fisSummary } from '../fis'
 
 export default function Settings({ profile, team, isCoach, onChange }) {
@@ -92,7 +93,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
         <div className="card">
           <h2>{t('team')}</h2>
           <p className="muted">{t('inviteHint')}</p>
-          <span className="code">{team.invite_code}</span>
+          <Lagkode team={team} />
           <form onSubmit={saveTeam}><label>{t('teamName')}</label><input value={teamName} onChange={e => setTeamName(e.target.value)} />
             <div style={{ marginTop: 10 }}><button className="btn small primary">Lagre</button></div></form>
         </div>

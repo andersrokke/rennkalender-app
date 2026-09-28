@@ -932,3 +932,9 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .hc-bryter em{display:block;font-style:normal;font-size:13.5px;color:var(--mute);margin-top:2px}
 /* Står regelen på, er rutenettet en visning og ikke noe å klikke i. */
 .hc-laast{opacity:.6}
+
+/* Lagkoden med lenke. Lenka står synlig, ikke bare bak en knapp - klarer ikke
+   nettleseren å kopiere, skal man fortsatt kunne markere den selv. */
+.lk-lenke{margin:9px 0 0;font-size:12.5px;line-height:1.45;word-break:break-all}
+.lk-lenke a{color:var(--accent);text-decoration:none}
+.lk-lenke a:hover{text-decoration:underline}
