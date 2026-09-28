@@ -18,6 +18,16 @@ export default function Athletes({ team }) {
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
 
+  // Feil kode på avveie, eller noen som har sluttet. Før kunne bare løperen
+  // selv gå ut, og det er feil vei: den som oppdager det er treneren.
+  async function fjern(a) {
+    if (!confirm(`Fjerne ${a.full_name || 'løperen'} fra laget? Lagets planer for henne forsvinner.`)) return
+    const { error } = await supabase.rpc('fjern_fra_lag', { p_athlete: a.id })
+    if (error) return alert(error.message)
+    if (sel === a.id) setSel(null)
+    load()
+  }
+
   async function load() {
     const [{ data: a }, { data: tr }, { data: s }] = await Promise.all([
       supabase.from('profiles').select('*').eq('team_id', team.id).order('full_name'),
@@ -67,7 +77,12 @@ export default function Athletes({ team }) {
         <table><thead><tr><th>Navn</th><th>Årgang</th><th>FIS-kode</th><th>Renn</th><th>Renndager</th><th></th></tr></thead>
           <tbody>{athletes.map(a => { const s = summary(a.id); return (
             <tr key={a.id}><td>{a.full_name}</td><td>{a.birth_year || '–'}</td><td>{a.fis_code || '–'}</td><td>{s.n}</td><td>{s.d}</td>
-              <td><button className="btn small" onClick={() => openAthlete(sel === a.id ? null : a.id)}>{sel === a.id ? 'Lukk' : 'Planlegg'}</button></td></tr>) })}
+              <td>
+                <div className="row" style={{ gap: 6, flexWrap: 'nowrap' }}>
+                  <button className="btn small" onClick={() => openAthlete(sel === a.id ? null : a.id)}>{sel === a.id ? 'Lukk' : 'Planlegg'}</button>
+                  <button className="btn small danger" onClick={() => fjern(a)}>Fjern</button>
+                </div>
+              </td></tr>) })}
           </tbody></table>
       </div>
 

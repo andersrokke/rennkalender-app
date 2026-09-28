@@ -81,7 +81,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
   }
   async function joinTeam(e) {
     e.preventDefault(); setJoining(true); setJoinErr(null)
-    const { error } = await supabase.rpc('join_team', { code: joinCode.trim().toLowerCase() })
+    const { error } = await supabase.rpc('join_team', { code: joinCode.trim() })
     setJoining(false)
     if (error) { setJoinErr(error.message); return }
     setJoinCode(''); onChange()
@@ -93,7 +93,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
         <div className="card">
           <h2>{t('team')}</h2>
           <p className="muted">{t('inviteHint')}</p>
-          <Lagkode team={team} />
+          <Lagkode team={team} kanBytte onEndret={onChange} />
           <form onSubmit={saveTeam}><label>{t('teamName')}</label><input value={teamName} onChange={e => setTeamName(e.target.value)} />
             <div style={{ marginTop: 10 }}><button className="btn small primary">Lagre</button></div></form>
         </div>

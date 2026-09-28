@@ -503,6 +503,33 @@ endre.** Å skille lesing fra skriving ville betydd å skrive om alle 26 reglene
 og innenfor ett trenerteam er ikke det problemet dette skal løse. Er det
 ønskelig senere, er `team_access` stedet å legge et `can_edit`-flagg.
 
+### Lagkoden
+
+Seks tegn fra `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` - ingen `O` mot `0`, ingen
+`I` mot `1`. Koden skal tåle å leses opp på trening og skrives på en tavle,
+og det gjorde ikke de tolv heksadesimale tegnene den hadde før.
+
+Løperne får den som en lenke: `/?lag=K7RF2M`. Koden fanges ved sidelast og
+legges i `localStorage` før noe rekker å endre URL-en, siden Google-innlogging
+forlater siden og kommer tilbake uten spørringen. Så fjernes den fra
+adresselinja - den hører ikke hjemme i historikken.
+
+`join_team()` tåler både store og små bokstaver.
+
+To ting gjør lenka trygg å dele i en gruppechat:
+
+```sql
+-- Ny kode. Alle delte lenker slutter å virke med én gang.
+select public.ny_invitasjonskode('<lag-uuid>');
+
+-- Fjerne noen fra laget. Lagets planer for henne følger med ut.
+select public.fjern_fra_lag('<løper-uuid>');
+```
+
+Begge ligger også som knapper: ny kode under Lag og profil, fjerning i
+trenerens løperliste. Uten dem var en lenke på avveie permanent - koden kunne
+ikke byttes, og bare løperen selv kunne gå ut av laget.
+
 ### Hvem kan invitere trenere
 
 Både administrator og hovedtrener. Hvem som får lov følger av strukturen og

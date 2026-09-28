@@ -76,7 +76,9 @@ export default function Onboarding({ profile, onDone }) {
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr(null)
     const f = new FormData(e.target)
-    const name = f.get('name'), code = (f.get('code') || '').trim().toLowerCase()
+    // Ikke toLowerCase her: lagkoden er versaler, og join_team tåler begge
+    // deler selv. link_guardian normaliserer sin egen kode i basen.
+    const name = f.get('name'), code = (f.get('code') || '').trim()
     try {
       if (mode === 'coach') {
         // Gjennom create_coach_team og ikke rett i tabellen: funksjonen ser
