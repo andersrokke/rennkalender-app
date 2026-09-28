@@ -464,6 +464,31 @@ plukker bare den nyeste.
 
 ---
 
+## Treningsloggen og statistikken
+
+Loggen har alltid samlet føre, vær, temperatur, porter, minutter og
+anstrengelse. Fram til nå viste skjermen tre tall og de åtte siste øktene, så
+resten lå der uten at noen fikk se det.
+
+Statistikken ligger under Treningslogg og filtrerer i nettleseren, ikke i
+basen. En sesong er noen hundre rader per løper, og da er filtrene
+øyeblikkelige i stedet for en ny spørring per klikk. Trengs det en gang
+tusenvis av rader per lag, er det her man legger inn en RPC.
+
+Trenere ser gruppa si gjennom RLS-regelen `training coach`, som går gjennom
+`is_coach_of()` - altså gjelder både hovedtrenere og innsyn gitt i rutenettet.
+
+**Innendørs.** `slopes.indoor` er sann for SNØ Lørenskog. Velger man en bakke
+der, låses vær til `indoor` og værvalget skjules. Grunnen er at et tomt felt
+ikke kan skilles fra «glemte å fylle ut», og at «sol» inne i en hall er verre
+enn ingenting. Nye innendørsanlegg settes med:
+
+```sql
+update public.slopes set indoor = true where resort = '<anlegg>';
+```
+
+---
+
 ## Lag, grupper og innsyn
 
 Et lag kan ligge under et annet. NTG Lillehammer er laget; Fart, Teknikk og

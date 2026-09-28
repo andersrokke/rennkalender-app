@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import TrainingStats from './TrainingStats.jsx'
 import TrainingPlan from './TrainingPlan.jsx'
 
 // Treningslogg. Tabellen training_sessions fantes i basen fra før uten noen
@@ -16,26 +17,9 @@ const WEATHER = ['sun', 'cloudy', 'flat_light', 'snow', 'fog', 'rain', 'wind']
 
 // Vanskelighetsgrad vises i løypefargene en skikjører allerede leser. Fargen
 // står alltid sammen med ordet, så den er aldri det eneste kjennetegnet.
-const DIFF_COLOR = {
-  novice: '#2E9E4F', easy: '#2F6FE0', intermediate: '#D9342B',
-  advanced: '#14181F', expert: '#14181F', freeride: '#E0862F'
-}
-
-// Egen verdi for «et sted som ikke er i registeret», saa den ikke forveksles
-// med «ingen destinasjon valgt ennaa».
-const OTHER = '__other'
-// Egne verdier for «legg til», saa de ikke kan forveksles med en destinasjon
-// eller bakke som faktisk heter noe.
-const ADD = '__add'
-
-const DIFFICULTIES = Object.keys(DIFF_COLOR)
+const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'freeride']
 
 const today = () => new Date().toISOString().slice(0, 10)
-// Sesongen foelger FIS: 1. juli til 30. juni.
-const seasonStart = () => {
-  const n = new Date()
-  return `${n.getMonth() + 1 >= 7 ? n.getFullYear() : n.getFullYear() - 1}-07-01`
-}
 const blank = () => ({
   date: today(), resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
   gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', note: ''
@@ -48,14 +32,14 @@ export default function TrainingLog({ profile, team, isCoach }) {
   const [mates, setMates] = useState([])
   const [who, setWho] = useState(profile.id)
   const [form, setForm] = useState(blank)
-  const [recent, setRecent] = useState([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
   const [adding, setAdding] = useState(null)   // 'resort' | 'slope' | null
   const [draft, setDraft] = useState({ resort: '', name: '', difficulty: '' })
   const [addBusy, setAddBusy] = useState(false)
   const [addErr, setAddErr] = useState(null)
-  const [season, setSeason] = useState([])
+  // Bumpes når en økt er lagret, så statistikken under henter på nytt.
+  const [nonce, setNonce] = useState(0)
 
   useEffect(() => {
     supabase.from('slopes').select('id, resort, name, difficulty')
@@ -70,30 +54,26 @@ export default function TrainingLog({ profile, team, isCoach }) {
       .then(({ data }) => setMates(data || []))
   }, [isCoach, team?.id])
 
-  const loadRecent = () => {
-    supabase.from('training_sessions')
-      .select('id, date, discipline, runs, gates, snow, weather, minutes, note, venue, slope:slopes(resort, name, difficulty)')
-      .eq('athlete_id', who).eq('planned', false)
-      .order('date', { ascending: false }).limit(8)
-      .then(({ data }) => setRecent(data || []))
-    // Hele sesongen, men bare datoen og grenen: nok til å telle skidager
-    // uten å dra ned alt.
-    supabase.from('training_sessions').select('date, discipline, runs')
-      .eq('athlete_id', who).eq('planned', false).gte('date', seasonStart())
-      .then(({ data }) => setSeason(data || []))
-  }
-  useEffect(() => { loadRecent() }, [who])
+  // Skjemaet henter ikke lenger økter selv. Statistikken under gjør det, med
+  // filtre og sortering, og nonce ber den om å hente på nytt når noe er lagret.
+  const oppdater = () => setNonce(n => n + 1)
 
-  // Skidager teller dager på ski, ikke økter. To bolker samme dag er én dag,
-  // og basistrening teller ikke - den foregår ikke i bakken.
-  const tall = useMemo(() => {
-    const ski = season.filter(s => s.discipline !== 'COND')
-    return {
-      dager: new Set(ski.map(s => s.date)).size,
-      runs: ski.reduce((a, s) => a + (s.runs || 0), 0),
-      okter: ski.length
-    }
-  }, [season])
+
+  // Inne i en hall er vær ikke en variabel - det er alltid det samme. Å be om
+  // sol eller tåke der gir enten et tilfeldig svar eller et tomt felt, og
+  // begge forurenser statistikken. «Innendørs» er et svar; tomt felt er et
+  // hull man ikke kan skille fra «glemte det».
+  const erInne = useMemo(() => {
+    if (form.slope_id) return !!slopes.find(s => String(s.id) === String(form.slope_id))?.indoor
+    if (!form.resort || form.resort === OTHER) return false
+    const i = slopes.filter(s => s.resort === form.resort)
+    return i.length > 0 && i.every(s => s.indoor)
+  }, [slopes, form.resort, form.slope_id])
+
+  useEffect(() => {
+    if (erInne && form.weather !== 'indoor') set({ weather: 'indoor' })
+    if (!erInne && form.weather === 'indoor') set({ weather: '' })
+  }, [erInne])
 
   // To steg: destinasjon foerst, saa bakke. Med flere hundre nedfarter i
   // registeret blir én lang liste ubrukelig paa telefon.
@@ -120,7 +100,7 @@ export default function TrainingLog({ profile, team, isCoach }) {
       source: 'user', created_by: profile.id
     }
     let { data, error } = await supabase.from('slopes').insert(row)
-      .select('id, resort, name, difficulty').single()
+      .select('id, resort, name, difficulty, indoor').single()
     if (error?.code === '23505') {
       ({ data, error } = await supabase.from('slopes')
         .select('id, resort, name, difficulty')
@@ -167,26 +147,17 @@ export default function TrainingLog({ profile, team, isCoach }) {
     })
     setBusy(false)
     if (error) return setMsg({ bad: true, text: error.message })
-    setForm(blank()); setMsg({ text: t('tlSaved') })
-    loadRecent()
+    setForm(blank()); setMsg({ text: t('tlSaved') }); oppdater()
   }
 
   return (
     <>
       <TrainingPlan profile={profile} team={team} isCoach={isCoach} slopes={slopes}
-        onPlanned={loadRecent} />
+        onPlanned={oppdater} />
 
       <div className="card">
       <h2>{t('tlTitle')}</h2>
       <p className="muted">{t('tlSub')}</p>
-
-      {tall.okter > 0 && (
-        <div className="kpis">
-          <div className="kpi"><b>{tall.dager}</b><span>{t('tsDays')}</span></div>
-          <div className="kpi"><b>{tall.runs}</b><span>{t('tsRuns')}</span></div>
-          <div className="kpi"><b>{tall.okter}</b><span>{t('tsSessions')}</span></div>
-        </div>
-      )}
 
       <form onSubmit={save}>
         {isCoach && mates.length > 0 && (
@@ -295,8 +266,10 @@ export default function TrainingLog({ profile, team, isCoach }) {
           onPick={v => set({ snow: v })} />
 
         <label>{t('tlWeather')}</label>
-        <Chips t={t} options={WEATHER} prefix="wx_" value={form.weather}
-          onPick={v => set({ weather: v })} />
+        {erInne
+          ? <p className="tl-inne">{t('tlIndoor')}</p>
+          : <Chips t={t} options={WEATHER} prefix="wx_" value={form.weather}
+              onPick={v => set({ weather: v })} />}
 
         <div className="tl-grid">
           <div>
@@ -330,37 +303,9 @@ export default function TrainingLog({ profile, team, isCoach }) {
         </div>
       </form>
 
-      {recent.length > 0 && (
-        <>
-          <h3>{t('tlRecent')}</h3>
-          <div className="tl-list">
-            {recent.map(s => (
-              <div className="tl-row" key={s.id}>
-                <span className="d">{s.date}</span>
-                <span className="w">
-                  <b>{t('disc_' + s.discipline)}</b>
-                  {s.slope
-                    ? <> · {s.slope.resort} <i>{s.slope.name}</i>
-                        {s.slope.difficulty && (
-                          <span className="tl-diff">
-                            <i style={{ background: DIFF_COLOR[s.slope.difficulty] }} />
-                            {t('diff_' + s.slope.difficulty)}
-                          </span>
-                        )}
-                      </>
-                    : s.venue ? <> · {s.venue}</> : null}
-                </span>
-                <span className="n">
-                  {s.runs != null && <>{s.runs} {t('tlRunsShort')}</>}
-                  {s.snow && <> · {t('snow_' + s.snow)}</>}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="muted tl-credit">{t('tlOsmCredit')}</p>
-        </>
-      )}
       </div>
+
+      <TrainingStats athleteId={who} mates={mates} isCoach={isCoach} nonce={nonce} />
     </>
   )
 }
