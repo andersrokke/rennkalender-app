@@ -4,3 +4,11 @@ dist
 .env.*
 !.env.example
 .DS_Store
+
+# Innebygd Postgres for scripts/dbtest
+scripts/dbtest/.data/
+
+# Genereres av npm run test:ui - skal aldri inn
+preview.html
+src/preview-main.jsx
+src/preview-testdata.js

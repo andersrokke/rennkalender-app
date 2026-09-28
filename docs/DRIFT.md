@@ -12,6 +12,7 @@ begge deler går ut via `supabase db push` og `supabase functions deploy`.
 ## Innhold
 
 - [Kom i gang](#kom-i-gang)
+- [Test før push](#test-før-push)
 - [Skjemaendringer](#skjemaendringer)
 - [Edge-funksjoner](#edge-funksjoner)
 - [Cron-jobbene](#cron-jobbene)
@@ -70,6 +71,56 @@ felt mot produksjon.
 
 `supabase migration list --linked` skal derfor vise tre versjoner på begge
 sider, uten uparede rader.
+
+---
+
+## Test før push
+
+En push til `main` går rett i produksjon. Det finnes ingen staging. Så det som
+skal fange feil, må fange dem *før* pushen - og bygget alene gjør ikke det.
+
+Bygget sjekker syntaks. Det klager ikke på et navn som ikke finnes; det er en
+kjøretidsfeil. 28. september forsvant to konstanter i en opprydding, bygget
+gikk rent, og hver løper fikk hvit skjerm på første fane i en time. Samme dag
+lå «Min sesong» i uendelig løkke, og en kolonnestandard kalte en funksjon
+ingen hadde lov til å kjøre, så ingen kunne opprette lag. Ingen av de tre ble
+sett av bygget. Alle tre blir sett av dette:
+
+```bash
+# 1. Databasen: alle migrasjoner fra bunnen mot innebygd Postgres 17, deretter
+#    RLS, rettigheter og funksjoner slik hver rolle faktisk bruker dem.
+#    Til slutt en revisjon av alt frontend kaller - hver tabelloperasjon, hver
+#    RPC, hver kolonnestandard - som authenticated. Ingen Docker.
+npm run test:db
+
+# 2. Skjermene, tomme: hver skjerm for hver rolle, med tomme svar fra basen
+#    og en krasjfanger rundt hver. Åpne /preview.html i dev-serveren og les
+#    window.__feil (krasj) og window.__konsoll (feil og advarsler, talt inne
+#    i siden fra før første render).
+npm run test:ui
+
+# 3. Skjermene, med innhold: 40 renn, sesongplaner, 180 økter, FIS-poeng.
+#    Tomme lister skjuler feil i listevisning, sortering og gruppering.
+npm run test:ui:data
+
+# 4. Rydd før commit. preview-filene skal ikke inn.
+npm run test:ui:clean
+```
+
+`test:db` henter `embedded-postgres` og `pg` med `--no-save` første gang. De
+er 100 MB og hører ikke hjemme i `package.json` for en Netlify-bygging.
+
+**Hva de ikke fanger.** Nettleser-testene mocker nettverket, så de kan aldri
+se en rettighetsfeil - det er derfor `test:db` finnes. Og ingen av dem kjører
+mot produksjon: en innstilling i Supabase-dashbordet (SMTP, utløpstid, en
+provider som er av) vises bare i auth-loggen etter at noen har truffet den.
+
+### Legge til en skjerm
+
+Nye komponenter må inn i `scripts/preview/alle-skjermer.jsx` (og
+`-med-data.jsx` hvis den viser lister). Rettighetsrevisjonen trenger ingen
+oppdatering: `scripts/dbtest/frontend-bruk.mjs` finner selv hva frontend
+kaller.
 
 ---
 

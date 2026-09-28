@@ -17,7 +17,11 @@
     "db:push": "supabase db push",
     "db:status": "supabase migration list --linked",
     "fn:deploy": "supabase functions deploy",
-    "fn:secrets": "supabase secrets list"
+    "fn:secrets": "supabase secrets list",
+    "test:db": "npm ls embedded-postgres >/dev/null 2>&1 || npm i --no-save --no-audit --no-fund embedded-postgres@17.10.0-beta.17 pg; node scripts/dbtest/run.mjs",
+    "test:ui": "cp scripts/preview/preview.html preview.html && sed \"s#\\.\\./\\.\\./src/#./#g\" scripts/preview/alle-skjermer.jsx > src/preview-main.jsx && echo \"Åpne /preview.html i dev-serveren og les window.__feil og window.__konsoll\"",
+    "test:ui:data": "cp scripts/preview/preview.html preview.html && cp scripts/preview/testdata.js src/preview-testdata.js && sed -e \"s#\\.\\./\\.\\./src/#./#g\" -e \"s#./testdata.js#./preview-testdata.js#\" scripts/preview/alle-skjermer-med-data.jsx > src/preview-main.jsx && echo \"Åpne /preview.html i dev-serveren\"",
+    "test:ui:clean": "rm -f preview.html src/preview-main.jsx src/preview-testdata.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
