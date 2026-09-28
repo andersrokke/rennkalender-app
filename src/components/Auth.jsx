@@ -83,12 +83,23 @@ export default function Auth() {
   const [codeErr, setCodeErr] = useState(null)
   const [verifying, setVerifying] = useState(false)
 
-  // Magisk lenke er ikke lenger hovedveien inn, men veien tilbake naar
-  // passordet er glemt. Den samme e-posten baerer bade lenke og kode.
+  // Veien tilbake når passordet er glemt.
+  //
+  // Her sto det signInWithOtp, som har shouldCreateUser = true som standard.
+  // Den lagde altså en ny konto av hver adresse noen skrev feil, sendte en
+  // innloggingslenke til den, og slapp dem inn i «opprett lag» - i stedet for
+  // å hjelpe dem tilbake til kontoen de allerede hadde. Det skjedde i praksis,
+  // og ga to kontoer og to lag med samme navn.
+  //
+  // resetPasswordForEmail oppretter ingenting. Den svarer likt enten adressen
+  // finnes eller ikke, med vilje, så ingen kan bruke skjemaet til å finne ut
+  // hvem som har konto.
   async function send(e) {
     e?.preventDefault(); setBusy(true); setErr(null); setCodeErr(null)
-    setSentKind('link')
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+    setSentKind('reset')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    })
     setBusy(false)
     if (error) setErr(error.message.includes('rate limit') ? L.rateLimit : error.message)
     else setSent(true)
@@ -101,7 +112,8 @@ export default function Auth() {
     e.preventDefault(); setVerifying(true); setCodeErr(null)
     const token = code.replace(/\D/g, '')
     const { error } = await supabase.auth.verifyOtp({
-      email, token, type: sentKind === 'signup' ? 'signup' : 'email' })
+      email, token,
+      type: sentKind === 'signup' ? 'signup' : sentKind === 'reset' ? 'recovery' : 'email' })
     setVerifying(false)
     if (error) setCodeErr(error.message.includes('rate limit') ? L.rateLimit : L.codeBad)
   }
@@ -165,8 +177,10 @@ export default function Auth() {
           {sent ? (
             <div className="sent">
               <div className="icon">✓</div>
-              <h2>{sentKind === 'signup' ? L.confirmTitle : L.checkInbox}</h2>
-              <p>{sentKind === 'signup' ? L.confirmSentTo : L.sentTo} <b>{email}</b>. {L.tapIt}</p>
+              <h2>{sentKind === 'signup' ? L.confirmTitle
+                : sentKind === 'reset' ? L.resetTitle : L.checkInbox}</h2>
+              <p>{sentKind === 'signup' ? L.confirmSentTo
+                : sentKind === 'reset' ? L.resetSentTo : L.sentTo} <b>{email}</b>. {L.tapIt}</p>
               <p className="fine">{L.spam}</p>
 
               <form className="otp" onSubmit={verify}>

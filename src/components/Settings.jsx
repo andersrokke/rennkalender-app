@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import PassordKort from './Passord.jsx'
 import { fetchFromFis, fetchFromFisInBackground, fisSummary } from '../fis'
 
 export default function Settings({ profile, team, isCoach, onChange }) {
@@ -124,6 +125,8 @@ export default function Settings({ profile, team, isCoach, onChange }) {
           ))}
         </div>
       )}
+      <PassordKort />
+
       <div className="card">
         <h2>{t('myProfile')}</h2>
         <form onSubmit={saveProfile}>

@@ -13,6 +13,8 @@ import NextRace from './components/NextRace.jsx'
 import TrainingLog from './components/TrainingLog.jsx'
 import Feedback from './components/Feedback.jsx'
 import Admin from './components/Admin.jsx'
+import { PassordSkjema } from './components/Passord.jsx'
+import { fangLagkode } from './join'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
@@ -28,6 +30,7 @@ export default function App() {
   const [tab, setTab] = useState(null)
   const [pane, setPane] = useState('list')
   const [planCount, setPlanCount] = useState(0)
+  const [recovery, setRecovery] = useState(false)
 
   const loadProfile = useCallback(async uid => {
     const { data: p } = await supabase.from('profiles').select('*').eq('id', uid).single()
@@ -39,8 +42,15 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    // Lagkoden fra en delt lenke må fanges før noe annet rekker å endre URL-en.
+    fangLagkode()
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setTimeout(() => setSession(s), 0))
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
+      // Kommer man hit fra en tilbakestillingslenke, er man innlogget - men
+      // det man ville var å sette et nytt passord, ikke å havne i appen.
+      if (e === 'PASSWORD_RECOVERY') setRecovery(true)
+      setTimeout(() => setSession(s), 0)
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
 
@@ -77,6 +87,17 @@ export default function App() {
 
   if (session === undefined) return <div className="page muted">{I18N.no.loading}</div>
   if (!session) return <Auth />
+  if (recovery) return (
+    <LangContext.Provider value={lang}>
+      <div className="page" style={{ maxWidth: 460, margin: '40px auto' }}>
+        <div className="card">
+          <h2>{d.pwNewTitle}</h2>
+          <p className="muted">{d.pwNewSub}</p>
+          <PassordSkjema onLagret={() => setRecovery(false)} knappetekst={d.pwSetAndSignIn} />
+        </div>
+      </div>
+    </LangContext.Provider>
+  )
   if (!profile) return <div className="page muted">{I18N.no.loadingProfile}</div>
   if (!profile.onboarded) return (
     <LangContext.Provider value={lang}><Onboarding profile={profile} onDone={reload} /></LangContext.Provider>

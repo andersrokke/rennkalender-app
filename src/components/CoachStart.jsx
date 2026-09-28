@@ -25,10 +25,13 @@ export default function CoachStart({ team, antall }) {
 // rundt, fordi det er den samme handlingen: gi noen nøkkelen til laget ditt.
 function Kode({ team, t }) {
   const [kopiert, setKopiert] = useState(null)
+  // En kode alene er ikke noe man kan sende. Lenken velger laget for dem, og
+  // koden blir stående for den som må skrive den inn for hånd.
+  const lenke = `${window.location.origin}/?lag=${encodeURIComponent(team.invite_code)}`
   const invitasjon = t('csInviteText')
     .replace('{lag}', team.name)
+    .replace('{lenke}', lenke)
     .replace('{kode}', team.invite_code)
-    .replace('{url}', window.location.origin)
 
   const kopier = async (tekst, hva) => {
     try {
@@ -43,8 +46,8 @@ function Kode({ team, t }) {
   return (
     <div className="cs-kode">
       <code>{team.invite_code}</code>
-      <button type="button" className="btn small" onClick={() => kopier(team.invite_code, 'kode')}>
-        {kopiert === 'kode' ? t('csCopied') : t('csCopyCode')}
+      <button type="button" className="btn small primary" onClick={() => kopier(lenke, 'lenke')}>
+        {kopiert === 'lenke' ? t('csCopied') : t('csCopyLink')}
       </button>
       <button type="button" className="btn small" onClick={() => kopier(invitasjon, 'tekst')}>
         {kopiert === 'tekst' ? t('csCopied') : t('csCopyText')}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
+import { hentLagkode, glemLagkode } from '../join'
 import { detectLang, t } from '../i18n'
 import LangSwitch from './LangSwitch.jsx'
 
@@ -53,7 +54,10 @@ const ICONS = {
 
 export default function Onboarding({ profile, onDone }) {
   const [lang, setLang] = useState(detectLang())
-  const [mode, setMode] = useState(null)
+  // Kom man hit fra en delt lagkode, er valget allerede tatt: man skal bli
+  // med i et lag, og koden står der.
+  const fraLenke = hentLagkode()
+  const [mode, setMode] = useState(fraLenke ? 'team' : null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const L = t(lang)
@@ -101,6 +105,7 @@ export default function Onboarding({ profile, onDone }) {
           .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       }
+      glemLagkode()
       onDone()
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
@@ -142,7 +147,8 @@ export default function Onboarding({ profile, onDone }) {
 
             {(mode === 'team' || mode === 'parent') && (<>
               <label>{mode === 'team' ? L.codeTeam : L.codeParent}</label>
-              <input name="code" required autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder={L.codePh} />
+              <input name="code" required autoCapitalize="none" autoCorrect="off" spellCheck="false"
+                defaultValue={mode === 'team' ? fraLenke : ''} placeholder={L.codePh} />
             </>)}
 
             {mode === 'parent' && <p className="ob-hint">{L.parentHint}</p>}
