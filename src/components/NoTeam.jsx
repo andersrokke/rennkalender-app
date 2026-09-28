@@ -18,7 +18,7 @@ export default function NoTeam({ profile, onDone }) {
     // under riktig lag med én gang. To veier inn til det samme betød at bare
     // den ene gjorde det.
     const { data: teamId, error } = await supabase.rpc('create_coach_team', {
-      p_name: teamName, p_club: club
+      p_name: teamName.trim(), p_club: club.trim()
     })
     if (error) { setErr(error.message); setBusy(false); return }
     const { error: e2 } = await supabase.from('profiles').update({ role: 'coach', team_id: teamId }).eq('id', profile.id)

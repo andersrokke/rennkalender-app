@@ -42,7 +42,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     e.preventDefault()
     const code = fis.trim()
     const firstCode = !!code && !profile.fis_code
-    const { error } = await supabase.from('profiles').update({ full_name: name, fis_code: code || null, birth_year: year ? +year : null, gender: gender || null }).eq('id', profile.id)
+    const { error } = await supabase.from('profiles').update({ full_name: name.trim(), fis_code: code || null, birth_year: year ? +year : null, gender: gender || null }).eq('id', profile.id)
     setMsg(error ? error.message : t('saved')); onChange()
     // First time a FIS code is saved, warm the data in the background so the
     // athlete does not have to wait for the nightly job. Saving is not blocked.

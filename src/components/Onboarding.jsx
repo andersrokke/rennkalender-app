@@ -78,7 +78,8 @@ export default function Onboarding({ profile, onDone }) {
     const f = new FormData(e.target)
     // Ikke toLowerCase her: lagkoden er versaler, og join_team tåler begge
     // deler selv. link_guardian normaliserer sin egen kode i basen.
-    const name = f.get('name'), code = (f.get('code') || '').trim()
+    // Trimmes: Lukas skrev «Lukas » med mellomrom bak, og det ble lagret slik.
+    const name = (f.get('name') || '').trim(), code = (f.get('code') || '').trim()
     try {
       if (mode === 'coach') {
         // Gjennom create_coach_team og ikke rett i tabellen: funksjonen ser
