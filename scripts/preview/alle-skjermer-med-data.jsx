@@ -39,6 +39,33 @@ for (const niva of ['error', 'warn']) {
     opprinnelig(...a)
   }
 }
+// Elementer som stikker ut av kortet sitt uten å ligge i noe rullbart.
+// Ignorerer position:fixed (bunnark, skalert emulator) og alt under
+// overflow:hidden (Leaflet klipper kartet selv). Leses som window.__overflow.
+window.__maalOverflow = () => {
+  const ut = []
+  for (const el of document.querySelectorAll('.card *')) {
+    const kort = el.closest('.card'); if (!kort) continue
+    const r = el.getBoundingClientRect(), k = kort.getBoundingClientRect()
+    if (r.width === 0 || r.right <= k.right + 2) continue
+    if (getComputedStyle(el).position === 'fixed') continue
+    let a = el.parentElement, fanget = false
+    while (a && a !== kort.parentElement) {
+      const o = getComputedStyle(a).overflowX
+      if (o === 'auto' || o === 'scroll' || o === 'hidden') { fanget = true; break }
+      a = a.parentElement
+    }
+    if (fanget) continue
+    let n = kort, skjerm = '?'
+    while (n && n !== document.body) { if (n.previousElementSibling?.matches?.('p[style]')) { skjerm = n.previousElementSibling.textContent; break } n = n.parentElement }
+    ut.push({ skjerm, klasse: (el.className?.baseVal ?? el.className ?? '').toString().slice(0, 50), utenfor: Math.round(r.right - k.right) })
+  }
+  // Én rad per klasse per skjerm, verste først
+  const sett = new Map()
+  for (const u of ut) { const id = u.skjerm + '|' + u.klasse; if (!sett.has(id) || sett.get(id).utenfor < u.utenfor) sett.set(id, u) }
+  return (window.__overflow = [...sett.values()].sort((a, b) => b.utenfor - a.utenfor))
+}
+
 class Fanger extends Component {
   state = { feil: null }
   static getDerivedStateFromError(e) { return { feil: e } }

@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
+// Stilen fra pakken, ikke fra unpkg: kartet skal ikke være avhengig av en
+// tredjeparts CDN ved hver sidelast når filen alt ligger i node_modules.
+import 'leaflet/dist/leaflet.css'
 import { color, fmt, days, fisUrl } from '../util'
 import { heatColor } from './useSignups'
 import { useT } from '../i18n'

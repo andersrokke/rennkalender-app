@@ -885,11 +885,18 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 
 /* Ukesøylene: enkel og målbar, ikke et diagrambibliotek for åtte tall. */
 .ad-stolper{display:flex;align-items:flex-end;gap:8px;height:170px;margin-top:14px}
-.ad-stolpe{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.ad-stolpe{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .ad-sokyle{width:100%;max-width:46px;min-height:3px;border-radius:var(--r-xs) var(--r-xs) 0 0;
   background:var(--accent)}
 .ad-tall{font-family:var(--num);font-size:13px;margin-top:5px}
-.ad-uke{font-size:11px;color:var(--mute);margin-top:1px;white-space:nowrap}
+/* Datoen får brytes («28.» over «sep.»). Med nowrap ble hver søyle minst
+   39 px bred, og tolv av dem sprengte kortet på en telefon med 150 px. */
+.ad-uke{font-size:10.5px;line-height:1.15;color:var(--mute);margin-top:2px;text-align:center;word-spacing:100vw}
+@media (max-width:480px){
+  .ad-stolper{gap:5px}
+  /* Annenhver dato på smal skjerm: tolv datoer på 340 px er uleselig uansett. */
+  .ad-stolpe:nth-child(even) .ad-uke{visibility:hidden}
+}
 
 /* Steg-for-steg for treneren. */
 .cs-kort{border-left:3px solid var(--accent)}

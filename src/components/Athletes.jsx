@@ -74,6 +74,9 @@ export default function Athletes({ team }) {
 
       <div className="card">
         <h2>Løpere</h2>
+        {/* Rullbar ramme: seks kolonner pluss to knapper er bredere enn en
+            telefon, og uten rammen henger halve raden utenfor kortet. */}
+        <div className="ad-scroll">
         <table><thead><tr><th>Navn</th><th>Årgang</th><th>FIS-kode</th><th>Renn</th><th>Renndager</th><th></th></tr></thead>
           <tbody>{athletes.map(a => { const s = summary(a.id); return (
             <tr key={a.id}><td>{a.full_name}</td><td>{a.birth_year || '–'}</td><td>{a.fis_code || '–'}</td><td>{s.n}</td><td>{s.d}</td>
@@ -84,6 +87,7 @@ export default function Athletes({ team }) {
                 </div>
               </td></tr>) })}
           </tbody></table>
+        </div>
       </div>
 
       {sel && (
@@ -95,6 +99,7 @@ export default function Athletes({ team }) {
             <button className="btn small link" onClick={() => setDraft(new Set(teamRaces.filter(r => chipState(rowsFor(sel).find(x => x.race_id === r.id)) !== 'unavailable').map(r => r.id)))}>{t('pickAll')}</button>
             <button className="btn small link" onClick={() => setDraft(new Set())}>{t('pickNone')}</button>
           </div>
+          <div className="ad-scroll">
           <table><tbody>{teamRaces.map(r => {
             const s = get(sel, r.id)
             const row = rowsFor(sel).find(x => x.race_id === r.id)
@@ -115,6 +120,7 @@ export default function Athletes({ team }) {
                 {s && <button onClick={() => clear(sel, r.id)}>×</button>}
               </div></td>
             </tr>) })}</tbody></table>
+          </div>
           {draft && (() => {
             const stored = assignedSet(sel)
             const add = [...draft].filter(x => !stored.has(x)).length

@@ -113,12 +113,17 @@ export function svarPa(url, o) {
       if (inn) { const s = new Set(inn[1].split(',').map(x => x.replace(/^"|"$/g, ''))); rader = rader.filter(r => s.has(String(r[k]))) }
       const gte = String(v).match(/^gte\.(.*)$/)
       if (gte) rader = rader.filter(r => String(r[k]) >= gte[1])
+      // Development bruker not.is.null for å holde løpere uten FIS-kode ute.
+      // Uten dette i mocken kom de med, og ga «unique key»-advarsler som
+      // ikke finnes i appen.
+      if (String(v) === 'is.null') rader = rader.filter(r => r[k] == null)
+      if (String(v) === 'not.is.null') rader = rader.filter(r => r[k] != null)
     }
     return rader
   }
   if (rpc) {
     const fn = rpc[1]
-    if (fn === 'my_children') return [{ id: 'lukas', full_name: 'Lukas Røkke', team_name: 'NTG Lillehammer' }]
+    if (fn === 'my_children') return [{ athlete_id: 'lukas', full_name: 'Lukas Røkke', team_name: 'NTG Lillehammer', club: 'NTG', fis_code: '6535004', races: 7, race_days: 12 }]
     if (/^admin_(overview|ops|activity)$/.test(fn)) return { brukere: 5, jobber: [], varsler: [], uker: [] }
     if (fn === 'head_overview' || fn === 'predicted_start') return null
     return enkelt ? null : []
