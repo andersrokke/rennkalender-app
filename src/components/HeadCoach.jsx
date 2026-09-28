@@ -34,6 +34,15 @@ export default function HeadCoach() {
     last()
   }
 
+  async function giTil(gruppe, trener) {
+    if (!trener) return
+    setBusy('gi' + gruppe); setFeil(null)
+    const { error } = await supabase.rpc('sett_gruppetrener', { p_team: gruppe, p_coach: trener })
+    setBusy(null)
+    if (error) return setFeil(error.message)
+    last()
+  }
+
   async function bytt(trener, gruppe, pa) {
     setBusy(trener + gruppe); setFeil(null)
     const { error } = await supabase.rpc('head_set_access', {
@@ -61,7 +70,14 @@ export default function HeadCoach() {
             {d.grupper.map(g => (
               <tr key={g.id}>
                 <td>{g.navn}</td>
-                <td>{g.trener || '–'}</td>
+                <td>
+                  {/* Hovedtreneren kan gi gruppa til en annen trener i huset. */}
+                  <select value={g.trener_id || ''} aria-label={t('hcCoach')} disabled={busy === 'gi' + g.id}
+                    onChange={e => giTil(g.id, e.target.value)}>
+                    {!g.trener_id && <option value="">–</option>}
+                    {d.trenere.map(tr => <option key={tr.id} value={tr.id}>{tr.navn}</option>)}
+                  </select>
+                </td>
                 <td className="n">{g.lopere}</td>
                 <td className="n">{g.okter_30d}</td>
               </tr>

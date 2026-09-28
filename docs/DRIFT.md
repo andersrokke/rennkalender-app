@@ -549,6 +549,40 @@ Juniorgruppa er grupper under det. Hovedtreneren eier laget øverst.
 håndheves av triggeren `teams_ett_niva_trg`, ikke av disiplin. Et tre hadde
 vært mer generelt, men også noe ingen har bedt om.
 
+### Grupper: hvem lager dem, og hvordan man bytter
+
+Hver trener i huset kan opprette grupper under det, eie flere, og bytte
+mellom dem. «Huset» er toppen av det laget treneren står i: laget selv hvis
+det ikke ligger under noe, ellers det det ligger under. Står treneren ikke i
+noe lag - forfremmet fra løper, for eksempel - er huset et toppnivålag hun eier.
+
+| Funksjon | Gjør | Hvem |
+| --- | --- | --- |
+| `opprett_gruppe(navn)` | Ny gruppe under huset, eid av deg. Du står i den etterpå | trener i huset |
+| `bytt_gruppe(lag)` | Setter hvilket lag du står i | trener for laget |
+| `mine_grupper()` | Alle lag du er trener for, huset først | alle |
+| `flytt_loper(løper, lag)` | Flytter en løper mellom grupper i samme hus. Den gamle gruppas planer for henne følger ikke med | trener for begge |
+| `sett_gruppetrener(lag, trener)` | Gir en gruppe til en annen trener i huset. Huset selv kan ikke gis bort | eier av huset |
+
+En trener som er trener for flere lag får en gruppevelger øverst på siden i
+stedet for lagnavnet. `profiles.team_id` er det laget hun står i nå, og alle
+skjermene leser det.
+
+### Vernet på profiles
+
+`profiles update self` hadde ingen `with check`. Det betød at hvem som helst
+kunne kjøre `update profiles set is_admin = true` på sin egen rad gjennom
+REST-API-et - eller sette `team_id` til hvilket som helst lag uten kode.
+
+Triggeren `profiles_vern_trg` avviser begge når kallet kommer direkte som
+`authenticated`. Funksjoner som er `security definer` kjører som eieren og
+slipper gjennom - så alt lagbytte går gjennom `join_team`, `bytt_gruppe`,
+`flytt_loper`, `create_coach_team`, og bare dem. Å gå *ut* av et lag
+(`team_id = null`) er fortsatt lov direkte.
+
+Det betyr at klienten aldri skal skrive `team_id` selv. Gjør den det, får hun
+«Lag byttes gjennom join_team, bytt_gruppe eller flytt_loper».
+
 ### Hvem ser hva
 
 Hovedtreneren har to måter å styre innsynet på, og de dekker hvert sitt behov:
@@ -570,8 +604,10 @@ Alt går gjennom `is_coach_of(t)`, som 26 RLS-regler kaller. Den svarer ja hvis:
 2. du eier laget `t`
 3. du eier laget som `t` ligger under - du er hovedtrener
 4. det finnes en rad i `team_access` for deg og `t`
+5. «alle ser alt» er på i huset, og `t` er huset selv eller en gruppe i det, og du eier en gruppe i det
 
-Punkt 3 og 4 er nye. Hovedtreneren ser alle gruppene sine automatisk, og kan
+Punkt 5 dekker løpere som står rett på huset. Uten det var Oscars egne løpere
+usynlige for de andre trenerne selv med bryteren på. Hovedtreneren ser alle gruppene sine automatisk, og kan
 gi enkelttrenere innsyn i hverandres grupper gjennom `head_set_access()`.
 
 **Innsyn gir samme rettigheter som å være gruppas egen trener, også til å

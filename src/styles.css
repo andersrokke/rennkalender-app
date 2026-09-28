@@ -959,3 +959,13 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 /* Innendørs: et svar, ikke et tomt felt. */
 .tl-inne{margin:4px 0 0;padding:9px 13px;background:var(--sunken);border:1px solid var(--line);
   border-radius:var(--r-s);font-size:14px;color:var(--mute)}
+
+/* Gruppevelgeren i toppen: erstatter lagnavnet når treneren har flere. */
+.topbar .gruppevelger{width:auto;padding:5px 28px 5px 10px;font-size:13.5px;font-weight:600;
+  border-radius:999px;background:var(--panel-2);border-color:transparent;margin-left:8px}
+/* Grupper-kortet på Løpere. */
+.gr-liste{list-style:none;margin:10px 0 14px;padding:0;display:grid;gap:6px}
+.gr-liste li{padding:8px 11px;border:1px solid var(--line);border-radius:var(--r-s);font-size:14px}
+.gr-liste li.na{border-color:var(--accent);background:var(--accent-soft)}
+.gr-na{margin-left:8px;font-size:11.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.ad-table select.flytt{width:auto;max-width:130px;padding:5px 8px;font-size:13px}

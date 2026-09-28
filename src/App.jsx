@@ -31,10 +31,14 @@ export default function App() {
   const [pane, setPane] = useState('list')
   const [planCount, setPlanCount] = useState(0)
   const [recovery, setRecovery] = useState(false)
+  // Lagene treneren er trener for. Er det flere, vises en velger i toppen.
+  const [grupper, setGrupper] = useState([])
 
   const loadProfile = useCallback(async uid => {
     const { data: p } = await supabase.from('profiles').select('*').eq('id', uid).single()
     setProfile(p)
+    if (p?.role === 'coach') supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))
+    else setGrupper([])
     if (p?.team_id) {
       const { data: t } = await supabase.from('teams').select('*').eq('id', p.team_id).single()
       setTeam(t)
@@ -154,7 +158,16 @@ export default function App() {
   return (
     <LangContext.Provider value={lang}>
       <header className="topbar">
-        <h1>{d.appTitle}{team && <small>{team.name}</small>}</h1>
+        <h1>{d.appTitle}{team && grupper.length < 2 && <small>{team.name}</small>}</h1>
+        {team && grupper.length > 1 && (
+          <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
+            onChange={async e => {
+              const { error } = await supabase.rpc('bytt_gruppe', { p_team: e.target.value })
+              if (error) alert(error.message); else reload()
+            }}>
+            {grupper.map(g => <option key={g.id} value={g.id}>{g.er_hus ? `${g.name} · ${d.groupHouse}` : g.name}</option>)}
+          </select>
+        )}
         <nav>{tabs.map(([k, l]) => <button key={k} className={active === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</nav>
         <div className="spacer" />
         <Seg opts={[['no', 'NO'], ['en', 'EN']]} value={lang} onPick={v => setPref({ lang: v })} />

@@ -5,6 +5,7 @@ import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
 import CoachStart from './CoachStart.jsx'
 import HeadCoach from './HeadCoach.jsx'
+import Grupper from './Grupper.jsx'
 
 // Coach: per-athlete overview and status editing.
 export default function Athletes({ team }) {
@@ -17,6 +18,18 @@ export default function Athletes({ team }) {
   // Draft of which races this athlete should be assigned, saved in one go.
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
+  // Lagene jeg er trener for i dette huset, til «flytt til».
+  const [grupper, setGrupper] = useState([])
+  const lastGrupper = () => supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))
+  useEffect(() => { lastGrupper() }, [team.id])
+
+  async function flytt(a, til) {
+    if (!til) return
+    const { error } = await supabase.rpc('flytt_loper', { p_athlete: a.id, p_team: til })
+    if (error) return alert(error.message)
+    if (sel === a.id) setSel(null)
+    load(); lastGrupper()
+  }
 
   // Feil kode på avveie, eller noen som har sluttet. Før kunne bare løperen
   // selv gå ut, og det er feil vei: den som oppdager det er treneren.
@@ -70,6 +83,7 @@ export default function Athletes({ team }) {
   return (
     <div className="page">
       <HeadCoach />
+      <Grupper team={team} grupper={grupper} onEndret={lastGrupper} />
       <CoachStart team={team} antall={athletes.length} />
 
       <div className="card">
@@ -83,6 +97,12 @@ export default function Athletes({ team }) {
               <td>
                 <div className="row" style={{ gap: 6, flexWrap: 'nowrap' }}>
                   <button className="btn small" onClick={() => openAthlete(sel === a.id ? null : a.id)}>{sel === a.id ? 'Lukk' : 'Planlegg'}</button>
+                  {grupper.length > 1 && (
+                    <select className="flytt" value="" aria-label={t('grMoveTo')} onChange={e => flytt(a, e.target.value)}>
+                      <option value="">{t('grMoveTo')}</option>
+                      {grupper.filter(g => g.id !== team.id).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    </select>
+                  )}
                   <button className="btn small danger" onClick={() => fjern(a)}>Fjern</button>
                 </div>
               </td></tr>) })}

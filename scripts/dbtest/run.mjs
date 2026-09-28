@@ -11,7 +11,7 @@
 // fordi den mocker nettverket. Her kjøres alt mot en ekte database.
 import EmbeddedPostgres from 'embedded-postgres'
 import pg from 'pg'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync, readdirSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { hentBruk } from './frontend-bruk.mjs'
@@ -27,12 +27,20 @@ const strip = sql => sql.replace(
   /create extension if not exists ["']?(pg_cron|pg_net|pg_stat_statements|supabase_vault|uuid-ossp)["']?[^;]*;/gi,
   '-- (utelatt i lokal validering)')
 
+// Rydd etter forrige løp uansett hvordan det endte. Døde det midt i, kjørte
+// aldri pgdb.stop(), og initdb nekter å bruke en mappe som ikke er tom.
+rmSync(join(HER, '.data'), { recursive: true, force: true })
 const pgdb = new EmbeddedPostgres({ databaseDir: join(HER, '.data'), user: 'postgres', password: 'x', port: PORT, persistent: false })
 await pgdb.initialise(); await pgdb.start()
 const c = new pg.Client({ host: 'localhost', port: PORT, user: 'postgres', password: 'x', database: 'postgres' })
 await c.connect()
 
 const fail = m => { console.error('FEIL  ' + m); process.exitCode = 1 }
+// Et kast utenfor try/catch skal aldri avslutte løpet stille med «feil: 0».
+process.on('unhandledRejection', e => {
+  console.error('FEIL  uventet, løpet stoppet: ' + (e?.message || e))
+  process.exit(1)
+})
 const ok = m => console.log('OK    ' + m)
 
 await c.query(readFileSync(join(HER, 'shim.sql'), 'utf8'))
@@ -405,6 +413,80 @@ const nyeKoder = await q(`select invite_code from teams where name in ('Rett inn
 nyeKoder.length === 2 && nyeKoder.every(k => /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(k.invite_code))
   ? ok('begge nye lag fikk en lesbar kode') : fail(`koder: ${JSON.stringify(nyeKoder)}`)
 
+
+
+// --- grupper for alle trenere i huset ---
+// Kari (C1) eier G1 under P. Hun oppretter en gruppe til: den skal havne
+// under P, eies av henne, og hun skal stå i den etterpå.
+const u16 = (await as(C1, `select public.opprett_gruppe('Teknikk U16') as id`)).rows[0].id
+const u16rad = await q('select parent_team_id, owner_id from teams where id=$1', [u16])
+const c1na = await q('select team_id from profiles where id=$1', [C1])
+u16rad[0].parent_team_id === P && u16rad[0].owner_id === C1 && c1na[0].team_id === u16
+  ? ok('en gruppetrener opprettet en gruppe til under huset, og står i den') : fail(`opprett_gruppe: ${JSON.stringify([u16rad[0], c1na[0]])}`)
+await as(C1, 'select public.bytt_gruppe($1)', [G1])
+;(await q('select team_id from profiles where id=$1', [C1]))[0].team_id === G1
+  ? ok('treneren byttet tilbake til sin første gruppe') : fail('bytt_gruppe virket ikke')
+try { await as(C1, 'select public.bytt_gruppe($1)', [G2]); fail('byttet til en gruppe hun ikke er trener for') }
+catch (e) { e.message.includes('ikke trener') ? ok('kan ikke bytte til en gruppe man ikke er trener for') : fail(e.message) }
+const hOpp = (await as(H, `select public.opprett_gruppe('Oscars gruppe') as id`)).rows[0].id
+;(await q('select parent_team_id from teams where id=$1', [hOpp]))[0].parent_team_id === P
+  ? ok('hovedtreneren opprettet en gruppe til seg selv under huset') : fail('hovedtrenerens gruppe havnet feil')
+await as(H, 'select public.bytt_gruppe($1)', [P])
+try { await as(ADM, `select public.opprett_gruppe('Snik')`); fail('en utenforstående opprettet gruppe i huset') }
+catch (e) { ok('en som ikke står i huset kan ikke opprette grupper der') }
+try { await as(L2, `select public.opprett_gruppe('Løpergruppe')`); fail('en løper opprettet gruppe') }
+catch { ok('en løper kan ikke opprette grupper') }
+
+const mineGr = (await as(H, 'select * from public.mine_grupper()')).rows
+mineGr[0]?.er_hus && mineGr.length >= 4 ? ok(`mine_grupper gir huset først og ${mineGr.length} lag for hovedtreneren`)
+  : fail(`mine_grupper: ${JSON.stringify(mineGr.map(m => m.name))}`)
+
+// Flytting: L2 står i G1. Hovedtreneren flytter henne til G2.
+await as(H, `insert into athlete_races(athlete_id,race_id,team_id,status)
+  select $1, id, $2, 'planned' from races limit 1`, [L2, G1]).catch(() => {})
+await as(H, 'select public.flytt_loper($1,$2)', [L2, G2])
+const l2 = await q('select team_id from profiles where id=$1', [L2])
+const gamle = await q('select count(*)::int n from athlete_races where athlete_id=$1 and team_id=$2', [L2, G1])
+l2[0].team_id === G2 && gamle[0].n === 0 ? ok('løperen ble flyttet, og den gamle gruppas planer for henne er borte')
+  : fail(`flytt: team=${l2[0].team_id}, gamle planer=${gamle[0].n}`)
+try { await as(C1, 'select public.flytt_loper($1,$2)', [L2, G1]); fail('Kari flyttet en løper ut av en gruppe hun ikke har') }
+catch (e) { e.message.includes('ikke trener') ? ok('kan ikke flytte en løper fra en gruppe man ikke er trener for') : fail(e.message) }
+
+// Overdragelse: H gir G1 til C2.
+await as(H, 'select public.sett_gruppetrener($1,$2)', [G1, C2])
+;(await q('select owner_id from teams where id=$1', [G1]))[0].owner_id === C2
+  ? ok('hovedtreneren ga en gruppe til en annen trener') : fail('overdragelsen skjedde ikke')
+await as(H, 'select public.sett_gruppetrener($1,$2)', [G1, C1])
+try { await as(C1, 'select public.sett_gruppetrener($1,$2)', [G2, C1]); fail('en gruppetrener tok en gruppe') }
+catch (e) { e.message.includes('Bare hovedtrener') ? ok('bare hovedtreneren kan gi bort grupper') : fail(e.message) }
+try { await as(H, 'select public.sett_gruppetrener($1,$2)', [P, C1]); fail('huset ble gitt bort') }
+catch (e) { e.message.includes('Huset selv') ? ok('huset selv kan ikke gis bort') : fail(e.message) }
+
+// Vernet: direkte oppdatering som authenticated.
+try { await as(L2, 'update profiles set is_admin = true where id = $1', [L2]); fail('en løper gjorde seg selv til administrator') }
+catch (e) { e.message.includes('is_admin') ? ok('is_admin kan ikke settes direkte - hullet er tettet') : fail(e.message) }
+try { await as(L2, 'update profiles set team_id = $2 where id = $1', [L2, G1]); fail('en løper hoppet inn i et lag uten kode') }
+catch (e) { e.message.includes('byttes gjennom') ? ok('team_id kan ikke settes direkte') : fail(e.message) }
+await as(L2, 'update profiles set team_id = null where id = $1', [L2])
+ok('å gå ut av laget (team_id = null) er fortsatt lov direkte')
+await as(L2, 'update profiles set full_name = $2 where id = $1', [L2, 'Løper To'])
+ok('andre felt kan fortsatt oppdateres direkte')
+const g2kode = (await q('select invite_code k from teams where id=$1', [G2]))[0].k
+await as(L2, 'select public.join_team($1)', [g2kode])
+;(await q('select team_id from profiles where id=$1', [L2]))[0].team_id === G2
+  ? ok('join_team går gjennom vernet (security definer)') : fail('join_team ble stoppet av vernet')
+const NYC = 'cccccccc-0000-0000-0000-000000000002'
+await c.query(`insert into auth.users(id,email,raw_user_meta_data) values ($1,'nyc@test.no','{"full_name":"Ny Coach"}')`, [NYC])
+const nyLagId = (await as(NYC, `select public.create_coach_team('Eget lag') as id`)).rows[0].id
+const nyc = await q('select team_id, role::text r from profiles where id=$1', [NYC])
+nyc[0].team_id === nyLagId && nyc[0].r === 'coach' ? ok('create_coach_team setter team_id og rolle selv')
+  : fail(`create_coach_team: ${JSON.stringify(nyc[0])}`)
+
+// Huset selv under «alle ser alt»: en løper rett på P skal synes for gruppetrenerne.
+!(await ser(C1, P)) ? ok('uten bryteren ser ikke Kari huset selv') : fail('Kari ser huset uten bryteren')
+await as(H, 'select public.head_set_open(true)')
+await ser(C1, P) ? ok('med «alle ser alt» ser Kari også løperne som står rett på huset') : fail('huset selv er fortsatt usynlig')
+await as(H, 'select public.head_set_open(false)')
 
 // --- rettighetsrevisjon: alt frontend kaller, som authenticated ---
 //

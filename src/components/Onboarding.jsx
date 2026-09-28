@@ -89,7 +89,9 @@ export default function Onboarding({ profile, onDone }) {
         const { data: teamId, error } = await supabase.rpc('create_coach_team', { p_name: f.get('team') })
         if (error) throw error
         const { error: e2 } = await supabase.from('profiles')
-          .update({ full_name: name, role: 'coach', team_id: teamId, onboarded: true, lang }).eq('id', profile.id)
+          // team_id og rolle settes av create_coach_team selv; profiles er vernet
+          // mot at klienten skriver team_id direkte.
+          .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       } else if (mode === 'team') {
         const { error } = await supabase.rpc('join_team', { code })

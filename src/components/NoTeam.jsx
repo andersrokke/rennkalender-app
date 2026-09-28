@@ -21,9 +21,9 @@ export default function NoTeam({ profile, onDone }) {
       p_name: teamName.trim(), p_club: club.trim()
     })
     if (error) { setErr(error.message); setBusy(false); return }
-    const { error: e2 } = await supabase.from('profiles').update({ role: 'coach', team_id: teamId }).eq('id', profile.id)
+    // create_coach_team setter team_id og rolle selv.
     setBusy(false)
-    if (e2) setErr(e2.message); else onDone()
+    onDone()
   }
 
   return (
