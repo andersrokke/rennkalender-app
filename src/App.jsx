@@ -113,7 +113,10 @@ export default function App() {
     : isCoach
       // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
       // meaning here. For the athlete, season and plan are now the same tab.
-      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach], ['settings', d.settingsTabCoach], ['feedback', d.fbTab]]
+      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach],
+        // «Lag og profil» når det finnes et lag. En administrator uten lag
+        // har bare profilen sin der, og da lover navnet noe siden ikke har.
+        ['settings', team ? d.settingsTabCoach : d.settingsTab], ['feedback', d.fbTab]]
       // Løperen lander på «Neste renn»: rennet som kommer, fristen og
       // antatt startnummer, i stedet for hele kalenderen sortert på dato.
       : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab], ['feedback', d.fbTab]]

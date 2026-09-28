@@ -126,8 +126,6 @@ export default function Settings({ profile, team, isCoach, onChange }) {
           ))}
         </div>
       )}
-      <PassordKort />
-
       <div className="card">
         <h2>{t('myProfile')}</h2>
         <form onSubmit={saveProfile}>
@@ -153,6 +151,11 @@ export default function Settings({ profile, team, isCoach, onChange }) {
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {msg && <div className="notice">{msg}</div>}
       </div>
+
+      {/* Passordet hører til kontoen, ikke til laget. Det sto øverst, som det
+          første og største på en side om lag og profil - og for en som ikke har
+          lag var det alt siden inneholdt. */}
+      <PassordKort />
     </div>
   )
 }
