@@ -68,7 +68,9 @@ Deno.serve(async (req) => {
       // Et landutvalg hos FIS gir både renn som går i landet og renn landet
       // arrangerer andre steder. Vertslandet leses av stedsnavnet; bare renn
       // som faktisk går i landet tas med.
+      // World Cup er ikke med i kalenderen.
       const funnet = lesKalender(await r.text()).filter((x: any) => u.cup ? x.category === u.cup : x.host === u.nasjon)
+        .filter((x: any) => !String(x.category).split(" • ").includes("WC"))
         .map((x: any) => ({ ...x, host_nation: x.host, organiser_nation: x.nation !== x.host ? x.nation : null }));
       if (!funnet.length) { logg.push({ cup, funnet: 0, merknad: "Ingen rader lest - ingenting endret" }); continue; }
 

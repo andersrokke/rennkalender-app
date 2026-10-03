@@ -8,10 +8,13 @@ export const grp = c => ['NOR', 'SWE', 'FIN'].includes(c) ? c : ASIA.includes(c)
 // Gruppen et renn hører til i filteret og fargene. Utenfor Norden skilles
 // Europacupen fra resten: EC er det laget planlegger sesongen rundt, mens de
 // øvrige rennene i Alpene er mange og skal kunne slås av og på for seg.
+export const ALPELAND = ['AUT', 'GER', 'SUI', 'FRA', 'ITA']
 export const gruppe = r => {
   const g = grp(r.host_nation)
   if (g !== 'EUR') return g
-  return String(r.category || '').split(' • ').some(c => c === 'EC') ? 'EUR' : 'ALP'
+  if (String(r.category || '').split(' • ').some(c => c === 'EC')) return 'EUR'
+  // Alpelandene har hvert sitt valg i filteret; resten av Europa deler ett.
+  return ALPELAND.includes(r.host_nation) ? r.host_nation : 'ALP'
 }
 export function fmt(r) {
   const [, m1, d1] = r.start_date.split('-'), [, m2, d2] = r.end_date.split('-')
