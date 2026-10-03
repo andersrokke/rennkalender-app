@@ -58,6 +58,8 @@ export default function Onboarding({ profile, onDone }) {
   // med i et lag, og koden står der.
   const fraLenke = hentLagkode()
   const fraForelder = hentForeldrekode()
+  const [epost, setEpost] = useState('')
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setEpost(data?.user?.email || '')) }, [])
   const [mode, setMode] = useState(fraLenke ? 'team' : fraForelder ? 'parent' : null)
   // Skigymnasene finnes fra start, så en løper kan velge sitt uten å vente
   // på at treneren har kommet i gang.
@@ -192,6 +194,12 @@ export default function Onboarding({ profile, onDone }) {
             {mode !== 'coach' && mode !== 'parent' && <p className="ob-later">{L.later}</p>}
           </form>
         )}
+
+        {/* Uten denne var det ingen vei ut for den som havnet her på feil konto. */}
+        <p className="ob-later">
+          {epost && <>{L.signedInAs} {epost} · </>}
+          <button type="button" className="btn small link" onClick={() => supabase.auth.signOut()}>{L.signOutOther}</button>
+        </p>
       </div>
     </div>
   )
