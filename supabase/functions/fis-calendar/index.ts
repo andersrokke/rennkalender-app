@@ -10,10 +10,16 @@ import { lesKalender } from "./parse.js";
 // eller er nede - gjøres det ingenting, og svaret sier det.
 
 const UA = { "user-agent": "Mozilla/5.0 Rennkalender/1.0 (public FIS data)" };
-// Bare cupene denne funksjonen eier. De nordiske rennene og Europacupen er
-// lagt inn for hånd med egne merknader, og skal ikke overskrives herfra.
-const TILLATT = ["FEC"];
-const ISO2: Record<string, string> = { CHN: "cn", KOR: "kr", JPN: "jp", KAZ: "kz", MGL: "mn" };
+// To slags utvalg: en cup (alle renn i kategorien, uansett land) eller et
+// land (alle renn som går der, uansett kategori). De nordiske rennene er lagt
+// inn for hånd med egne merknader, og hentes ikke herfra.
+const CUPER = ["FEC"];
+const LAND = ["AUT", "GER", "SUI", "FRA", "ITA"];
+const ISO2: Record<string, string> = { CHN: "cn", KOR: "kr", JPN: "jp", KAZ: "kz", MGL: "mn", AUT: "at", GER: "de", SUI: "ch", FRA: "fr", ITA: "it" };
+// Kartoppslag tar et drøyt sekund hver. Ett kjør slår opp steder til tida er
+// brukt opp; resten tas neste natt. Rennene legges inn med en gang uansett,
+// og får markør på kartet når stedet deres er slått opp.
+const OPPSLAG_BUDSJETT_MS = 85_000;
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b, null, 1), { status, headers: { "content-type": "application/json" } });
 
 // Koordinater til et sted som ikke finnes fra før. Svarer null heller enn å
@@ -27,8 +33,17 @@ async function finnKoordinater(sted: string, nasjon: string) {
     const d = await r.json();
     return d?.[0] ? { lat: +d[0].lat, lng: +d[0].lon } : null;
   };
+  // FIS skriver gjerne to navn («Fassa | San Giovanni di Fassa»,
+  // «Sarentino/Sarntal»). Hele navnet prøves først, så hver del for seg.
+  const forsok = [sted, sted.replace(/\b(Ski )?Resorts?\b/gi, "").trim(),
+    ...sted.split(/[|\/,(]/).map((d) => d.replace(/\)/g, "").trim())].filter((q, i, a) => q.length > 2 && a.indexOf(q) === i);
   try {
-    return (await sok(sted)) ?? (await sok(sted.replace(/\b(Ski )?Resorts?\b/gi, "").trim()));
+    for (const q of forsok.slice(0, 3)) {
+      const k = await sok(q);
+      if (k) return k;
+      await new Promise((f) => setTimeout(f, 1100));
+    }
+    return null;
   } catch { return null; }
 }
 
@@ -39,23 +54,32 @@ Deno.serve(async (req) => {
   if (req.method === "POST") { try { body = await req.json(); } catch { /* tom kropp */ } }
   const dry = u.searchParams.get("dry") === "1" || body.dry === true;
   const season = /^\d{4}$/.test(String(body.season ?? "")) ? String(body.season) : "2027";
-  const onsket: string[] = Array.isArray(body.categories) ? body.categories : TILLATT;
-  const cuper = onsket.filter((c) => TILLATT.includes(c));
+  const start = Date.now();
+  const cuper = (Array.isArray(body.categories) ? body.categories : CUPER).filter((c: string) => CUPER.includes(c));
+  const land = (Array.isArray(body.nations) ? body.nations : LAND).filter((n: string) => LAND.includes(n));
+  const utvalg = [...cuper.map((c: string) => ({ cup: c, nasjon: null as string | null })), ...land.map((n: string) => ({ cup: null as string | null, nasjon: n }))];
 
   const logg: any[] = [];
-  for (const cup of cuper) {
+  for (const u of utvalg) {
+    const cup = u.cup ?? u.nasjon;
     try {
-      const r = await fetch(`https://www.fis-ski.com/DB/alpine-skiing/calendar-results.html?sectorcode=AL&seasoncode=${season}&categorycode=${cup}&seasonmonth=X-${season}&saveselection=-1`, { headers: UA });
+      const r = await fetch(`https://www.fis-ski.com/DB/alpine-skiing/calendar-results.html?sectorcode=AL&seasoncode=${season}&categorycode=${u.cup ?? ""}&nationcode=${u.nasjon ?? ""}&seasonmonth=X-${season}&saveselection=-1`, { headers: UA });
       if (!r.ok) { logg.push({ cup, feil: `FIS svarte ${r.status}` }); continue; }
-      const funnet = lesKalender(await r.text()).filter((x: any) => x.category === cup);
+      // I et landutvalg er landet vi spurte om vertslandet, og nasjonen FIS
+      // viser er arrangøren. I et cuputvalg finnes bare den FIS viser.
+      const funnet = lesKalender(await r.text()).filter((x: any) => !u.cup || x.category === u.cup)
+        .map((x: any) => ({ ...x, host_nation: u.nasjon ?? x.nation, organiser_nation: u.nasjon && x.nation !== u.nasjon ? x.nation : null }));
       if (!funnet.length) { logg.push({ cup, funnet: 0, merknad: "Ingen rader lest - ingenting endret" }); continue; }
 
       const navn = [...new Set(funnet.map((x: any) => x.place))];
       const { data: kjente } = await supabase.from("venues").select("id, name").in("name", navn);
       const sted = new Map((kjente || []).map((v: any) => [v.name, v.id]));
       const nyeSteder: any[] = [];
+      let utsatt = 0;
       for (const x of funnet) {
         if (sted.has(x.place)) continue;
+        sted.set(x.place, null);
+        if (Date.now() - start > OPPSLAG_BUDSJETT_MS) { utsatt++; continue; }
         const k = await finnKoordinater(x.place, x.host_nation);
         nyeSteder.push({ sted: x.place, land: x.host_nation, koordinater: k });
         sted.set(x.place, null);
@@ -77,7 +101,7 @@ Deno.serve(async (req) => {
         const note = x.cancelled ? "Avlyst" : null;
         const rad = { start_date: x.start_date, end_date: x.end_date, place: x.place, events: x.events, gender: x.gender };
         if (!g) {
-          nye.push({ ...rad, fis_event_id: x.fis_event_id, host_nation: x.host_nation, category: cup, season, venue_id: sted.get(x.place) ?? null, note });
+          nye.push({ ...rad, fis_event_id: x.fis_event_id, host_nation: x.host_nation, organiser_nation: x.organiser_nation, category: x.category, season, venue_id: sted.get(x.place) ?? null, note });
           continue;
         }
         const diff: any = {};
@@ -92,7 +116,7 @@ Deno.serve(async (req) => {
         if (nye.length) { const { error } = await supabase.from("races").insert(nye); if (error) throw error; }
         for (const e of endret) { const { error } = await supabase.from("races").update(e.diff).eq("id", e.id); if (error) throw error; }
       }
-      logg.push({ cup, funnet: funnet.length, nye: nye.map((n) => `${n.place} ${n.start_date}`), endret, nyeSteder });
+      logg.push({ utvalg: cup, funnet: funnet.length, nye: nye.length, endret, nyeSteder, stederUtsattTilNesteKjor: utsatt });
     } catch (e) { logg.push({ cup, feil: String((e as any)?.message ?? e).slice(0, 200) }); }
   }
   return json({ dry, season, logg });

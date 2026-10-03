@@ -44,7 +44,10 @@ export function lesKalender(html) {
     const kjonn = [/gender__item_l">\s*W\s*</.test(del) && 'W', /gender__item_m">\s*M\s*</.test(del) && 'M'].filter(Boolean).join(' ')
     sett.add(id[1])
     ut.push({
-      fis_event_id: +id[1], start_date: d.start, end_date: d.end, place: ren(sted[1]), host_nation: nasjon[1],
+      // Nasjonen FIS viser er arrangørens. Som oftest er det også landet
+      // rennet går i, men ikke alltid: Luxembourg kjører mesterskapet sitt i
+      // Østerrike. Den som kaller avgjør hva som er vertsland.
+      fis_event_id: +id[1], start_date: d.start, end_date: d.end, place: ren(sted[1]), nation: nasjon[1],
       category: graa[0], events: graa[1], gender: kjonn || 'W M',
       // FIS skriver «Not cancelled» på renn som går; «Cancelled» alene betyr avlyst.
       cancelled: /title="Cancelled"/.test(del)

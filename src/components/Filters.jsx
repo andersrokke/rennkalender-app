@@ -14,7 +14,7 @@ export function applyFilter(races, f) {
   })
 }
 
-const MONTHS = [['all', 'Alle'], ['2026-11', 'Nov'], ['2026-12', 'Des'], ['2027-01', 'Jan'], ['2027-02', 'Feb'], ['2027-03', 'Mar'], ['2027-04', 'Apr']]
+const MONTHS = [['all', 'Alle'], ['2026-10', 'Okt'], ['2026-11', 'Nov'], ['2026-12', 'Des'], ['2027-01', 'Jan'], ['2027-02', 'Feb'], ['2027-03', 'Mar'], ['2027-04', 'Apr']]
 
 export default function Filters({ f, setF, view, setView, extra, onDone }) {
   const t = useT()

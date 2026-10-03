@@ -18,10 +18,10 @@ const rader = lesKalender(readFileSync(new URL('./fixtures/fis-kalender-fec.html
 sjekk('to arrangementer i utsnittet', rader.length === 2)
 const alp = rader.find(r => r.fis_event_id === 63786)
 sjekk('Alpensia leses riktig', !!alp && lik(alp, { fis_event_id: 63786, start_date: '2027-01-28', end_date: '2027-02-04',
-  place: 'Alpensia Resort', host_nation: 'KOR', category: 'FEC', events: '8xSL', gender: 'W M', cancelled: false }))
+  place: 'Alpensia Resort', nation: 'KOR', category: 'FEC', events: '8xSL', gender: 'W M', cancelled: false }))
 const wan = rader.find(r => r.fis_event_id === 64468)
 sjekk('Wanlong leses riktig', !!wan && wan.start_date === '2026-12-08' && wan.end_date === '2026-12-11'
-  && wan.host_nation === 'CHN' && wan.events === '4xGS 4xSL')
+  && wan.nation === 'CHN' && wan.events === '4xGS 4xSL')
 sjekk('tom side gir ingen rader', lesKalender('<html></html>').length === 0)
 sjekk('avlyst renn merkes', lesKalender(readFileSync(new URL('./fixtures/fis-kalender-fec.html', import.meta.url), 'utf8')
   .replace('title="Not cancelled"', 'title="Cancelled"')).some(r => r.cancelled))
