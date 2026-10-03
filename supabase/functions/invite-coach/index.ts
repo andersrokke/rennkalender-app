@@ -69,16 +69,24 @@ Deno.serve(async (req) => {
   try { id = (await req.json())?.id; } catch { /* tom body */ }
   if (!id) return reply({ sent: false, reason: "mangler id" });
 
+  // Invitasjonen tas før den sendes: bare det første kallet får raden, fordi
+  // sent_at må være tom. Funksjonen kan kalles av hvem som helst med den
+  // offentlige nøkkelen, og uten dette kunne samme invitasjon sendes om og om
+  // igjen. En ny utsending går gjennom invitasjonsfunksjonene i basen, som
+  // nullstiller sent_at - og de krever administrator eller hovedtrener.
   const { data: inv } = await supabase
     .from("coach_invites")
+    .update({ sent_at: new Date().toISOString(), send_error: null })
+    .eq("id", id).is("sent_at", null)
     .select("id, email, note, invited_by:profiles!coach_invites_invited_by_fkey(full_name)")
-    .eq("id", id).maybeSingle();
-  if (!inv) return reply({ sent: false, reason: "fant ikke invitasjonen" });
+    .maybeSingle();
+  if (!inv) return reply({ sent: false, reason: "allerede sendt, eller finnes ikke" });
 
-  // Feiler noe under, skrives grunnen på invitasjonen. Da står den i lista
-  // med en forklaring i stedet for å se ut som om den gikk fint.
+  // Feiler noe under, skrives grunnen på invitasjonen og den frigis igjen. Da
+  // står den i lista med en forklaring i stedet for å se ut som om den gikk fint.
   const giUpp = async (grunn: string) => {
-    await supabase.from("coach_invites").update({ send_error: grunn.slice(0, 500) }).eq("id", inv.id);
+    await supabase.from("coach_invites")
+      .update({ send_error: grunn.slice(0, 500), sent_at: null }).eq("id", inv.id);
     return reply({ sent: false, reason: grunn });
   };
 
@@ -98,7 +106,5 @@ Deno.serve(async (req) => {
   });
   if (!r.ok) return giUpp(`${r.via}: ${r.error}`);
 
-  await supabase.from("coach_invites")
-    .update({ sent_at: new Date().toISOString(), send_error: null }).eq("id", inv.id);
   return reply({ sent: true, to: inv.email, id: inv.id });
 });

@@ -978,6 +978,6 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
    skjemafelt den bredere enn kortet på de smaleste skjermene. */
 .cs-steg li>.cs-tekst{flex:1 1 0;min-width:0}
 
-/* Modusbyttet i toppen er for brede skjermer; på telefon står det øverst på
-   admin-siden i stedet, så toppen ikke får en fjerde rad med knapper. */
-@media (max-width:900px){.topbar .modus{display:none}}
+/* Modusbyttet står i toppen på alle skjermer. Det er veien tilbake når man
+   har byttet til forelder eller løper, og kan ikke være gjemt på telefon. */
+.topbar .modus .seg button{text-transform:capitalize}

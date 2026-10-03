@@ -80,7 +80,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     await supabase.from('profiles').update({ team_id: null }).eq('id', profile.id); onChange()
   }
   const [skoler, setSkoler] = useState([])
-  useEffect(() => { if (!isCoach && !team) supabase.rpc('skigymnas').then(({ data }) => setSkoler(data || [])) }, [isCoach, team?.id])
+  useEffect(() => { if (!isCoach && profile.role !== 'parent' && !team) supabase.rpc('skigymnas').then(({ data }) => setSkoler(data || [])) }, [isCoach, team?.id])
   async function velgSkole(id) {
     if (!id) return
     const { error } = await supabase.rpc('velg_skigymnas', { p_team: id })
@@ -96,11 +96,25 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     setFkode(data)
   }
 
+  // Forelderen legger inn koden hun har fått fra løperen. Koden er den eneste
+  // veien inn: ikke navn, ikke FIS-kode.
+  const [barnekode, setBarnekode] = useState('')
+  const [barnMsg, setBarnMsg] = useState(null)
+  async function kobleBarn(e) {
+    e.preventDefault(); setBarnMsg(null)
+    const { data, error } = await supabase.rpc('link_guardian', { code: barnekode.trim() })
+    if (error) return setBarnMsg({ bad: true, text: error.message })
+    if (!data?.length) return setBarnMsg({ bad: true, text: t('codeInvalid') })
+    setBarnekode(''); setBarnMsg({ text: t('linkChildDone').replace('{n}', data[0].full_name || '') })
+    onChange()
+  }
+
   async function joinTeam(e) {
     e.preventDefault(); setJoining(true); setJoinErr(null)
-    const { error } = await supabase.rpc('join_team', { code: joinCode.trim() })
+    const { data: lagId, error } = await supabase.rpc('join_team', { code: joinCode.trim() })
     setJoining(false)
     if (error) { setJoinErr(error.message); return }
+    if (!lagId) { setJoinErr(t('codeInvalid')); return }
     setJoinCode(''); onChange()
   }
 
@@ -115,7 +129,9 @@ export default function Settings({ profile, team, isCoach, onChange }) {
             <div style={{ marginTop: 10 }}><button className="btn small primary">Lagre</button></div></form>
         </div>
       )}
-      {!isCoach && !team && (
+      {/* Bare løpere blir med i lag. En forelder hører ikke til noe lag - hun
+          er koblet til barnet sitt, ikke til skigymnaset. */}
+      {isAthlete && !team && (
         <div className="card">
           <h2>{t('joinTeam')}</h2>
           <p className="muted">{t('joinHint')}</p>
@@ -129,6 +145,19 @@ export default function Settings({ profile, team, isCoach, onChange }) {
             <div style={{ marginTop: 10 }}><button className="btn small primary" disabled={joining}>{t('join')}</button></div>
           </form>
           {joinErr && <div className="error">{joinErr}</div>}
+        </div>
+      )}
+      {profile.role === 'parent' && (
+        <div className="card">
+          <h2>{t('linkChildTitle')}</h2>
+          <p className="muted">{t('linkChildSub')}</p>
+          <form onSubmit={kobleBarn} className="cs-inviter">
+            <input required value={barnekode} placeholder="K7RF2M" aria-label={t('linkChildTitle')}
+              autoCapitalize="characters" autoCorrect="off" spellCheck="false"
+              onChange={e => { setBarnekode(e.target.value); setBarnMsg(null) }} />
+            <button className="btn primary small" disabled={barnekode.trim().length < 4}>{t('linkBtn')}</button>
+          </form>
+          {barnMsg && <p className={barnMsg.bad ? 'error' : 'notice'} style={{ margin: '8px 0 0' }}>{barnMsg.text}</p>}
         </div>
       )}
       {isAthlete && (

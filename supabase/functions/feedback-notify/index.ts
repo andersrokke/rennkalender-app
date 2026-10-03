@@ -51,11 +51,17 @@ Deno.serve(async (req) => {
   try { id = (await req.json())?.id; } catch { /* tom body */ }
   if (!id) return reply({ sent: false, reason: "mangler id" });
 
+  // Saken tas før varselet sendes: bare det første kallet får raden, fordi
+  // notified_at må være tom. Funksjonen kan kalles av hvem som helst med den
+  // offentlige nøkkelen, og uten dette kunne samme varsel sendes om og om igjen.
   const { data: f, error } = await supabase
     .from("feedback")
+    .update({ notified_at: new Date().toISOString() })
+    .eq("id", id).is("notified_at", null)
     .select("id, kind, title, body, area, user_agent, author:profiles!feedback_author_id_fkey(full_name)")
-    .eq("id", id).maybeSingle();
-  if (error || !f) return reply({ sent: false, reason: error?.message ?? "fant ikke saken" });
+    .maybeSingle();
+  if (error || !f) return reply({ sent: false, reason: error?.message ?? "allerede varslet, eller finnes ikke" });
+  const frigi = () => supabase.from("feedback").update({ notified_at: null }).eq("id", f.id);
 
   // Mottakerne er de som er merket som administrator. Ingen adresse står i
   // koden, så den endres i basen og ikke i en ny utrulling.
@@ -66,7 +72,7 @@ Deno.serve(async (req) => {
     const { data } = await supabase.auth.admin.getUserById(a.id);
     if (data?.user?.email) to.push(data.user.email);
   }
-  if (!to.length) return reply({ sent: false, reason: "ingen profil er merket is_admin" });
+  if (!to.length) { await frigi(); return reply({ sent: false, reason: "ingen profil er merket is_admin" }); }
 
   const who = (f as any).author?.full_name ?? "en bruker";
   const r = await sendMail({
@@ -74,5 +80,7 @@ Deno.serve(async (req) => {
     subject: `${KIND[f.kind as keyof typeof KIND] ?? "Tilbakemelding"}: ${f.title}`,
     html: html(f, who),
   });
+  // Gikk det ikke, frigis saken så et nytt forsøk kan varsle.
+  if (!r.ok) await frigi();
   return reply({ sent: r.ok, via: r.via, reason: r.error, to, id: f.id });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
-import { tabForNav, navForState } from './nav'
+import { tabForNav, navForState, rolleFlagg, fanerFor } from './nav'
 import { supabase } from './supabase'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
@@ -107,34 +107,23 @@ export default function App() {
     <LangContext.Provider value={lang}><Onboarding profile={profile} onDone={reload} /></LangContext.Provider>
   )
 
-  const isCoach = profile.role === 'coach' || team?.owner_id === profile.id
+  // Rollen bestemmer, og bare den. Før var enhver lageier trener uansett
+  // rolle, så en administrator som byttet til forelder fikk trenerens skjermer
+  // likevel. Basen følger samme regel: is_coach_of krever rollen trener.
+  // Selve utledningen ligger i nav.js, der den kan testes uten å tegne appen.
+  const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
-  // A guardian has no season of their own, so they get the children view,
-  // the race calendar (read-only) and their profile.
-  const isParent = profile.role === 'parent' && !isCoach
-  const baseTabs = isParent
-    ? [['children', d.children], ['races', d.races], ['settings', d.settingsTab], ['feedback', d.fbTab]]
-    : isCoach
-      // A coach plans through «Lagets sesong» and «Løpere», so «Min plan» has no
-      // meaning here. For the athlete, season and plan are now the same tab.
-      ? [['training', d.tlTitle], ['season', d.season], ['matrix', d.matrix], ['athletes', d.athletes], ['races', d.races], ['dev', d.devTitleCoach],
-        // «Lag og profil» når det finnes et lag. En administrator uten lag
-        // har bare profilen sin der, og da lover navnet noe siden ikke har.
-        ['settings', team ? d.settingsTabCoach : d.settingsTab], ['feedback', d.fbTab]]
-      // Løperen lander på «Neste renn»: rennet som kommer, fristen og
-      // antatt startnummer, i stedet for hele kalenderen sortert på dato.
-      : [['training', d.tlTitle], ['next', d.nextTab], ['mine', d.mine], ['races', d.races], ['dev', d.dev], ['settings', d.settingsTab], ['feedback', d.fbTab]]
-  // Admin-fanen er en snarvei, ikke en rettighet. Skjuler vi den, er dataene
-  // fortsatt stengt: admin_*-funksjonene sjekker is_admin() i basen selv.
-  //
-  // Uten lag kommer den først. En administrator som drifter appen for andre
-  // har ikke noe lag selv, og skal ikke lande på en skjerm som ber henne
-  // opprette et - hun skal lande der arbeidet hennes er.
-  const adminFane = ['admin', d.adTab]
-  const tabs = !profile.is_admin ? baseTabs
-    : team ? [...baseTabs, adminFane]
-      : [adminFane, ...baseTabs]
-  const active = tab || tabs[0][0]
+  const ETIKETT = {
+    children: d.children, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
+    next: d.nextTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
+    // «Lag og profil» bare når treneren faktisk har et lag.
+    settings: isCoach && team ? d.settingsTabCoach : d.settingsTab
+  }
+  const tabs = fanerFor(profile, !!team).map(k => [k, ETIKETT[k]])
+  // Aktiv fane må være en fane denne modusen har. Uten sjekken kunne en fane
+  // fra forrige modus bli stående, og tegne en skjerm rollen ikke skal se.
+  const active = tabs.some(([k]) => k === tab) ? tab : tabs[0][0]
 
   const pickPane = k => {
     if (k === 'filter') return setSheet(true)
@@ -158,8 +147,8 @@ export default function App() {
   return (
     <LangContext.Provider value={lang}>
       <header className="topbar">
-        <h1>{d.appTitle}{team && grupper.length < 2 && <small>{team.name}</small>}</h1>
-        {team && grupper.length > 1 && (
+        <h1>{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
+        {team && isCoach && grupper.length > 1 && (
           <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
             onChange={async e => {
               const { error } = await supabase.rpc('bytt_gruppe', { p_team: e.target.value })

@@ -610,11 +610,32 @@ på løperens rad. Flypris per renn føres av den foresatte gjennom
 
 ### Administrator bytter modus
 
-Administrator har en bryter øverst (og øverst på Admin-siden på telefon) for å
-se appen som trener, løper eller forelder. Den bytter `profiles.role` på
-ordentlig gjennom `admin_set_role` - ikke en maske over - fordi flere
-funksjoner i basen spør om rollen. For å se foreldrevisningen for et barn må
-man være koblet til barnet med foreldrekoden, som alle andre.
+Administrator har en bryter øverst for å bruke appen som trener, løper eller
+forelder. Den bytter `profiles.role` på ordentlig gjennom `admin_set_role`.
+
+**Modusen bestemmer, både i skjermene og i basen.** Fanene utledes av rollen
+alene (`fanerFor` i `src/nav.js`, testet i `npm run test:unit`), og
+`is_coach_of` krever rollen trener i tillegg til eierskapet. En administrator
+som eier et lag og står som forelder ser altså bare foreldresidene, og har
+bare en forelders rettigheter: sine egne barn. Før byttet bryteren bare en
+etikett - lageieren var trener uansett.
+
+Løpermodus er administratorens *egen* løperprofil. Ingen, heller ikke
+administrator, kan gå inn som en annen person. Det en forelder skal se om
+barnet sitt, ser hun i foreldremodus, etter å ha koblet seg til med
+foreldrekoden som alle andre.
+
+### Forsøkssperre og engangsvarsler
+
+`link_guardian` og `join_team` svarer tomt på feil kode i stedet for å kaste,
+så forsøket kan telles i `kodeforsok`. Etter ti feil på en time får brukeren
+«For mange forsøk» - også med riktig kode. Klientene må derfor sjekke tomt
+svar, ikke bare `error`.
+
+`invite-coach` og `feedback-notify` tar raden før de sender (`sent_at` /
+`notified_at` må være tom). De kan kalles av hvem som helst med den offentlige
+nøkkelen, og uten dette kunne samme e-post sendes om og om igjen. En ny
+invitasjon sendes ved å invitere på nytt, som nullstiller `sent_at`.
 
 ### Grupper: hvem lager dem, og hvordan man bytter
 

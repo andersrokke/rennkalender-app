@@ -103,10 +103,12 @@ export default function Onboarding({ profile, onDone }) {
         // Uten kode velges skigymnaset, og treneren henter løperen inn derfra.
         const skole = f.get('school')
         if (!code && !skole) throw new Error(L.schoolOrCode)
-        const { error } = code
+        const { data: lagId, error } = code
           ? await supabase.rpc('join_team', { code })
           : await supabase.rpc('velg_skigymnas', { p_team: skole })
         if (error) throw error
+        // Feil kode svarer tomt i stedet for å kaste, så forsøket kan telles.
+        if (code && !lagId) throw new Error(L.codeInvalid)
         const { error: e2 } = await supabase.from('profiles')
           .update({ full_name: name, role: 'athlete', onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
@@ -115,8 +117,9 @@ export default function Onboarding({ profile, onDone }) {
           .update({ full_name: name, role: 'athlete', team_id: null, onboarded: true, lang }).eq('id', profile.id)
         if (error) throw error
       } else if (mode === 'parent') {
-        const { error } = await supabase.rpc('link_guardian', { code })
+        const { data: barn, error } = await supabase.rpc('link_guardian', { code })
         if (error) throw error
+        if (!barn?.length) throw new Error(L.codeInvalid)
         const { error: e2 } = await supabase.from('profiles')
           .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2

@@ -41,9 +41,10 @@ export default function Children({ profile }) {
 
   async function link(e) {
     e.preventDefault(); setBusy(true); setErr(null)
-    const { error } = await supabase.rpc('link_guardian', { code: code.trim().toLowerCase() })
+    const { data, error } = await supabase.rpc('link_guardian', { code: code.trim() })
     setBusy(false)
     if (error) { setErr(error.message); return }
+    if (!data?.length) { setErr(t('codeInvalid')); return }
     setCode(''); setAdding(false); load()
   }
   async function unlink(kid) {
@@ -106,7 +107,7 @@ export default function Children({ profile }) {
         {adding ? (
           <form onSubmit={link}>
             <label>{t('linkCode')}</label>
-            <input required value={code} onChange={e => { setCode(e.target.value); setErr(null) }} placeholder="8 tegn" />
+            <input required value={code} onChange={e => { setCode(e.target.value); setErr(null) }} placeholder="K7RF2M" />
             <div className="row" style={{ marginTop: 10 }}>
               <button className="btn small primary" disabled={busy}>{t('linkBtn')}</button>
               <button type="button" className="btn small" onClick={() => { setAdding(false); setErr(null) }}>{t('cancel')}</button>

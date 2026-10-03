@@ -56,7 +56,7 @@ await pgdb.stop(); process.exit(1) }
 const q = async (sql, p) => (await c.query(sql, p)).rows
 const cols = await q(`select column_name from information_schema.columns
   where table_schema='public' and table_name='feedback' order by 1`)
-const want = ['admin_note','area','author_id','body','created_at','id','kind','status','title','updated_at','user_agent']
+const want = ['admin_note','area','author_id','body','created_at','id','kind','notified_at','status','title','updated_at','user_agent']
 const got = cols.map(r => r.column_name)
 JSON.stringify(got) === JSON.stringify(want) ? ok(`feedback har ${got.length} kolonner`)
   : fail(`kolonner: ${JSON.stringify(got)}`)
@@ -358,8 +358,8 @@ gyldig.test(nyKode) && nyKode !== g1kode ? ok('treneren fikk en ny, lesbar kode'
 const L2 = 'bbbbbbbb-0000-0000-0000-000000000002'
 await c.query(`insert into auth.users(id,email,raw_user_meta_data)
   values ($1,'lop2@test.no',jsonb_build_object('full_name','Løper To'))`, [L2])
-try { await as(L2, 'select public.join_team($1)', [g1kode]); fail('den gamle koden virket fortsatt') }
-catch (e) { e.message.includes('Ugyldig') ? ok('den gamle koden er ugyldig etter bytte') : fail(e.message) }
+;(await as(L2, 'select public.join_team($1) as t', [g1kode])).rows[0].t === null
+  ? ok('den gamle koden er ugyldig etter bytte') : fail('den gamle koden virket fortsatt')
 await as(L2, 'select public.join_team($1)', [nyKode])
 ok('den nye koden virker')
 
@@ -557,15 +557,15 @@ const forKode = (await q('select link_code k from profiles where id=$1', [S2]))[
 const FOR = 'dddddddd-0000-0000-0000-000000000009'
 await c.query(`insert into auth.users(id,email,raw_user_meta_data) values ($1,'far@test.no','{"full_name":"Far"}')`, [FOR])
 const nyK = (await as(S2, 'select public.bytt_foreldrekode() as k')).rows[0].k
-try { await as(FOR, 'select * from public.link_guardian($1)', [forKode]); fail('den gamle foreldrekoden virket skoleEtter bytte') }
-catch { ok('den gamle foreldrekoden er ugyldig skoleEtter bytte') }
+;(await as(FOR, 'select * from public.link_guardian($1)', [forKode])).rows.length === 0
+  ? ok('den gamle foreldrekoden er ugyldig etter bytte') : fail('den gamle foreldrekoden virket etter bytte')
 await as(FOR, 'select * from public.link_guardian($1)', [nyK.toLowerCase()])
 ;(await as(FOR, 'select id from profiles where id = $1', [S2])).rows.length === 1
   ? ok('forelderen koblet seg til med den nye koden, skrevet med små bokstaver') : fail('foreldrekobling virket ikke')
 const s2fis = '9990002'
 await c.query('update profiles set fis_code = $2 where id = $1', [S2, s2fis])
-try { await as(FOR, 'select * from public.link_guardian($1)', [s2fis]); fail('FIS-koden virket som foreldrekode') }
-catch { ok('FIS-koden kan ikke brukes til å koble seg på som forelder') }
+;(await as(FOR, 'select * from public.link_guardian($1)', [s2fis])).rows.length === 0
+  ? ok('FIS-koden kan ikke brukes til å koble seg på som forelder') : fail('FIS-koden virket som foreldrekode')
 
 const adminRader = (await as(ADM, 'select * from public.admin_users()')).rows
 const s2rad = adminRader.find(u => u.id === S2)
@@ -591,6 +591,36 @@ try { await as(FOR, `update race_plan_details set travel_mode='car' where athlet
   const m = (await q('select travel_mode m from race_plan_details where athlete_id=$1 and race_id=$2', [S2, rennId]))[0].m
   m === 'flight' ? ok('en foresatt kan ikke endre resten av reiseplanen') : fail('foresatt endret reisemåte') }
 catch { ok('en foresatt kan ikke endre resten av reiseplanen') }
+
+
+// --- modusen bestemmer, også i databasen ---
+await ser(H, G1) ? ok('utgangspunkt: hovedtreneren er trener for gruppa') : fail('H er ikke trener i utgangspunktet')
+await as(H, `update profiles set role = 'parent' where id = $1`, [H])
+!(await ser(H, G1)) && !(await ser(H, P)) ? ok('i foreldremodus har lageieren ingen trenerrett, heller ikke til sitt eget lag')
+  : fail('foreldremodus beholdt trenerrettighetene')
+;(await as(H, 'select id from profiles where team_id = $1', [G2])).rows.length === 0
+  ? ok('i foreldremodus kan hun ikke lese løperne i gruppene') : fail('foreldremodus leser løpere')
+try { await as(H, `select public.opprett_gruppe('Skal ikke gå')`); fail('opprettet gruppe i foreldremodus') }
+catch { ok('i foreldremodus kan hun ikke opprette grupper') }
+await as(H, `update profiles set role = 'athlete' where id = $1`, [H])
+!(await ser(H, G1)) ? ok('i løpermodus har hun heller ingen trenerrett') : fail('løpermodus beholdt trenerrettighetene')
+await c.query(`update profiles set role = 'coach' where id = $1`, [H])
+await ser(H, G1) ? ok('tilbake som trener er rettighetene tilbake') : fail('trenerrett kom ikke tilbake')
+
+// --- forsøkssperre på kodene ---
+const GJ = 'eeeeeeee-0000-0000-0000-000000000001'
+await c.query(`insert into auth.users(id,email,raw_user_meta_data) values ($1,'gjett@test.no','{"full_name":"Gjetter"}')`, [GJ])
+for (let i = 0; i < 10; i++) await as(GJ, 'select * from public.link_guardian($1)', ['FEIL' + i + 'X'])
+const riktig = (await q('select link_code k from profiles where id=$1', [L2]))[0].k
+try { await as(GJ, 'select * from public.link_guardian($1)', [riktig]); fail('ellevte forsøk slapp gjennom') }
+catch (e) { e.message.includes('For mange forsøk') ? ok('etter ti feil foreldrekoder stopper det - også for riktig kode') : fail(e.message) }
+for (let i = 0; i < 10; i++) await as(GJ, 'select public.join_team($1)', ['NEI' + i + 'XX'])
+try { await as(GJ, 'select public.join_team($1)', [g2k]); fail('ellevte lagkode-forsøk slapp gjennom') }
+catch (e) { e.message.includes('For mange forsøk') ? ok('etter ti feil lagkoder stopper det') : fail(e.message) }
+;(await as(GJ, 'select count(*)::int n from kodeforsok').catch(() => ({ rows: [{ n: -1 }] }))).rows[0].n === -1
+  ? ok('forsøksloggen kan ikke leses av brukeren') : fail('kodeforsok er lesbar')
+;(await q(`select count(*)::int n from information_schema.columns where table_name='feedback' and column_name='notified_at'`))[0].n === 1
+  ? ok('feedback har notified_at, så et varsel bare sendes én gang') : fail('notified_at mangler')
 
 // --- rettighetsrevisjon: alt frontend kaller, som authenticated ---
 //

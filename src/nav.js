@@ -19,3 +19,24 @@ export function navForState(activeTab, pane, { isParent = false } = {}) {
     || (isParent && activeTab === 'children')) return 'plan'
   return 'list'
 }
+
+// Hvem man er i appen akkurat nå. Rollen bestemmer, og bare den: å eie et lag
+// gjør ingen til trener i en annen modus. Basen følger samme regel -
+// is_coach_of krever rollen trener i tillegg til eierskapet.
+export function rolleFlagg(profile) {
+  return { isCoach: profile.role === 'coach', isParent: profile.role === 'parent' }
+}
+
+// Fanene for en profil, som nøkler. En forelder ser barna sine, rennkalenderen
+// og profilen - aldri trenerens eller løperens skjermer, uansett hva kontoen
+// ellers eier. Administratorfanen kommer i tillegg, først når man ikke har lag.
+export function fanerFor(profile, harLag) {
+  const { isCoach, isParent } = rolleFlagg(profile)
+  const base = isParent
+    ? ['children', 'races', 'settings', 'feedback']
+    : isCoach
+      ? ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'settings', 'feedback']
+      : ['training', 'next', 'mine', 'races', 'dev', 'settings', 'feedback']
+  if (!profile.is_admin) return base
+  return harLag ? [...base, 'admin'] : ['admin', ...base]
+}
