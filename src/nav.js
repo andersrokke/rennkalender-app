@@ -33,7 +33,7 @@ export function rolleFlagg(profile) {
 export function fanerFor(profile, harLag) {
   const { isCoach, isParent } = rolleFlagg(profile)
   const base = isParent
-    ? ['children', 'races', 'settings', 'feedback']
+    ? ['children', 'kidraces', 'races', 'settings', 'feedback']
     : isCoach
       ? ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'settings', 'feedback']
       : ['training', 'next', 'mine', 'races', 'dev', 'settings', 'feedback']

@@ -19,6 +19,7 @@ import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
 import Children from './components/Children.jsx'
+import ChildRaces from './components/ChildRaces.jsx'
 import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
@@ -114,7 +115,7 @@ export default function App() {
   const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
   const ETIKETT = {
-    children: d.children, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    children: d.children, kidraces: d.kidraces, races: d.races, feedback: d.fbTab, admin: d.adTab,
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
     next: d.nextTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
@@ -189,6 +190,7 @@ export default function App() {
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
       {active === 'children' && <Children profile={profile} />}
+      {active === 'kidraces' && <ChildRaces />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'feedback' && <Feedback profile={profile} />}
       {active === 'admin' && <Admin profile={profile} />}

@@ -17,6 +17,7 @@ import SeasonMatrix from '../../src/components/SeasonMatrix.jsx'
 import Athletes from '../../src/components/Athletes.jsx'
 import RaceBrowser from '../../src/components/RaceBrowser.jsx'
 import Children from '../../src/components/Children.jsx'
+import ChildRaces from '../../src/components/ChildRaces.jsx'
 import Admin from '../../src/components/Admin.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
 import { LangContext } from '../../src/i18n'
@@ -101,6 +102,7 @@ const skjermer = [
   ['Trener: RaceBrowser', <RaceBrowser profile={TRENER} team={TEAM} isCoach readOnly={false} />],
   ['Trener: Development', <Development profile={TRENER} team={TEAM} isCoach />],
   ['Forelder: Children', <Children profile={forelder} />],
+  ['Forelder: ChildRaces', <ChildRaces />],
   ['Forelder: barnets sesong (med kostnader)', <MySeason profile={lukas} team={TEAM} readOnly forelder={forelder} />],
   ['Admin (klikk gjennom fanene)', <Admin profile={{ id: 'anders', is_admin: true }} />],
   ['Løper uten lag: Settings (skigymnas-velger)', <Settings profile={{ ...lukas, team_id: null }} team={null} isCoach={false} onChange={ingen} />],
