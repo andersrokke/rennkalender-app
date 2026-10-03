@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import RaceList from './RaceList.jsx'
+import GoodVenues from './GoodVenues.jsx'
 import { fisPoints } from '../format'
 import { berik, sesongNavn, FORSTE_SESONG } from '../resultater'
 
@@ -16,6 +17,7 @@ export default function ChildRaces() {
   // planen. Planen i appen går bare så langt tilbake som appen har vært i bruk.
   const [kjort, setKjort] = useState({})     // athlete_id -> berikede fis_results
   const [tidligere, setTidligere] = useState(false)
+  const [gode, setGode] = useState(false)
 
   useEffect(() => {
     let av = false
@@ -60,10 +62,13 @@ export default function ChildRaces() {
   return (
     <div className="page">
       <div className="row" style={{ marginBottom: 10 }}>
-        <button className={`chip ${!tidligere ? 'on' : ''}`} aria-pressed={!tidligere} onClick={() => setTidligere(false)}>{t('krUpcoming')}</button>
-        <button className={`chip ${tidligere ? 'on' : ''}`} aria-pressed={tidligere} onClick={() => setTidligere(true)}>{t('krPast')}</button>
+        <button className={`chip ${!tidligere && !gode ? 'on' : ''}`} aria-pressed={!tidligere && !gode} onClick={() => { setTidligere(false); setGode(false) }}>{t('krUpcoming')}</button>
+        <button className={`chip ${tidligere ? 'on' : ''}`} aria-pressed={tidligere} onClick={() => { setTidligere(true); setGode(false) }}>{t('krPast')}</button>
+        <button className={`chip ${gode ? 'on' : ''}`} aria-pressed={gode} onClick={() => { setGode(true); setTidligere(false) }}>{t('krGood')}</button>
       </div>
-      {kids.map(k => {
+      {gode && <div className="gv-inni">{kids.map(k =>
+        <GoodVenues key={k.athlete_id} fisCode={k.fis_code} gender={k.gender?.trim() || null} name={k.full_name} />)}</div>}
+      {!gode && kids.map(k => {
         if (tidligere) {
           const res = kjort[k.athlete_id] || []
           const sesonger = [...new Set(res.map(r => r.sesong))]

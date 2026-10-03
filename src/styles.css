@@ -1017,3 +1017,14 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .rh-mndhode>b{font-size:16px;font-weight:800;letter-spacing:-.01em}
 .rh-forklaring{display:flex;gap:16px;font-size:12px;color:var(--mute);margin:6px 0 2px}
 .rh-forklaring i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+
+/* Gode steder */
+.gv{border-left:6px solid var(--line)}
+.gv.sterkt{border-left-color:#2E9E6B} .gv.svakt{border-left-color:#E0A030} .gv.ingen{border-left-color:#E5484D}
+.gv-hode{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.gv-hode h3{margin:2px 0}
+.gv-dato{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.gv-dom{flex:0 0 auto;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--ice);color:var(--slate);white-space:nowrap}
+.gv-dom.sterkt{background:#E3F4EC;color:#1E7A52} .gv-dom.svakt{background:#FBF0D9;color:#8A5A0B} .gv-dom.ingen{background:#FBE4E5;color:#B4292E}
+.gv-mot{margin:10px 0 2px;font-size:15px}
+.gv-inni .page{padding:0}

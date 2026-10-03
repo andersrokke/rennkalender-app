@@ -8,7 +8,7 @@ let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
 const TRENER = ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'settings', 'feedback']
-const LOPER = ['training', 'next', 'mine', 'races', 'dev', 'settings', 'feedback']
+const LOPER = ['training', 'next', 'mine', 'races', 'dev', 'steder', 'settings', 'feedback']
 const FORELDER = ['children', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
 const trenerfaner = ['season', 'matrix', 'athletes']
 

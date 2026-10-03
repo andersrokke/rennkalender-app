@@ -73,6 +73,11 @@ sjekk('per måned: eldste først, én rad per måned', pm.length === 6 && pm[0].
 sjekk('per måned: utkjøring telles', pm.find(x => x.nokkel === '2024-02').ute === 1 && pm.find(x => x.nokkel === '2024-02').prosent === 0)
 sjekk('per måned: fullført gir 100 %', pm.find(x => x.nokkel === '2024-12').prosentTekst === '100 %')
 
+const D = berik([rad('2025-01-10', 'Slalom', '4', 50), rad('2025-01-11', 'Slalom', 'DNS1', null), rad('2025-01-12', 'Slalom', 'DNF1', null), rad('2025-01-13', 'Slalom', 'DNS2', null)])
+sjekk('DNS er ikke en start: 1 av 2 fullført, ikke 1 av 4', nokkeltall(D).starter === 2 && nokkeltall(D).ute === 1 && nokkeltall(D).prosent === 50)
+sjekk('DNS telles ikke i måneden', perManed(D)[0].starter === 2 && perManed(D)[0].prosent === 50)
+sjekk('DNS-rader står fortsatt i lista', D.length === 4 && D[1].dns && !D[2].dns)
+
 const felt = sesongFelt(pt)
 sjekk('sesongfelt: ett per sesong, annenhver skygget', felt.length === 2 && !felt[0].skygge && felt[1].skygge)
 sjekk('sesongfelt: skille ved 1. juli, ikke for første', felt[0].skille === null && felt[1].skille === Date.UTC(2024, 6, 1))

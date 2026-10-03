@@ -26,6 +26,9 @@ export function berik(rader) {
     sesong: sesongAv(r.race_date),
     gren: grenkode(r.discipline),
     plass: fullfort(r.position) ? Number(r.position) : null,
+    // DNS er «startet ikke». Det er verken en start eller en utkjøring, så
+    // raden vises i lista, men holdes utenfor tallene.
+    dns: /^DNS/i.test(String(r.position ?? '').trim()),
     poeng: r.fis_points == null || r.fis_points === '' ? null : Number(r.fis_points)
   }))
 }
@@ -59,7 +62,8 @@ const snitt = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
 const minst = xs => xs.length ? Math.min(...xs) : null
 
 // Nøkkeltall for et utvalg. Lavere FIS-poeng er bedre, så «beste» er minst.
-export function nokkeltall(rader) {
+export function nokkeltall(alle) {
+  const rader = alle.filter(r => !r.dns)
   const ferdig = rader.filter(r => r.plass != null)
   const poeng = ferdig.map(r => r.poeng).filter(p => p != null)
   return {
@@ -115,6 +119,7 @@ const MND_KORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep',
 export function perManed(rader) {
   const m = new Map()
   rader.forEach(r => {
+    if (r.dns) return
     const k = r.race_date.slice(0, 7)
     const x = m.get(k) || { nokkel: k, sesong: r.sesong, starter: 0, fullfort: 0, ute: 0,
       navn: `${MND_KORT[+k.slice(5) - 1]} ${k.slice(2, 4)}` }
