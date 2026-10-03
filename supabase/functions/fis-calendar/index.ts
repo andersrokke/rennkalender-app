@@ -106,7 +106,9 @@ Deno.serve(async (req) => {
           continue;
         }
         const diff: any = {};
-        for (const [k, v] of Object.entries(rad)) if (g[k] !== v) diff[k] = v;
+        // Stedsnavnet på et renn som alt ligger inne står: FIS pusser på
+        // skrivemåten («Peio» blir «Pejo»), og noen navn er ryddet for hånd.
+        for (const [k, v] of Object.entries(rad)) if (k !== "place" && g[k] !== v) diff[k] = v;
         // En merknad noen har skrevet for hånd står; bare «Avlyst» styres herfra.
         if (x.cancelled && g.note !== "Avlyst") diff.note = "Avlyst";
         if (!x.cancelled && g.note === "Avlyst") diff.note = null;
