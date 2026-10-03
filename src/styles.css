@@ -869,7 +869,7 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .ad-table td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .ad-table th.n,.ad-table td.n{text-align:right;font-family:var(--num)}
 .ad-table select{width:auto;padding:5px 8px;font-size:13.5px}
-.ad-epost{font-size:13px;word-break:break-all}
+.ad-epost{font-size:13px;overflow-wrap:anywhere}
 .ad-test td{opacity:.72}
 .ad-feil td{background:var(--danger-soft)}
 .ad-gammel{color:var(--danger-ink);font-weight:650}

@@ -227,12 +227,15 @@ function Brukere({ rader, meg, t, onEndret }) {
 
   const hus = new Map()
   for (const u of rader) {
-    const k = u.hus_id || '__uten'
-    if (!hus.has(k)) hus.set(k, { id: u.hus_id, navn: u.hus_navn, skigymnas: u.skigymnas, folk: [] })
+    // Foreldre hører ikke til noe lag: de er koblet til barnet sitt. De får
+    // sin egen gruppe i stedet for å stå som «uten lag».
+    const forelder = u.role === 'parent' && !u.hus_id
+    const k = u.hus_id || (forelder ? '__foreldre' : '__uten')
+    if (!hus.has(k)) hus.set(k, { id: u.hus_id, navn: u.hus_navn, skigymnas: u.skigymnas, foreldre: forelder, folk: [] })
     hus.get(k).folk.push(u)
   }
   const ordnet = [...hus.values()].sort((x, y) =>
-    (x.id ? 0 : 1) - (y.id ? 0 : 1) || (x.navn || '').localeCompare(y.navn || '', 'nb'))
+    (x.id ? 0 : x.foreldre ? 1 : 2) - (y.id ? 0 : y.foreldre ? 1 : 2) || (x.navn || '').localeCompare(y.navn || '', 'nb'))
   for (const h of ordnet) h.folk.sort((x, y) =>
     (ROLLEORDEN[x.role] ?? 9) - (ROLLEORDEN[y.role] ?? 9)
     || Number(y.pa_huset) - Number(x.pa_huset)
@@ -248,9 +251,9 @@ function Brukere({ rader, meg, t, onEndret }) {
         <p className="muted">{t('adUsersSub')}</p>
       </div>
       {ordnet.map(h => (
-        <div className="card" key={h.id || 'uten'}>
+        <div className="card" key={h.id || (h.foreldre ? 'foreldre' : 'uten')}>
           <h2>
-            {h.id ? h.navn : t('adNoTeamGroup')}
+            {h.id ? h.navn : h.foreldre ? t('adParentsGroup') : t('adNoTeamGroup')}
             {h.skigymnas && <span className="ad-merke admin">{t('adSchool')}</span>}
             <span className="muted"> ({h.folk.length})</span>
           </h2>
@@ -278,6 +281,7 @@ function Brukere({ rader, meg, t, onEndret }) {
                       </select>
                     </td>
                     <td>
+                      {u.role === 'parent' && !u.team_id ? <span className="muted">{t('adParentNoTeam')}</span> : <>
                       <select value={u.team_id || ''} aria-label={t('adTeam')}
                         onChange={e => kall('admin_set_team', { p_user: u.id, p_team: e.target.value || null })}>
                         <option value="">{t('adNoTeamOpt')}</option>
@@ -285,6 +289,7 @@ function Brukere({ rader, meg, t, onEndret }) {
                       </select>
                       {u.role === 'athlete' && u.pa_huset && u.skigymnas &&
                         <><br /><span className="ad-merke">{t('adNoGroup')}</span></>}
+                      </>}
                     </td>
                     <td className="ad-kobling">
                       {u.foresatte && <div>{t('adGuardians')}: {u.foresatte}</div>}
