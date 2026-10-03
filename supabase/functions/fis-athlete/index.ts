@@ -89,8 +89,13 @@ async function fetchAthlete(competitorId: string) {
     // tilbake til 2023/24, så hele lista hentes.
     fetch(base + "&type=result&limit=1000", { headers: UA }).then((r) => r.text()),
   ]);
-  const name = (hp.match(/<h1[^>]*>\s*([^<]+?)\s*<\/h1>/) || [])[1]?.trim() || null;
-  const fisCode = (hp.match(/FIS Code[\s\S]{0,200}?(\d{5,7})/) || [])[1] || null;
+  // Navnet står som «Fornavn <span>ETTERNAVN</span>» i overskriften.
+  const h1 = (hp.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1];
+  const name = h1 ? decode(h1.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() || null : null;
+  // Koden leses fra profilfeltet, ikke fra første «FIS Code» på siden: menyen
+  // har en lenke til «FIS Code of Conduct», og et tall i den ble en gang lest
+  // som løperens kode, så alt ble forsøkt lagret på en løper som ikke finnes.
+  const fisCode = (hp.match(/id="FIS Code"[\s\S]{0,200}?profile-info__value">\s*(\d{5,7})\s*</) || [])[1] || null;
   const birth = (hp.match(/Birthdate[\s\S]{0,200}?(\d{2})-(\d{2})-(\d{4})/) || []);
   const nation = (hp.match(/country__name-short">([A-Z]{3})/) || [])[1] || null;
   const club = (hp.match(/<h1[^>]*>[\s\S]*?<\/h1>[\s\S]{0,600}?<div[^>]*>\s*([^<]{3,80}?)\s*<\/div>/) || [])[1] || null;
@@ -128,11 +133,16 @@ Deno.serve(async (req) => {
       }
       if (!cid) { log.push({ ...t, error: "Fant ikke FIS-profilen" }); continue; }
       const a = await fetchAthlete(cid);
-      const code = a.fisCode || t.fiscode;
+      // Koden vi ble bedt om å hente går foran den som leses fra siden.
+      const code = t.fiscode || a.fisCode;
       if (!code) { log.push({ ...t, error: "no fis code" }); continue; }
-      await supabase.from("fis_athletes").upsert({ fis_code: code, competitor_id: cid, name: a.name, club: a.club, nation: a.nation, birth_year: a.birth_year, updated_at: new Date().toISOString() });
-      if (a.points.length) await supabase.from("fis_points").upsert(a.points.map((p) => ({ ...p, fis_code: code })), { onConflict: "fis_code,list_id,discipline" });
-      if (a.results.length) await supabase.from("fis_results").upsert(a.results.map((r) => ({ ...r, fis_code: code })), { onConflict: "fis_code,fis_race_id" });
+      if (t.fiscode && a.fisCode && a.fisCode !== t.fiscode) { log.push({ ...t, error: `FIS-siden viser kode ${a.fisCode}, ikke ${t.fiscode}` }); continue; }
+      // Feil ved lagring skal fram i svaret. Før ble de svelget, og funksjonen
+      // meldte «142 resultater» uten at en eneste rad var lagret.
+      const lagre = async (q: PromiseLike<{ error: any }>) => { const { error } = await q; if (error) throw new Error(error.message); };
+      await lagre(supabase.from("fis_athletes").upsert({ fis_code: code, competitor_id: cid, name: a.name, club: a.club, nation: a.nation, birth_year: a.birth_year, updated_at: new Date().toISOString() }));
+      if (a.points.length) await lagre(supabase.from("fis_points").upsert(a.points.map((p) => ({ ...p, fis_code: code })), { onConflict: "fis_code,list_id,discipline" }));
+      if (a.results.length) await lagre(supabase.from("fis_results").upsert(a.results.map((r) => ({ ...r, fis_code: code })), { onConflict: "fis_code,fis_race_id" }));
       log.push({ fis_code: code, competitor_id: cid, name: a.name, club: a.club, lists: new Set(a.points.map((p) => p.list_id)).size, results: a.results.length });
     } catch (e) { log.push({ ...t, error: String(e).slice(0, 200) }); }
   }
