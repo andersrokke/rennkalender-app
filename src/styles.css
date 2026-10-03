@@ -1028,3 +1028,7 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .gv-dom.sterkt{background:#E3F4EC;color:#1E7A52} .gv-dom.svakt{background:#FBF0D9;color:#8A5A0B} .gv-dom.ingen{background:#FBE4E5;color:#B4292E}
 .gv-mot{margin:10px 0 2px;font-size:15px}
 .gv-inni .page{padding:0}
+
+.ts-navn{font-weight:700;padding:0;text-align:left}
+.ts-valgt td{background:var(--sel)}
+.ts-tilbake{display:flex;align-items:center;gap:12px;margin:4px 2px 14px;font-size:17px}

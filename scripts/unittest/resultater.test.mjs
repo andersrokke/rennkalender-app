@@ -1,4 +1,5 @@
 // Resultathistorikken, testet uten å tegne noe. Kjøres med: npm run test:unit
+import { lagTabell, sorterLag } from '../../src/resultater.js'
 import { sesongFelt, sorterOppsummering, perManed } from '../../src/resultater.js'
 import { sesongAv, sesongNavn, berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf } from '../../src/resultater.js'
 
@@ -77,6 +78,16 @@ const D = berik([rad('2025-01-10', 'Slalom', '4', 50), rad('2025-01-11', 'Slalom
 sjekk('DNS er ikke en start: 1 av 2 fullført, ikke 1 av 4', nokkeltall(D).starter === 2 && nokkeltall(D).ute === 1 && nokkeltall(D).prosent === 50)
 sjekk('DNS telles ikke i måneden', perManed(D)[0].starter === 2 && perManed(D)[0].prosent === 50)
 sjekk('DNS-rader står fortsatt i lista', D.length === 4 && D[1].dns && !D[2].dns)
+
+const LAG = [{ id: 'a', full_name: 'Ida', fis_code: '1' }, { id: 'b', full_name: 'Jonas', fis_code: '2' }, { id: 'c', full_name: 'Åse', fis_code: '3' }]
+const PK = { 1: R, 2: berik([rad('2025-01-05', 'Slalom', '2', 30), rad('2025-01-06', 'Slalom', 'DNF1', null)]) }
+const lt = lagTabell(LAG, PK, { sesong: 2024 })
+sjekk('lagtabell: én rad per løper, også uten resultater', lt.length === 3 && lt[2].starter === 0 && lt[2].prosent === null)
+sjekk('lagtabell: filteret gjelder hver løper', lt[0].starter === 3 && lt[1].starter === 2 && lt[1].prosent === 50)
+sjekk('lagtabell sortert på navn', sorterLag(lt).map(x => x.navn).join() === 'Ida,Jonas,Åse')
+sjekk('lagtabell sortert på beste poeng: lavest først, uten poeng sist', sorterLag(lt, 'bestePoeng', 'opp').map(x => x.navn).join() === 'Jonas,Ida,Åse')
+sjekk('lagtabell synkende prosent: uten starter fortsatt sist', sorterLag(lt, 'prosent', 'ned').at(-1).navn === 'Åse' && sorterLag(lt, 'prosent', 'ned')[0].navn === 'Ida')
+sjekk('lagtabell med grenfilter', lagTabell(LAG, PK, { gren: ['GS'] })[1].starter === 0)
 
 const felt = sesongFelt(pt)
 sjekk('sesongfelt: ett per sesong, annenhver skygget', felt.length === 2 && !felt[0].skygge && felt[1].skygge)

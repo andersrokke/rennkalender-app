@@ -9,6 +9,8 @@ import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
 import Timing from './Timing.jsx'
 import ResultHistory from './ResultHistory.jsx'
+import TeamStats from './TeamStats.jsx'
+import GoodVenues from './GoodVenues.jsx'
 import {
   DISC, COUNT_DISC, DISC_COLOR, useDevelopment, useCurrentList, toChartRows, countingResults,
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish, shortLabel
@@ -32,7 +34,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
 
   useEffect(() => {
     if (isCoach && team) {
-      supabase.from('profiles').select('id, full_name, fis_code').eq('team_id', team.id)
+      supabase.from('profiles').select('id, full_name, fis_code, gender').eq('team_id', team.id)
         .not('fis_code', 'is', null).order('full_name')
         .then(({ data }) => setPeople(data || []))
     } else {
@@ -193,6 +195,19 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         )}
       </div>
 
+      {/* Treneren: hele laget i én sorterbar tabell. Et trykk på en løper
+          velger ham eller henne, og alt under gjelder da den løperen. */}
+      {isCoach && people.length > 0 && (
+        <TeamStats people={people} valgt={only === 'all' ? null : only}
+          onPick={code => { setOnly(code); setTimeout(() => document.getElementById('dev-loper')?.scrollIntoView({ behavior: 'smooth' }), 50) }} />
+      )}
+      {isCoach && only !== 'all' && (
+        <div className="ts-tilbake" id="dev-loper">
+          <button className="btn small" onClick={() => setOnly('all')}>← {t('tsBack')}</button>
+          <b>{nameOf(only)}</b>
+        </div>
+      )}
+
       {people.map(p => <CupStandings key={'cup' + p.fis_code} groups={cups[p.fis_code]} />)}
 
       {shown.map(p => {
@@ -267,6 +282,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet}
             grenUtenfra={isCoach ? null : gren} />
         : shown.length > 1 && <div className="card"><h2>{t('rhTitle')}</h2><p className="muted">{t('rhPickOne')}</p></div>}
+      {isCoach && shown.length === 1 && (
+        <div className="gv-inni"><GoodVenues fisCode={shown[0].fis_code} gender={shown[0].gender?.trim() || null} name={shown[0].full_name} /></div>
+      )}
       <Timing profile={profile} team={team} isCoach={isCoach} />
     </div>
   )

@@ -164,3 +164,24 @@ export function sesongGraf(rader) {
   })
   return [...ut.values()].sort((a, b) => a.sesong - b.sesong)
 }
+
+// Trenerens lagtabell: én rad per løper med nøkkeltallene for utvalget.
+// perKode er { fis_code: berikede rader }.
+export function lagTabell(lopere, perKode, filter = {}) {
+  return lopere.map(p => ({
+    id: p.id, navn: p.full_name, fis_code: p.fis_code,
+    ...nokkeltall(filtrer(perKode[p.fis_code] || [], filter))
+  }))
+}
+// Sortert på en valgfri kolonne. Løpere uten verdi står sist uansett retning,
+// og navnet avgjør ved likhet.
+export function sorterLag(rader, kol = 'navn', retning = 'opp') {
+  const f = retning === 'ned' ? -1 : 1
+  return [...rader].sort((a, b) => {
+    const x = a[kol], y = b[kol]
+    const xt = x == null, yt = y == null
+    if (xt !== yt) return xt ? 1 : -1
+    const c = xt ? 0 : typeof x === 'number' ? (x - y) * f : String(x).localeCompare(String(y), 'nb') * f
+    return c || a.navn.localeCompare(b.navn, 'nb')
+  })
+}
