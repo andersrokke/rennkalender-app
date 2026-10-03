@@ -65,12 +65,19 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const curList = useCurrentList()
   const curLabel = curList ? shortLabel(curList.name) : null
   const nowLabel = curLabel && rows.some(r => r.label === curLabel) ? curLabel : null
-  const seasonBand = useMemo(() => {
-    if (!curList) return null
-    const suffix = `${String(curList.season_code - 1).slice(2)}/${String(curList.season_code).slice(2)}`
-    const inSeason = rows.filter(r => r.label.endsWith(suffix))
-    return inSeason.length > 1 ? [inSeason[0].label, inSeason[inSeason.length - 1].label] : null
-  }, [rows, curList])
+  // Ett felt per sesong, lest av listenavnet («11 · 23/24»). Annenhver sesong
+  // skygges og hver får navnet sitt øverst, så årene skilles tydelig.
+  const seasonBands = useMemo(() => {
+    const ut = []
+    rows.forEach(r => {
+      const s = (/(\d{2}\/\d{2})$/.exec(r.label) || [])[1]
+      if (!s) return
+      const siste = ut[ut.length - 1]
+      if (siste && siste.navn === s) siste.til = r.label
+      else ut.push({ navn: s, fra: r.label, til: r.label })
+    })
+    return ut.map((b, i) => ({ ...b, skygge: i % 2 === 1 }))
+  }, [rows])
   const onlyDate = v => new Date(v).toLocaleDateString(t.lang === 'en' ? 'en-GB' : 'nb-NO',
     { day: 'numeric', month: 'short', year: 'numeric' })
   const nameOf = code => people.find(p => p.fis_code === code)?.full_name || code
@@ -158,10 +165,13 @@ export default function Development({ profile, team, isCoach, readOnly = false }
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={rows} margin={{ top: 22, right: 30, left: -18, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-                {seasonBand && (
-                  <ReferenceArea x1={seasonBand[0]} x2={seasonBand[1]}
-                    fill="var(--accent)" fillOpacity={0.08} stroke="none" />
-                )}
+                {seasonBands.map(b => (
+                  <ReferenceArea key={'b' + b.navn} x1={b.fra} x2={b.til} fill="var(--slate)" fillOpacity={b.skygge ? 0.07 : 0}
+                    stroke="none" label={{ value: `20${b.navn}`, position: 'insideBottom', fill: 'var(--slate)', fontSize: 12, fontWeight: 800 }} />
+                ))}
+                {seasonBands.slice(1).map(b => (
+                  <ReferenceLine key={'l' + b.navn} x={b.fra} stroke="var(--slate)" strokeWidth={1.5} strokeDasharray="5 4" />
+                ))}
                 {nowLabel && (
                   <ReferenceLine x={nowLabel} stroke="var(--slate)" strokeWidth={2}
                     label={{ value: t('fisNowMark'), position: 'top', fill: 'var(--slate)',

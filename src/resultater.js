@@ -99,6 +99,20 @@ export function poengOverTid(rader) {
       plass: r.plass, [r.gren]: r.poeng, ['plass_' + r.gren]: r.plass }))
 }
 
+// Sesongene i en tidsgraf som felt: fra 1. juli til 1. juli, klippet til
+// dataene. Annenhver får bakgrunn, så årene skilles tydelig.
+export function sesongFelt(punkter) {
+  if (!punkter.length) return []
+  const min = punkter[0].t, max = punkter[punkter.length - 1].t
+  const sesonger = [...new Set(punkter.map(p => sesongAv(p.dato)))].sort((a, b) => a - b)
+  return sesonger.map((s, i) => ({
+    sesong: s, navn: sesongNavn(s), skygge: i % 2 === 1,
+    fra: Math.max(min, Date.UTC(s, 6, 1)), til: Math.min(max, Date.UTC(s + 1, 6, 1)),
+    // Skillelinja står ved sesongstart, bortsett fra for den første.
+    skille: i > 0 ? Date.UTC(s, 6, 1) : null
+  }))
+}
+
 // Graf 2: beste og snitt per sesong, én rad per sesong med felt per gren.
 export function sesongGraf(rader) {
   const ut = new Map()

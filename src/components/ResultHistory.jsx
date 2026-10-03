@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine } from 'recharts'
 import { useT } from '../i18n'
 import { fisPoints } from '../format'
 import { DISC_COLOR } from './useDevelopment'
 import {
-  berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf, sesongNavn, FORSTE_SESONG
+  berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
 } from '../resultater'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'AC']
@@ -54,6 +54,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const n = useMemo(() => nokkeltall(utvalg), [utvalg])
   const liste = useMemo(() => sorter(utvalg, kol, retning), [utvalg, kol, retning])
   const tid = useMemo(() => poengOverTid(utvalg), [utvalg])
+  const felt = useMemo(() => sesongFelt(tid), [tid])
   // Sesonggrafen sammenligner sesonger, så den ser bort fra sesongfilteret.
   const perSesong = useMemo(() => sesongGraf(filtrer(alle, { gren, kategori })), [alle, gren, kategori])
   const oppsummert = useMemo(() => perSesongOgGren(utvalg), [utvalg])
@@ -121,8 +122,18 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
         {tid.length < 2 ? <p className="muted">{t('rhTooFew')}</p> : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={tid} margin={{ top: 10, right: 16, left: -18, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <LineChart data={tid} margin={{ top: 22, right: 16, left: -18, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
+                {/* Ett felt per sesong med navnet øverst, annenhver skygget, og
+                    en tydelig strek der en ny sesong starter. */}
+                {felt.map(f => (
+                  <ReferenceArea key={'f' + f.sesong} x1={f.fra} x2={f.til} fill="var(--slate)" fillOpacity={f.skygge ? 0.07 : 0}
+                    stroke="none" ifOverflow="hidden"
+                    label={{ value: f.navn, position: 'insideTop', fill: 'var(--slate)', fontSize: 12, fontWeight: 800 }} />
+                ))}
+                {felt.filter(f => f.skille).map(f => (
+                  <ReferenceLine key={'s' + f.sesong} x={f.skille} stroke="var(--slate)" strokeWidth={1.5} strokeDasharray="5 4" />
+                ))}
                 <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']}
                   tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={kortDato} />
                 {/* lavere er bedre for både poeng og plass, så aksen er snudd */}
@@ -175,8 +186,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
               <th>{t('rhSeason')}</th><th>{t('rhDisc')}</th><th className="tall">{t('startsL')}</th><th className="tall">{t('finished')}</th>
               <th className="tall">{t('rhBestPos')}</th><th className="tall">{t('rhBestPts')}</th><th className="tall">{t('rhAvgPts')}</th>
             </tr></thead>
-            <tbody>{oppsummert.map(x => (
-              <tr key={x.sesong + x.gren}>
+            <tbody>{oppsummert.map((x, i) => (
+              <tr key={x.sesong + x.gren} className={i > 0 && oppsummert[i - 1].sesong !== x.sesong ? 'rh-nysesong' : ''}>
                 <td>{sesongNavn(x.sesong)}</td>
                 <td><b style={{ color: farge(x.gren) }}>{x.gren}</b></td>
                 <td className="tall">{x.starter}</td><td className="tall">{x.fullfort}</td>
@@ -199,8 +210,14 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                 </th>
               ))}
             </tr></thead>
-            <tbody>{liste.map(r => (
-              <tr key={r.fis_race_id}>
+            <tbody>{liste.map((r, i) => (
+              <Fragment key={r.fis_race_id}>
+              {/* Sortert på dato får hver sesong sin egen overskriftsrad. */}
+              {kol === 'dato' && (i === 0 || liste[i - 1].sesong !== r.sesong) && (
+                <tr className="rh-sesongrad"><td colSpan={6}>{sesongNavn(r.sesong)}
+                  <span> · {liste.filter(x => x.sesong === r.sesong).length} {t('krCount')}</span></td></tr>
+              )}
+              <tr>
                 <td className="nobr">{dato(r.race_date)}</td>
                 <td>
                   <a href={`https://www.fis-ski.com/DB/general/results.html?sectorcode=AL&raceid=${r.fis_race_id}`}
@@ -212,6 +229,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                 <td className="tall">{r.plass ?? <span className="muted">{r.position || '–'}</span>}</td>
                 <td className="tall">{p1(r.poeng)}</td>
               </tr>
+              </Fragment>
             ))}</tbody>
           </table>
         </div>

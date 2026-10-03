@@ -87,7 +87,7 @@ export const SIGNUPS = RACES.map(r => ({ id: r.id, race_id: r.id, counted_at: '2
   participants: 20 + rnd(90), teams: 5 + rnd(20) }))
 
 export const FIS_POINTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
-  Array.from({ length: 6 }, (_, i) => ({ fis_code: p.fis_code, list_id: 500 + i, list_label: `Liste ${i + 1}`,
+  Array.from({ length: 6 }, (_, i) => ({ fis_code: p.fis_code, list_id: 500 + i, list_label: `${i % 3 + 1}th FIS points list ${2024 + Math.floor(i / 3)}/${2025 + Math.floor(i / 3)}`,
     season: '2027', discipline: velg(GRENER), points: 60 + rnd(80), rank: 100 + rnd(900), base_list: i === 0,
     fetched_at: '2026-09-20' })))
 

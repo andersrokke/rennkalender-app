@@ -1,4 +1,5 @@
 // Resultathistorikken, testet uten å tegne noe. Kjøres med: npm run test:unit
+import { sesongFelt } from '../../src/resultater.js'
 import { sesongAv, sesongNavn, berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf } from '../../src/resultater.js'
 
 let feil = 0
@@ -57,6 +58,12 @@ sjekk('per sesong og gren: GS 2023/24 har to starter, én fullført', ps.find(x 
 const pt = poengOverTid(R)
 sjekk('poeng over tid: bare fullførte med poeng, eldste først', pt.length === 4 && pt[0].dato === '2023-07-01')
 sjekk('poeng over tid: felt per gren', pt[1].GS === 55.5 && pt[1].SL === undefined && pt[1].plass_GS === 3)
+
+const felt = sesongFelt(pt)
+sjekk('sesongfelt: ett per sesong, annenhver skygget', felt.length === 2 && !felt[0].skygge && felt[1].skygge)
+sjekk('sesongfelt: skille ved 1. juli, ikke for første', felt[0].skille === null && felt[1].skille === Date.UTC(2024, 6, 1))
+sjekk('sesongfelt: klippet til dataene', felt[0].fra === pt[0].t && felt[1].til === pt.at(-1).t)
+sjekk('sesongfelt på tomt utvalg', sesongFelt([]).length === 0)
 
 const sg = sesongGraf(R)
 sjekk('sesonggraf: eldste sesong først', sg.length === 2 && sg[0].navn === '2023/24')
