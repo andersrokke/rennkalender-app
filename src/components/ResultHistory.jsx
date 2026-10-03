@@ -5,12 +5,25 @@ import { useT } from '../i18n'
 import { fisPoints } from '../format'
 import { DISC_COLOR } from './useDevelopment'
 import {
-  berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
+  berik, filtrer, sorter, sorterOppsummering, perManed, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
 } from '../resultater'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'AC']
 const farge = g => DISC_COLOR[g] || '#B08CFF'
 const KOLONNER = [['dato', 'rhDate'], ['sted', 'rhPlace'], ['kategori', 'rhCat'], ['gren', 'rhDisc'], ['plass', 'rhPos'], ['poeng', 'rhPts']]
+// Aksemerke med to linjer: måneden, og andelen fullført rett under - i farge,
+// så man ser med ett blikk hvilke måneder det ryker.
+const PST_FARGE = p => p >= 75 ? '#1E7A52' : p >= 50 ? '#B7791F' : '#D03B40'
+function MndTick({ x, y, payload, rader }) {
+  const r = rader.find(m => m.nokkel === payload.value)
+  if (!r) return null
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fontSize={11} fill="var(--mute)" dy={12}>{r.navn.split(' ')[0]}</text>
+      <text textAnchor="middle" fontSize={11} fontWeight={800} fill={PST_FARGE(r.prosent)} dy={28}>{r.prosent}%</text>
+    </g>
+  )
+}
 const TIPS = { background: 'var(--snow)', border: '1px solid var(--line)', color: 'var(--slate)' }
 
 // Alle FIS-renn løperen har stått på startlista i siden 2023/24: nøkkeltall,
@@ -34,6 +47,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const [retning, setRetning] = useState('ned')
   const [yAkse, setYAkse] = useState('poeng')     // poeng | plass
   const [mal, setMal] = useState('beste')         // beste | snitt
+  const [oppKol, setOppKol] = useState('sesong')
+  const [oppRetning, setOppRetning] = useState('ned')
 
   useEffect(() => {
     let av = false
@@ -57,7 +72,14 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const felt = useMemo(() => sesongFelt(tid), [tid])
   // Sesonggrafen sammenligner sesonger, så den ser bort fra sesongfilteret.
   const perSesong = useMemo(() => sesongGraf(filtrer(alle, { gren, kategori })), [alle, gren, kategori])
-  const oppsummert = useMemo(() => perSesongOgGren(utvalg), [utvalg])
+  const oppsummert = useMemo(() => sorterOppsummering(perSesongOgGren(utvalg), oppKol, oppRetning), [utvalg, oppKol, oppRetning])
+  const maneder = useMemo(() => perManed(utvalg), [utvalg])
+  const sorterOpp = k => {
+    if (k === oppKol) setOppRetning(r => r === 'opp' ? 'ned' : 'opp')
+    // Plass og poeng er best lavest; resten er mest nyttig høyest først.
+    else { setOppKol(k); setOppRetning(['gren', 'bestePlass', 'bestePoeng', 'snittPoeng'].includes(k) ? 'opp' : 'ned') }
+  }
+  const pstKlasse = p => p == null ? '' : p >= 75 ? 'bra' : p >= 50 ? 'middels' : 'svak'
   const grenerIUtvalg = grener.filter(g => utvalg.some(r => r.gren === g))
 
   const sorterPa = k => {
@@ -97,6 +119,11 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
           </select>
           <label className="rh-kryss"><input type="checkbox" checked={bareFullfort} onChange={e => setBareFullfort(e.target.checked)} /> {t('rhOnlyFinished')}</label>
         </div>
+      </div>
+
+      <div className={`rh-andel ${pstKlasse(n.prosent)}`}>
+        <b>{n.prosent == null ? '–' : `${n.prosent} %`}</b>
+        <span>{t('rhPctLong')}<br /><em>{n.fullfort} {t('ofN')} {n.starter} {t('startsL')} · {n.ute} {t('rhOut')}</em></span>
       </div>
 
       <div className="kpis">
@@ -179,18 +206,59 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
           </div>
         )}
 
+        <h3>{t('rhChartMonths')}</h3>
+        <p className="muted rh-note">{t('rhChartMonthsSub')}</p>
+        {/* Ett diagram per sesong, nyeste først: få stolper i hvert, så
+            måned og prosent er lesbare også på mobil. */}
+        {[...new Set(maneder.map(x => x.sesong))].sort((x, y) => y - x).map(ses => {
+          const mnd = maneder.filter(x => x.sesong === ses)
+          const tot = nokkeltall(utvalg.filter(r => r.sesong === ses))
+          return (
+            <div className="chart rh-mnd" key={ses}>
+              <div className="rh-mndhode">
+                <b>{sesongNavn(ses)}</b>
+                <span className={`rh-pst ${pstKlasse(tot.prosent)}`}><i style={{ width: `${tot.prosent}%` }} /><b>{tot.prosent} % {t('finished')}</b></span>
+              </div>
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart data={mnd} margin={{ top: 8, right: 16, left: -24, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
+                  <XAxis dataKey="nokkel" interval={0} height={40} tickLine={false} tick={<MndTick rader={mnd} />} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--mute)' }} />
+                  <Tooltip contentStyle={TIPS} cursor={{ fill: 'var(--ice)' }}
+                    labelFormatter={(k, pl) => { const r = pl?.[0]?.payload; return r ? `${r.navn} · ${r.prosent} % ${t('finished')}` : k }} />
+                  <Bar dataKey="fullfort" name={t('finished')} stackId="a" fill="#2E9E6B" maxBarSize={46} isAnimationActive={false} />
+                  <Bar dataKey="ute" name={t('rhOut')} stackId="a" fill="#E5484D" maxBarSize={46} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )
+        })}
+        <div className="rh-forklaring"><span><i style={{ background: '#2E9E6B' }} />{t('finished')}</span><span><i style={{ background: '#E5484D' }} />{t('rhOut')}</span></div>
+
         <h3>{t('rhBySeason')}</h3>
         <div className="ad-scroll">
           <table className="ad-table rh-tabell">
             <thead><tr>
-              <th>{t('rhSeason')}</th><th>{t('rhDisc')}</th><th className="tall">{t('startsL')}</th><th className="tall">{t('finished')}</th>
-              <th className="tall">{t('rhBestPos')}</th><th className="tall">{t('rhBestPts')}</th><th className="tall">{t('rhAvgPts')}</th>
+              {[['sesong', 'rhSeason'], ['gren', 'rhDisc'], ['starter', 'startsL'], ['fullfort', 'finished'], ['prosent', 'rhPct'],
+                ['bestePlass', 'rhBestPos'], ['bestePoeng', 'rhBestPts'], ['snittPoeng', 'rhAvgPts']].map(([k, etikett], i) => (
+                <th key={k} className={i > 1 ? 'tall' : ''}
+                  aria-sort={oppKol === k ? (oppRetning === 'opp' ? 'ascending' : 'descending') : 'none'}>
+                  <button type="button" className="rh-sort" onClick={() => sorterOpp(k)}>
+                    {t(etikett)}<span aria-hidden="true">{oppKol === k ? (oppRetning === 'opp' ? ' ▲' : ' ▼') : ''}</span>
+                  </button>
+                </th>
+              ))}
             </tr></thead>
             <tbody>{oppsummert.map((x, i) => (
-              <tr key={x.sesong + x.gren} className={i > 0 && oppsummert[i - 1].sesong !== x.sesong ? 'rh-nysesong' : ''}>
+              <tr key={x.sesong + x.gren} className={oppKol === 'sesong' && i > 0 && oppsummert[i - 1].sesong !== x.sesong ? 'rh-nysesong' : ''}>
                 <td>{sesongNavn(x.sesong)}</td>
                 <td><b style={{ color: farge(x.gren) }}>{x.gren}</b></td>
                 <td className="tall">{x.starter}</td><td className="tall">{x.fullfort}</td>
+                <td className="tall">
+                  <span className={`rh-pst ${pstKlasse(x.prosent)}`}>
+                    <i style={{ width: `${x.prosent ?? 0}%` }} /><b>{x.prosent == null ? '–' : `${x.prosent} %`}</b>
+                  </span>
+                </td>
                 <td className="tall">{x.bestePlass ?? '–'}</td><td className="tall">{p1(x.bestePoeng)}</td><td className="tall">{p1(x.snittPoeng)}</td>
               </tr>
             ))}</tbody>

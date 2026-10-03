@@ -1,5 +1,5 @@
 // Resultathistorikken, testet uten å tegne noe. Kjøres med: npm run test:unit
-import { sesongFelt } from '../../src/resultater.js'
+import { sesongFelt, sorterOppsummering, perManed } from '../../src/resultater.js'
 import { sesongAv, sesongNavn, berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf } from '../../src/resultater.js'
 
 let feil = 0
@@ -58,6 +58,20 @@ sjekk('per sesong og gren: GS 2023/24 har to starter, én fullført', ps.find(x 
 const pt = poengOverTid(R)
 sjekk('poeng over tid: bare fullførte med poeng, eldste først', pt.length === 4 && pt[0].dato === '2023-07-01')
 sjekk('poeng over tid: felt per gren', pt[1].GS === 55.5 && pt[1].SL === undefined && pt[1].plass_GS === 3)
+
+sjekk('prosent fullført i nøkkeltall', n.prosent === 67 && nokkeltall([]).prosent === null)
+sjekk('prosent per sesong og gren', ps.find(x => x.sesong === 2023 && x.gren === 'GS').prosent === 50)
+const so = sorterOppsummering(ps, 'prosent', 'opp')
+sjekk('oppsummering sortert på prosent: lavest først', so[0].prosent === 0 && so.at(-1).prosent === 100)
+sjekk('oppsummering sortert på gren: SL først, så nyeste sesong', sorterOppsummering(ps, 'gren', 'opp')[0].gren === 'SL'
+  && sorterOppsummering(ps, 'gren', 'opp')[0].sesong === 2024)
+sjekk('oppsummering på beste poeng: uten poeng sist', sorterOppsummering(ps, 'bestePoeng', 'opp').at(-1).bestePoeng === null
+  && sorterOppsummering(ps, 'bestePoeng', 'ned').at(-1).bestePoeng === null)
+sjekk('oppsummering standard: nyeste sesong først', sorterOppsummering(ps)[0].sesong === 2024)
+const pm = perManed(R)
+sjekk('per måned: eldste først, én rad per måned', pm.length === 6 && pm[0].nokkel === '2023-07' && pm[0].navn === 'jul 23')
+sjekk('per måned: utkjøring telles', pm.find(x => x.nokkel === '2024-02').ute === 1 && pm.find(x => x.nokkel === '2024-02').prosent === 0)
+sjekk('per måned: fullført gir 100 %', pm.find(x => x.nokkel === '2024-12').prosentTekst === '100 %')
 
 const felt = sesongFelt(pt)
 sjekk('sesongfelt: ett per sesong, annenhver skygget', felt.length === 2 && !felt[0].skygge && felt[1].skygge)

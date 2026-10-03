@@ -92,7 +92,7 @@ export const FIS_POINTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
     fetched_at: '2026-09-20' })))
 
 export const FIS_RESULTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
-  Array.from({ length: 30 }, (_, i) => { const ute = i % 7 === 3; return ({ fis_code: p.fis_code, fis_race_id: 70000 + i, race_date: iso(dager(-32 * i - 200)),
+  Array.from({ length: 30 }, (_, i) => { const ute = i % 7 === 3; return ({ fis_code: p.fis_code, fis_race_id: 70000 + i, race_date: `${2025 - Math.floor(i / 10)}-${['11', '12', '12', '11', '12'][i % 5]}-${String(3 + (i * 7) % 24).padStart(2, '0')}`.replace(/^(\d+)/, y => i % 2 ? String(+y + 1) : y).replace(/-(11|12)-/, m => i % 2 ? ['-01-', '-02-', '-03-'][i % 3] : m),
     place: velg(VENUES).name, discipline: velg(GRENER), nation: 'NOR', category: i % 5 ? 'FIS' : 'NJR', category_name: 'FIS',
     position: ute ? 'DNF1' : String(1 + rnd(40)), fis_points: ute ? null : 50 + rnd(60) + i, cup_points: null, fetched_at: '2026-09-20' }) }))
 

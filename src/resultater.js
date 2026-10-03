@@ -66,6 +66,8 @@ export function nokkeltall(rader) {
     starter: rader.length,
     fullfort: ferdig.length,
     ute: rader.length - ferdig.length,
+    // Andel fullførte i hele prosent; null uten starter, ikke 0.
+    prosent: rader.length ? Math.round(ferdig.length / rader.length * 100) : null,
     seire: ferdig.filter(r => r.plass === 1).length,
     pall: ferdig.filter(r => r.plass <= 3).length,
     topp10: ferdig.filter(r => r.plass <= 10).length,
@@ -89,6 +91,39 @@ export function perSesongOgGren(rader) {
     const [sesong, gren] = k.split('|')
     return { sesong: Number(sesong), gren, ...nokkeltall(rs) }
   }).sort((a, b) => b.sesong - a.sesong || plass(a.gren) - plass(b.gren))
+}
+
+// Oppsummeringen sortert på en valgfri kolonne. Tomme verdier sist, og ved
+// likhet faller den tilbake på nyeste sesong og vanlig grenrekkefølge.
+const GRENORDEN = ['SL', 'GS', 'SG', 'DH', 'AC']
+const grenplass = g => { const i = GRENORDEN.indexOf(g); return i < 0 ? 99 : i }
+export function sorterOppsummering(rader, kol = 'sesong', retning = 'ned') {
+  const f = retning === 'ned' ? -1 : 1
+  const verdi = r => kol === 'gren' ? grenplass(r.gren) : r[kol]
+  return [...rader].sort((a, b) => {
+    const x = verdi(a), y = verdi(b)
+    const xt = x == null, yt = y == null
+    if (xt !== yt) return xt ? 1 : -1
+    const c = xt ? 0 : (x - y) * f
+    return c || b.sesong - a.sesong || grenplass(a.gren) - grenplass(b.gren)
+  })
+}
+
+// Måned for måned: hvor mange starter som ble fullført og hvor mange som endte
+// med utkjøring. Viser når på sesongen det går bra og når det ryker.
+const MND_KORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
+export function perManed(rader) {
+  const m = new Map()
+  rader.forEach(r => {
+    const k = r.race_date.slice(0, 7)
+    const x = m.get(k) || { nokkel: k, sesong: r.sesong, starter: 0, fullfort: 0, ute: 0,
+      navn: `${MND_KORT[+k.slice(5) - 1]} ${k.slice(2, 4)}` }
+    x.starter++
+    if (r.plass != null) x.fullfort++; else x.ute++
+    m.set(k, x)
+  })
+  return [...m.values()].sort((a, b) => a.nokkel.localeCompare(b.nokkel))
+    .map(x => ({ ...x, prosent: Math.round(x.fullfort / x.starter * 100), prosentTekst: `${Math.round(x.fullfort / x.starter * 100)} %` }))
 }
 
 // Graf 1: hvert fullførte renn med poeng, eldste først, én nøkkel per gren.
