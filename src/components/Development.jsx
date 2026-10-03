@@ -88,8 +88,8 @@ export default function Development({ profile, team, isCoach, readOnly = false }
 
   if (!codes.length) {
     return <div className="page"><div className="card">
-      <h2>{t('devTitle')}</h2>
-      <p className="muted">{isCoach ? t('devNoTeamCodes') : t('devNoCode')}</p>
+      <h2>{readOnly ? profile.full_name : t('devTitle')}</h2>
+      <p className="muted">{isCoach ? t('devNoTeamCodes') : readOnly ? t('krNoFis') : t('devNoCode')}</p>
     </div></div>
   }
 

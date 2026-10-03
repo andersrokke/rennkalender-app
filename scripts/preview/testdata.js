@@ -101,7 +101,10 @@ export const FIS_RESULTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
 // forventer dem. Enkle eq/in-filtre i spørringen respekteres.
 export function svarPa(url, o) {
   const u = new URL(url)
-  const enkelt = (o?.headers?.Accept || o?.headers?.accept || '').includes('object')
+  // supabase-js sender et Headers-objekt, ikke et vanlig objekt; uten .get()
+  // ble .single() besvart med en liste.
+  const hode = o?.headers
+  const enkelt = String((typeof hode?.get === 'function' ? hode.get('Accept') : hode?.Accept || hode?.accept) || '').includes('object')
   const m = u.pathname.match(/\/rest\/v1\/([a-z_]+)/)
   const rpc = u.pathname.match(/\/rpc\/([a-z_]+)/)
   const filt = rader => {

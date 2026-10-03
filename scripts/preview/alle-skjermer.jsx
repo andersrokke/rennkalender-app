@@ -23,6 +23,7 @@ import RaceBrowser from '../../src/components/RaceBrowser.jsx'
 import Admin from '../../src/components/Admin.jsx'
 import Children from '../../src/components/Children.jsx'
 import ChildRaces from '../../src/components/ChildRaces.jsx'
+import ChildDev from '../../src/components/ChildDev.jsx'
 import NoTeam from '../../src/components/NoTeam.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
 import Auth from '../../src/components/Auth.jsx'
@@ -129,6 +130,7 @@ const skjermer = [
   ['Admin: Admin', <Admin profile={admin} />],
   ['Forelder: Children', <Children profile={forelder} />],
   ['Forelder: ChildRaces', <ChildRaces />],
+  ['Forelder: ChildDev', <ChildDev />],
   ['Forelder: RaceBrowser', <RaceBrowser profile={forelder} team={null} isCoach={false} readOnly />],
   ['Forelder: Settings', <Settings profile={forelder} team={null} isCoach={false} onChange={ingen} />],
   ['Onboarding', <Onboarding profile={{ id: 'ny', full_name: '', lang: 'no' }} onDone={ingen} />],
