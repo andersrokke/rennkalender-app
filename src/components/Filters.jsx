@@ -1,7 +1,7 @@
 import { grp } from '../util'
 import { useT } from '../i18n'
 
-export const initialFilter = { country: new Set(['NOR', 'SWE', 'FIN', 'EUR']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() }
+export const initialFilter = { country: new Set(['NOR', 'SWE', 'FIN', 'EUR', 'ASIA']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() }
 
 export function applyFilter(races, f) {
   return races.filter(r => {
@@ -26,16 +26,17 @@ export default function Filters({ f, setF, view, setView, extra, onDone }) {
       <div className="group"><span>{t('country')}</span>
         <Chip k="country" v="NOR" cls="nor" label={t('norway')} /><Chip k="country" v="SWE" cls="swe" label={t('sweden')} />
         <Chip k="country" v="FIN" cls="fin" label={t('finland')} /><Chip k="country" v="EUR" cls="eur" label={t('ecLands')} />
+        <Chip k="country" v="ASIA" cls="asia" label={t('asia')} />
       </div>
       {setView && <div className="group"><span>{t('mapF')}</span>
-        {[['norden', t('nordics')], ['alpene', t('alps')], ['europa', t('europe')]].map(([k, l]) => <button key={k} className={`chip ${view === k ? 'on' : ''}`} onClick={() => setView(k)}>{l}</button>)}
+        {[['norden', t('nordics')], ['alpene', t('alps')], ['europa', t('europe')], ['asia', t('asia')]].map(([k, l]) => <button key={k} className={`chip ${view === k ? 'on' : ''}`} onClick={() => setView(k)}>{l}</button>)}
       </div>}
       <div className="group"><span>{t('gender')}</span><Chip k="gender" v="W" label={t('women')} /><Chip k="gender" v="M" label={t('men')} /></div>
       <div className="group"><span>{t('month')}</span>
         {MONTHS.map(([k, l]) => <button key={k} className={`chip ${f.month === k ? 'on' : ''}`} onClick={() => setF(p => ({ ...p, month: k }))}>{k === 'all' ? t('allM') : l}</button>)}
       </div>
       <div className="group"><span>{t('disc')}</span>{['SL', 'GS', 'SG', 'DH'].map(d => <Chip key={d} k="disc" v={d} label={d} />)}</div>
-      <div className="group"><span>{t('cat')}</span>{['FIS', 'ENL', 'NJR', 'NJC', 'NC', 'EC'].map(c => <Chip key={c} k="cat" v={c} label={c} />)}</div>
+      <div className="group"><span>{t('cat')}</span>{['FIS', 'ENL', 'NJR', 'NJC', 'NC', 'EC', 'FEC'].map(c => <Chip key={c} k="cat" v={c} label={c} />)}</div>
       {extra}
     </div>
   )

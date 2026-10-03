@@ -1,8 +1,10 @@
 export const MN = ['', 'jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
 export const MONTHS = { '2026-11': 'November 2026', '2026-12': 'Desember 2026', '2027-01': 'Januar 2027', '2027-02': 'Februar 2027', '2027-03': 'Mars 2027', '2027-04': 'April 2027' }
-export const COLORS = { NOR: '#C8102E', SWE: '#0A5CB0', FIN: '#2E8B57' }
+export const COLORS = { NOR: '#C8102E', SWE: '#0A5CB0', FIN: '#2E8B57', CHN: '#D97706', KOR: '#D97706', JPN: '#D97706' }
 export const color = c => COLORS[c] || '#7B4FBF'
-export const grp = c => ['NOR', 'SWE', 'FIN'].includes(c) ? c : 'EUR'
+// Far East Cup går i Kina, Korea og Japan; alt annet utenfor Norden er Europa.
+export const ASIA = ['CHN', 'KOR', 'JPN', 'KAZ', 'MGL']
+export const grp = c => ['NOR', 'SWE', 'FIN'].includes(c) ? c : ASIA.includes(c) ? 'ASIA' : 'EUR'
 export function fmt(r) {
   const [, m1, d1] = r.start_date.split('-'), [, m2, d2] = r.end_date.split('-')
   if (r.start_date === r.end_date) return `${+d1}. ${MN[+m1]}`

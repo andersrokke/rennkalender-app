@@ -28,7 +28,7 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home, h
 
   useEffect(() => {
     if (!map.current) return
-    const v = { norden: [[64.5, 18.5], 5], alpene: [[46.6, 10.0], 7], europa: [[56, 14], 4] }[view]
+    const v = { norden: [[64.5, 18.5], 5], alpene: [[46.6, 10.0], 7], europa: [[56, 14], 4], asia: [[38.5, 127], 5] }[view]
     if (v) map.current.flyTo(v[0], v[1])
   }, [view])
 

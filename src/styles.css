@@ -16,7 +16,7 @@
   --good:#0F7A47;   --good-soft:#E3F3EA;
   --accent-fg:#FFFFFF;
   /* Nasjonalitet er ikke lenger en UI-farge. Tonene er dempet med vilje. */
-  --nor:#B8697A; --swe:#6E8DC4; --fin:#74A894; --eur:#9A8FC0; --amber:#D98A00;
+  --nor:#B8697A; --swe:#6E8DC4; --fin:#74A894; --eur:#9A8FC0; --asia:#D9A066; --amber:#D98A00;
   --sel:#EEF4FF; --sel-fg:#1B3E7A;
   /* Status = trafikklys. Uendret: tonene er kontrastsjekket fra før, og de
      skal fortsatt aldri leses som en nasjonalitet. */
@@ -45,7 +45,7 @@ html[data-theme=dark]{
   --danger:#FF5871; --danger-soft:#33141C; --danger-ink:#FF5871;
   --good:#4ADE80;   --good-soft:#0F2F1D;
   --accent-fg:#04101F;
-  --nor:#C4808A; --swe:#7C97C9; --fin:#7FAE9C; --eur:#A296C4; --amber:#FFB547;
+  --nor:#C4808A; --swe:#7C97C9; --fin:#7FAE9C; --eur:#A296C4; --asia:#DDAA72; --amber:#FFB547;
   --sel:#152743; --sel-fg:#8FB6FF;
   --st-planned:#22C55E;     --st-planned-fg:#04140A;
   --st-entered:#065F46;     --st-entered-fg:#FFFFFF;
@@ -88,12 +88,13 @@ label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
 
 .chip{border:1px solid var(--line);background:var(--snow);color:var(--slate);padding:5px 11px;border-radius:999px;font-size:13px}
 .chip.on{background:var(--slate);color:var(--accent-fg);border-color:var(--slate)}
-.chip.nor,.chip.swe,.chip.fin,.chip.eur{display:inline-flex;align-items:center;gap:7px}
-.chip.nor::before,.chip.swe::before,.chip.fin::before,.chip.eur::before{content:"";width:8px;height:8px;
+.chip.nor,.chip.swe,.chip.fin,.chip.eur,.chip.asia{display:inline-flex;align-items:center;gap:7px}
+.chip.nor::before,.chip.swe::before,.chip.fin::before,.chip.eur::before,.chip.asia::before{content:"";width:8px;height:8px;
   border-radius:50%;background:var(--nor);flex:0 0 auto}
 .chip.swe::before{background:var(--swe)}
 .chip.fin::before{background:var(--fin)}
 .chip.eur::before{background:var(--eur)}
+.chip.asia::before{background:var(--asia)}
 .controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:10px 24px;background:var(--snow);border-bottom:1px solid var(--line)}
 .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .group>span{font-size:13px;color:var(--mute);margin-right:2px}
@@ -106,7 +107,7 @@ label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
 .race{display:grid;grid-template-columns:92px 1fr auto;gap:4px 14px;padding:13px 20px;border-bottom:1px solid var(--line);border-left:3px solid transparent}
 .race.clickable{cursor:pointer}
 .race:hover,.race.active{background:var(--ice)}
-.race.nor{border-left-color:var(--nor)} .race.swe{border-left-color:var(--swe)} .race.fin{border-left-color:var(--fin)} .race.eur{border-left-color:var(--eur)}
+.race.nor{border-left-color:var(--nor)} .race.swe{border-left-color:var(--swe)} .race.fin{border-left-color:var(--fin)} .race.eur{border-left-color:var(--eur)} .race.asia{border-left-color:var(--asia)}
 .race.selected{background:var(--sel)}
 .date{font-family:var(--num);font-variant-numeric:tabular-nums;color:var(--faint);font-size:13px;font-weight:600;padding-top:2px}
 .place{font-weight:700;letter-spacing:-.012em}
