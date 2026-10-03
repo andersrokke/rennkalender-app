@@ -488,6 +488,91 @@ await as(H, 'select public.head_set_open(true)')
 await ser(C1, P) ? ok('med «alle ser alt» ser Kari også løperne som står rett på huset') : fail('huset selv er fortsatt usynlig')
 await as(H, 'select public.head_set_open(false)')
 
+
+// --- skigymnas, åpen tilknytning og eierskapsbasert trenerrett ---
+const skoler = (await as(L2, 'select * from public.skigymnas()')).rows
+skoler.length === 9 ? ok(`ni skigymnas finnes fra start (${skoler.map(s => s.name).slice(0, 3).join(', ')} …)`)
+  : fail(`skigymnas: ${skoler.length}`)
+const GEILO = skoler.find(s => s.name === 'NTG Geilo').id
+;(await q('select owner_id from teams where id=$1', [GEILO]))[0].owner_id === null
+  ? ok('et skigymnas finnes uten at noen trener har startet') : fail('skigymnaset har eier')
+
+const [S1, S2, SC, SX] = ['dddddddd-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000002',
+  'dddddddd-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000004']
+for (const [id, mail, navn] of [[S1, 's1@test.no', 'Skole Én'], [S2, 's2@test.no', 'Skole To'],
+  [SC, 'sc@test.no', 'Geilo Trener'], [SX, 'sx@test.no', 'Selverklært']]) {
+  await c.query(`insert into auth.users(id,email,raw_user_meta_data)
+    values ($1,$2,jsonb_build_object('full_name',$3::text))`, [id, mail, navn])
+}
+await as(S1, 'select public.velg_skigymnas($1)', [GEILO])
+await as(S2, 'select public.velg_skigymnas($1)', [GEILO])
+;(await q('select team_id from profiles where id=$1', [S1]))[0].team_id === GEILO
+  ? ok('en løper knyttet seg til skigymnaset uten kode og uten trener') : fail('velg_skigymnas virket ikke')
+const serAndre = await as(S1, 'select id from profiles where id = $1', [S2])
+serAndre.rows.length === 0 ? ok('to løpere som bare har valgt samme skigymnas ser ikke hverandre')
+  : fail('løpere på skigymnaset ser hverandre')
+try { await as(S1, 'select public.velg_skigymnas($1)', [G1]); fail('valgte et lag som ikke er skigymnas') }
+catch (e) { e.message.includes('ikke et skigymnas') ? ok('bare skigymnas kan velges uten kode') : fail(e.message) }
+
+// Selverklært trener: setter rollen selv og går inn med lagkoden.
+await as(SX, `update profiles set role = 'coach' where id = $1`, [SX])
+const g2k = (await q('select invite_code k from teams where id=$1', [G2]))[0].k
+await as(SX, 'select public.join_team($1)', [g2k])
+!(await ser(SX, G2)) ? ok('rollen «trener» pluss lagkoden gir ikke trenerrett - det gjør bare eierskap')
+  : fail('en selverklært trener ble trener for laget')
+;(await as(SX, 'select id from profiles where team_id = $1 and id <> $2', [G2, SX])).rows.length >= 0
+try { await as(SX, `select public.opprett_gruppe('Snikgruppe')`); fail('selverklært trener opprettet gruppe i huset') }
+catch { ok('en selverklært trener kan ikke opprette grupper i huset') }
+
+// Administrator setter inn en trener: invitasjon med skigymnaset som hus.
+await as(ADM, `select public.admin_invite_coach('sc@test.no', null, $1)`, [GEILO])
+const scGruppe = (await as(SC, `select public.create_coach_team('Geilo Fart') as id`)).rows[0].id
+;(await q('select parent_team_id from teams where id=$1', [scGruppe]))[0].parent_team_id === GEILO
+  ? ok('en invitert trener fikk gruppa si under skigymnaset') : fail('gruppa havnet ikke under skigymnaset')
+const ledigeL = (await as(SC, 'select * from public.ledige_lopere()')).rows
+ledigeL.length === 2 ? ok('treneren ser de to løperne som alt står på skigymnaset') : fail(`ledigeL: ${ledigeL.length}`)
+;(await as(C1, 'select * from public.ledige_lopere()')).rows.every(l => l.id !== S1)
+  ? ok('en trener på et annet skigymnas ser dem ikke') : fail('ledigeL løpere lekker til andre hus')
+await as(SC, 'select public.flytt_loper($1,$2)', [S1, scGruppe])
+;(await q('select team_id from profiles where id=$1', [S1]))[0].team_id === scGruppe
+  ? ok('treneren hentet en løper som alt var registrert inn i gruppa si') : fail('hent inn virket ikke')
+try { await as(C1, 'select public.flytt_loper($1,$2)', [S2, G1]); fail('trener fra annet hus hentet løper') }
+catch { ok('en trener kan ikke hente løpere fra et annet skigymnas') }
+try { await as(S1, 'select public.velg_skigymnas($1)', [GEILO]); fail('løper i gruppe byttet seg ut med et klikk') }
+catch (e) { e.message.includes('Gå ut av laget') ? ok('en løper i en gruppe må gå ut før hun velger skigymnas på nytt') : fail(e.message) }
+
+// Hovedtrener settes av administrator, og skolen overlever at hun slettes.
+try { await as(SC, 'select public.admin_set_team_owner($1,$2)', [GEILO, SC]); fail('en trener tok skigymnaset selv') }
+catch (e) { e.message.includes('Bare administrator') ? ok('ingen kan ta et skigymnas selv') : fail(e.message) }
+await as(ADM, 'select public.admin_set_team_owner($1,$2)', [GEILO, SC])
+await ser(SC, GEILO) ? ok('administrator satte hovedtrener, og hun ser huset') : fail('hovedtrener ser ikke huset')
+await c.query('delete from auth.users where id = $1', [SC])
+const skoleEtter = await q('select owner_id, (select count(*)::int from teams where id=$1) n from teams where id=$1', [GEILO])
+skoleEtter[0]?.n === 1 && skoleEtter[0].owner_id === null ? ok('skigymnaset står igjen uten eier når hovedtreneren slettes')
+  : fail(`skigymnaset skoleEtter sletting: ${JSON.stringify(skoleEtter)}`)
+
+// Foreldrekoden: dedikert, lesbar, byttbar.
+const forKode = (await q('select link_code k from profiles where id=$1', [S2]))[0].k
+;/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(forKode) ? ok(`foreldrekoden er seks lesbare tegn (${forKode})`) : fail(`foreldrekode: ${forKode}`)
+const FOR = 'dddddddd-0000-0000-0000-000000000009'
+await c.query(`insert into auth.users(id,email,raw_user_meta_data) values ($1,'far@test.no','{"full_name":"Far"}')`, [FOR])
+const nyK = (await as(S2, 'select public.bytt_foreldrekode() as k')).rows[0].k
+try { await as(FOR, 'select * from public.link_guardian($1)', [forKode]); fail('den gamle foreldrekoden virket skoleEtter bytte') }
+catch { ok('den gamle foreldrekoden er ugyldig skoleEtter bytte') }
+await as(FOR, 'select * from public.link_guardian($1)', [nyK.toLowerCase()])
+;(await as(FOR, 'select id from profiles where id = $1', [S2])).rows.length === 1
+  ? ok('forelderen koblet seg til med den nye koden, skrevet med små bokstaver') : fail('foreldrekobling virket ikke')
+const s2fis = '9990002'
+await c.query('update profiles set fis_code = $2 where id = $1', [S2, s2fis])
+try { await as(FOR, 'select * from public.link_guardian($1)', [s2fis]); fail('FIS-koden virket som foreldrekode') }
+catch { ok('FIS-koden kan ikke brukes til å koble seg på som forelder') }
+
+const adminRader = (await as(ADM, 'select * from public.admin_users()')).rows
+const s2rad = adminRader.find(u => u.id === S2)
+s2rad?.hus_navn === 'NTG Geilo' && s2rad.skigymnas && s2rad.pa_huset && s2rad.foresatte === 'Far'
+  ? ok('admin-oversikten viser skigymnas, at løperen står uten gruppe, og foresatte')
+  : fail(`admin_users: ${JSON.stringify(s2rad)}`)
+
 // --- rettighetsrevisjon: alt frontend kaller, som authenticated ---
 //
 // Smoke-testen i nettleseren mocker nettverket og kan aldri se en

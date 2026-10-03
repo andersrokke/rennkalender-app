@@ -17,6 +17,8 @@ import SeasonMatrix from '../../src/components/SeasonMatrix.jsx'
 import Athletes from '../../src/components/Athletes.jsx'
 import RaceBrowser from '../../src/components/RaceBrowser.jsx'
 import Children from '../../src/components/Children.jsx'
+import Admin from '../../src/components/Admin.jsx'
+import Onboarding from '../../src/components/Onboarding.jsx'
 import { LangContext } from '../../src/i18n'
 import { svarPa, LOPERE, TRENER, TEAM } from './testdata.js'
 import '../../src/styles.css'
@@ -95,9 +97,13 @@ const skjermer = [
   ['Trener: CoachSeason', <CoachSeason profile={TRENER} team={TEAM} />],
   ['Trener: SeasonMatrix', <SeasonMatrix team={TEAM} />],
   ['Trener: Athletes', <Athletes team={TEAM} />],
+  ['Gruppetrener: Athletes (ventende løpere)', <Athletes team={{ ...TEAM, id: 'g2', name: 'Teknikk', parent_team_id: 'ntg' }} />],
   ['Trener: RaceBrowser', <RaceBrowser profile={TRENER} team={TEAM} isCoach readOnly={false} />],
   ['Trener: Development', <Development profile={TRENER} team={TEAM} isCoach />],
-  ['Forelder: Children', <Children profile={forelder} />]
+  ['Forelder: Children', <Children profile={forelder} />],
+  ['Admin (klikk gjennom fanene)', <Admin profile={{ id: 'anders', is_admin: true }} />],
+  ['Løper uten lag: Settings (skigymnas-velger)', <Settings profile={{ ...lukas, team_id: null }} team={null} isCoach={false} onChange={ingen} />],
+  ['Onboarding', <Onboarding profile={{ id: 'ny', full_name: '', lang: 'no' }} onDone={ingen} />]
 ]
 
 createRoot(document.getElementById('root')).render(

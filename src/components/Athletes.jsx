@@ -21,7 +21,17 @@ export default function Athletes({ team }) {
   // Lagene jeg er trener for i dette huset, til «flytt til».
   const [grupper, setGrupper] = useState([])
   const lastGrupper = () => supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))
-  useEffect(() => { lastGrupper() }, [team.id])
+  // Løpere som har valgt skigymnaset selv og står der uten gruppe. Det er slik
+  // en trener finner en løper som alt har registrert seg.
+  const [ledige, setLedige] = useState([])
+  const lastLedige = () => supabase.rpc('ledige_lopere').then(({ data }) => setLedige(data || []))
+  useEffect(() => { lastGrupper(); lastLedige() }, [team.id])
+
+  async function hentInn(a) {
+    const { error } = await supabase.rpc('flytt_loper', { p_athlete: a.id, p_team: team.id })
+    if (error) return alert(error.message)
+    load(); lastLedige(); lastGrupper()
+  }
 
   async function flytt(a, til) {
     if (!til) return
@@ -84,6 +94,23 @@ export default function Athletes({ team }) {
     <div className="page">
       <HeadCoach />
       <Grupper team={team} grupper={grupper} onEndret={lastGrupper} />
+      {team.parent_team_id && ledige.length > 0 && (
+        <div className="card cs-kort">
+          <h2>{t('grWaitingTitle')} <span className="muted">({ledige.length})</span></h2>
+          <p className="muted">{t('grWaitingSub')}</p>
+          <ul className="gr-liste">
+            {ledige.map(a => (
+              <li key={a.id} className="gr-ledig">
+                <span><b>{a.full_name || '–'}</b>
+                  <span className="muted">{a.birth_year ? ` · ${a.birth_year}` : ''}{a.fis_code ? ` · FIS ${a.fis_code}` : ''}</span></span>
+                <button type="button" className="btn small primary" onClick={() => hentInn(a)}>
+                  {t('grTakeIn').replace('{g}', team.name)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <CoachStart team={team} antall={athletes.length} />
 
       <div className="card">

@@ -34,7 +34,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     setGuardians(data || [])
   }
   async function copyCode() {
-    try { await navigator.clipboard.writeText(profile.link_code); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+    try { await navigator.clipboard.writeText(foreldrelenke); setCopied(true); setTimeout(() => setCopied(false), 2000) }
     catch { /* clipboard blocked; the code is on screen anyway */ }
   }
 
@@ -79,6 +79,23 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     if (!confirm(t('leaveConfirm'))) return
     await supabase.from('profiles').update({ team_id: null }).eq('id', profile.id); onChange()
   }
+  const [skoler, setSkoler] = useState([])
+  useEffect(() => { if (!isCoach && !team) supabase.rpc('skigymnas').then(({ data }) => setSkoler(data || [])) }, [isCoach, team?.id])
+  async function velgSkole(id) {
+    if (!id) return
+    const { error } = await supabase.rpc('velg_skigymnas', { p_team: id })
+    if (error) setJoinErr(error.message); else onChange()
+  }
+  const [fkode, setFkode] = useState(null)
+  const foreldrekode = fkode || profile.link_code
+  const foreldrelenke = `${window.location.origin}/?forelder=${encodeURIComponent(foreldrekode || '')}`
+  async function nyForeldrekode() {
+    if (!confirm(t('linkedNewConfirm'))) return
+    const { data, error } = await supabase.rpc('bytt_foreldrekode')
+    if (error) return alert(error.message)
+    setFkode(data)
+  }
+
   async function joinTeam(e) {
     e.preventDefault(); setJoining(true); setJoinErr(null)
     const { error } = await supabase.rpc('join_team', { code: joinCode.trim() })
@@ -102,8 +119,13 @@ export default function Settings({ profile, team, isCoach, onChange }) {
         <div className="card">
           <h2>{t('joinTeam')}</h2>
           <p className="muted">{t('joinHint')}</p>
+          <label htmlFor="st-skole">{t('schoolLabel')}</label>
+          <select id="st-skole" defaultValue="" onChange={e => velgSkole(e.target.value)}>
+            <option value="">{t('schoolPick')}</option>
+            {skoler.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
           <form onSubmit={joinTeam}>
-            <label>{t('inviteCode')}</label><input required value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="12 tegn" />
+            <label>{t('inviteCodeOr')}</label><input required value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="K7RF2M" />
             <div style={{ marginTop: 10 }}><button className="btn small primary" disabled={joining}>{t('join')}</button></div>
           </form>
           {joinErr && <div className="error">{joinErr}</div>}
@@ -113,10 +135,12 @@ export default function Settings({ profile, team, isCoach, onChange }) {
         <div className="card">
           <h2>{t('linkedTitle')}</h2>
           <p className="muted">{t('linkedShare')}</p>
-          <div className="row">
-            <span className="link-code">{profile.link_code || '–'}</span>
-            {profile.link_code && <button type="button" className="btn small" onClick={copyCode}>{copied ? t('copied') : t('linkedShare')}</button>}
+          <div className="cs-kode">
+            <code>{foreldrekode || '–'}</code>
+            <button type="button" className="btn small primary" onClick={copyCode}>{copied ? t('copied') : t('linkedCopyLink')}</button>
           </div>
+          <p className="lk-lenke"><a href={foreldrelenke}>{foreldrelenke}</a></p>
+          <button type="button" className="btn link small" onClick={nyForeldrekode}>{t('lkNew')}</button>
           <h3>{t('linkedWho')}</h3>
           {guardians.length === 0 ? <p className="muted">{t('linkedNone')}</p> : guardians.map(g => (
             <div className="guardian-row" key={g.parent_id}>

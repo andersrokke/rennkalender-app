@@ -125,6 +125,22 @@ export function svarPa(url, o) {
     const fn = rpc[1]
     if (fn === 'my_children') return [{ athlete_id: 'lukas', full_name: 'Lukas Røkke', team_name: 'NTG Lillehammer', club: 'NTG', fis_code: '6535004', races: 7, race_days: 12 }]
     if (/^admin_(overview|ops|activity)$/.test(fn)) return { brukere: 5, jobber: [], varsler: [], uker: [] }
+    if (fn === 'admin_users') return [
+      { id: 'anders', email: 'anders@example.com', full_name: 'Anders Røkke', role: 'athlete', is_admin: true, onboarded: true, team_id: null, last_sign_in_at: '2026-10-02T10:00:00Z', okter: 0 },
+      { id: 'oscar', email: 'oscar@ntg.no', full_name: 'Oscar Andersson', role: 'coach', is_admin: false, onboarded: true, team_id: 'ntg', team_name: 'NTG Lillehammer', hus_id: 'ntg', hus_navn: 'NTG Lillehammer', pa_huset: true, skigymnas: true, eier_av: 'NTG Lillehammer', last_sign_in_at: '2026-10-01T08:00:00Z', okter: 0 },
+      { id: 'kari', email: 'kari@ntg.no', full_name: 'Kari Lie', role: 'coach', is_admin: false, onboarded: true, team_id: 'g2', team_name: 'Teknikk', hus_id: 'ntg', hus_navn: 'NTG Lillehammer', pa_huset: false, skigymnas: true, eier_av: 'Teknikk', last_sign_in_at: null, okter: 0 },
+      { id: 'lukas', email: 'lukas@example.com', full_name: 'Lukas Røkke', role: 'athlete', is_admin: false, onboarded: true, team_id: 'ntg', team_name: 'NTG Lillehammer', hus_id: 'ntg', hus_navn: 'NTG Lillehammer', pa_huset: true, skigymnas: true, foresatte: 'Anders Røkke', last_sign_in_at: '2026-10-02T16:00:00Z', okter: 3 },
+      { id: 'ida', email: 'ida@example.com', full_name: 'Ida Moen', role: 'athlete', is_admin: false, onboarded: true, team_id: 'g2', team_name: 'Teknikk', hus_id: 'ntg', hus_navn: 'NTG Lillehammer', pa_huset: false, skigymnas: true, last_sign_in_at: '2026-09-30T16:00:00Z', okter: 12 },
+      { id: 'mor', email: 'mor@example.com', full_name: 'Mor Moen', role: 'parent', is_admin: false, onboarded: true, team_id: null, barn: 'Ida Moen', last_sign_in_at: '2026-09-29T16:00:00Z', okter: 0 }
+    ]
+    if (fn === 'admin_teams') return [
+      { id: 'geilo', name: 'NTG Geilo', owner_id: null, invite_code: 'A2B3C4', lopere: 2, renn: 0, parent_team_id: null, is_school: true, created_at: '2026-10-03' },
+      { id: 'ntg', name: 'NTG Lillehammer', owner_id: 'oscar', owner_name: 'Oscar Andersson', owner_email: 'oscar@ntg.no', invite_code: 'H6U6Z8', lopere: 1, renn: 4, parent_team_id: null, is_school: true, created_at: '2026-09-28' },
+      { id: 'g2', name: 'Teknikk', owner_id: 'kari', owner_name: 'Kari Lie', owner_email: 'kari@ntg.no', invite_code: 'K7RF2M', lopere: 1, renn: 2, parent_team_id: 'ntg', parent_name: 'NTG Lillehammer', is_school: false, created_at: '2026-10-01' }
+    ]
+    if (fn === 'skigymnas') return ['NTG Bærum', 'NTG Geilo', 'NTG Lillehammer', 'Wang Toppidrett'].map((name, i) => ({ id: 's' + i, name }))
+    if (fn === 'ledige_lopere') return [{ id: 'v1', full_name: 'Nora Lie', birth_year: 2009, fis_code: '6535009' }, { id: 'v2', full_name: 'Emil Dahl', birth_year: 2008, fis_code: null }]
+    if (fn === 'mine_grupper') return [{ id: 'ntg', name: 'NTG Lillehammer', parent_team_id: null, er_hus: true, eier_er_meg: true, eier_navn: 'Oscar Andersson', lopere: 4 }, { id: 'g2', name: 'Teknikk', parent_team_id: 'ntg', er_hus: false, eier_er_meg: false, eier_navn: 'Kari Lie', lopere: 6 }]
     if (fn === 'head_overview' || fn === 'predicted_start') return null
     return enkelt ? null : []
   }

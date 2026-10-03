@@ -25,3 +25,24 @@ export function hentLagkode() {
 export function glemLagkode() {
   try { localStorage.removeItem(NOKKEL) } catch { /* ignorert */ }
 }
+
+// Foreldrekoden fra en delt lenke: /?forelder=K7RF2M. Samme mønster som
+// lagkoden, og av samme grunn - den må overleve en tur innom Google.
+const FORELDER = 'rk-foreldrekode'
+
+export function fangForeldrekode() {
+  let kode = ''
+  try { kode = new URLSearchParams(location.search).get('forelder') || '' } catch { /* ingen URL */ }
+  if (!kode) return hentForeldrekode()
+  try { localStorage.setItem(FORELDER, kode) } catch { /* privat vindu */ }
+  try { history.replaceState(null, '', location.pathname) } catch { /* ignorert */ }
+  return kode
+}
+
+export function hentForeldrekode() {
+  try { return localStorage.getItem(FORELDER) || '' } catch { return '' }
+}
+
+export function glemForeldrekode() {
+  try { localStorage.removeItem(FORELDER) } catch { /* ignorert */ }
+}

@@ -206,8 +206,15 @@ function Trenere({ rader, t, onEndret }) {
   )
 }
 
+// Brukerne, gruppert slik de faktisk henger sammen: skigymnas, gruppe, og
+// hvem som hører til hvem. Den flate lista svarte på «hvem finnes», ikke på
+// «hvem hører til hvor» - og det siste er spørsmålet en administrator har.
+const ROLLEORDEN = { coach: 0, athlete: 1, parent: 2 }
+
 function Brukere({ rader, meg, t, onEndret }) {
   const [travel, setTravel] = useState(null)
+  const [lag, setLag] = useState([])
+  useEffect(() => { supabase.rpc('admin_teams').then(({ data }) => setLag(data || [])) }, [rader])
 
   const kall = async (fn, args) => {
     setTravel(JSON.stringify(args))
@@ -217,99 +224,173 @@ function Brukere({ rader, meg, t, onEndret }) {
   }
 
   if (!rader) return <div className="card muted">{t('adLoading')}</div>
+
+  const hus = new Map()
+  for (const u of rader) {
+    const k = u.hus_id || '__uten'
+    if (!hus.has(k)) hus.set(k, { id: u.hus_id, navn: u.hus_navn, skigymnas: u.skigymnas, folk: [] })
+    hus.get(k).folk.push(u)
+  }
+  const ordnet = [...hus.values()].sort((x, y) =>
+    (x.id ? 0 : 1) - (y.id ? 0 : 1) || (x.navn || '').localeCompare(y.navn || '', 'nb'))
+  for (const h of ordnet) h.folk.sort((x, y) =>
+    (ROLLEORDEN[x.role] ?? 9) - (ROLLEORDEN[y.role] ?? 9)
+    || Number(y.pa_huset) - Number(x.pa_huset)
+    || (x.team_name || '').localeCompare(y.team_name || '', 'nb')
+    || (x.full_name || '').localeCompare(y.full_name || '', 'nb'))
+
+  const lagnavn = l => (l.parent_name ? `${l.parent_name} › ${l.name}` : l.name)
+
   return (
-    <div className="card">
-      <h2>{t('adTab_brukere')} <span className="muted">({rader.length})</span></h2>
-      <div className="ad-scroll">
-        <table className="ad-table">
-          <thead>
-            <tr>
-              <th>{t('adName')}</th><th>{t('adEmail')}</th><th>{t('adRole')}</th>
-              <th>{t('adTeam')}</th><th className="n">{t('adSessions')}</th>
-              <th>{t('adLastIn')}</th><th>{t('adActions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rader.map(u => (
-              <tr key={u.id} className={u.is_test ? 'ad-test' : ''}>
-                <td>
-                  {u.full_name || '–'}
-                  {u.is_admin && <span className="ad-merke admin">{t('adAdmin')}</span>}
-                  {!u.onboarded && <span className="ad-merke">{t('adUnfinished')}</span>}
-                </td>
-                <td className="ad-epost">{u.email}<br /><span className="muted">{u.provider || 'e-post'}</span></td>
-                <td>
-                  <select value={u.role} aria-label={t('adRole')}
-                    onChange={e => kall('admin_set_role', { p_user: u.id, p_role: e.target.value })}>
-                    {ROLLER.map(r => <option key={r} value={r}>{t('adRole_' + r)}</option>)}
-                  </select>
-                </td>
-                <td>{u.team_name || '–'}</td>
-                <td className="n">{u.okter}</td>
-                <td>{siden(u.last_sign_in_at, t)}</td>
-                <td>
-                  <div className="ad-handlinger">
-                    <button type="button" className="btn small"
-                      disabled={!!travel}
-                      onClick={() => kall('admin_set_admin', { p_user: u.id, p_on: !u.is_admin })}>
-                      {u.is_admin ? t('adDemote') : t('adPromote')}
-                    </button>
-                    {u.id !== meg && (
-                      <button type="button" className="btn small danger" disabled={!!travel}
-                        onClick={() => confirm(t('adDeleteConfirm').replace('{n}', u.full_name || u.email))
-                          && kall('admin_delete_user', { p_user: u.id })}>
-                        {t('adDelete')}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      <div className="card">
+        <h2>{t('adTab_brukere')} <span className="muted">({rader.length})</span></h2>
+        <p className="muted">{t('adUsersSub')}</p>
       </div>
-    </div>
+      {ordnet.map(h => (
+        <div className="card" key={h.id || 'uten'}>
+          <h2>
+            {h.id ? h.navn : t('adNoTeamGroup')}
+            {h.skigymnas && <span className="ad-merke admin">{t('adSchool')}</span>}
+            <span className="muted"> ({h.folk.length})</span>
+          </h2>
+          <div className="ad-scroll">
+            <table className="ad-table">
+              <thead>
+                <tr>
+                  <th>{t('adName')}</th><th>{t('adRole')}</th><th>{t('adTeam')}</th>
+                  <th>{t('adLinks')}</th><th>{t('adLastIn')}</th><th>{t('adActions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {h.folk.map(u => (
+                  <tr key={u.id} className={u.is_test ? 'ad-test' : ''}>
+                    <td>
+                      {u.full_name || '–'}
+                      {u.is_admin && <span className="ad-merke admin">{t('adAdmin')}</span>}
+                      {!u.onboarded && <span className="ad-merke">{t('adUnfinished')}</span>}
+                      <br /><span className="muted ad-epost">{u.email} · {u.provider || 'e-post'}</span>
+                    </td>
+                    <td>
+                      <select value={u.role} aria-label={t('adRole')}
+                        onChange={e => kall('admin_set_role', { p_user: u.id, p_role: e.target.value })}>
+                        {ROLLER.map(r => <option key={r} value={r}>{t('adRole_' + r)}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select value={u.team_id || ''} aria-label={t('adTeam')}
+                        onChange={e => kall('admin_set_team', { p_user: u.id, p_team: e.target.value || null })}>
+                        <option value="">{t('adNoTeamOpt')}</option>
+                        {lag.map(l => <option key={l.id} value={l.id}>{lagnavn(l)}</option>)}
+                      </select>
+                      {u.role === 'athlete' && u.pa_huset && u.skigymnas &&
+                        <><br /><span className="ad-merke">{t('adNoGroup')}</span></>}
+                    </td>
+                    <td className="ad-kobling">
+                      {u.foresatte && <div>{t('adGuardians')}: {u.foresatte}</div>}
+                      {u.barn && <div>{t('adParentOf')}: {u.barn}</div>}
+                      {u.eier_av && <div>{t('adOwns')}: {u.eier_av}</div>}
+                      {!u.foresatte && !u.barn && !u.eier_av && '–'}
+                    </td>
+                    <td>{siden(u.last_sign_in_at, t)}</td>
+                    <td>
+                      <div className="ad-handlinger">
+                        <button type="button" className="btn small" disabled={!!travel}
+                          onClick={() => kall('admin_set_admin', { p_user: u.id, p_on: !u.is_admin })}>
+                          {u.is_admin ? t('adDemote') : t('adPromote')}
+                        </button>
+                        {u.id !== meg && (
+                          <button type="button" className="btn small danger" disabled={!!travel}
+                            onClick={() => confirm(t('adDeleteConfirm').replace('{n}', u.full_name || u.email))
+                              && kall('admin_delete_user', { p_user: u.id })}>
+                            {t('adDelete')}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
 function Lag({ rader, t, onEndret }) {
+  const [trenere, setTrenere] = useState([])
+  useEffect(() => {
+    supabase.rpc('admin_users').then(({ data }) =>
+      setTrenere((data || []).filter(u => u.role === 'coach')))
+  }, [rader])
+
   if (!rader) return <div className="card muted">{t('adLoading')}</div>
   if (!rader.length) return <div className="card"><p className="muted">{t('adNoTeams')}</p></div>
   // Et lag som alt ligger under et annet kan ikke selv bli forelder - det er
   // bare ett nivå - så de filtreres bort fra valgene.
   const mulige = rader.filter(x => !x.parent_team_id)
-  const settForelder = async (lag, forelder) => {
-    const { error } = await supabase.rpc('admin_set_parent_team',
-      { p_team: lag, p_parent: forelder || null })
+  const kall = async (fn, args) => {
+    const { error } = await supabase.rpc(fn, args)
     if (error) alert(error.message); else onEndret()
+  }
+  const nyttNavn = l => {
+    const n = prompt(t('adRenamePrompt'), l.name)
+    if (n && n.trim() && n.trim() !== l.name) kall('admin_rename_team', { p_team: l.id, p_name: n.trim() })
   }
   return (
     <div className="card">
       <h2>{t('adTab_lag')} <span className="muted">({rader.length})</span></h2>
+      <p className="muted">{t('adTeamsSub')}</p>
       <div className="ad-scroll">
         <table className="ad-table">
           <thead>
             <tr><th>{t('adTeam')}</th><th>{t('adParent')}</th><th>{t('adOwner')}</th>
               <th className="n">{t('adAthletes')}</th>
-              <th className="n">{t('adRaces')}</th><th>{t('adCode')}</th><th>{t('adCreated')}</th></tr>
+              <th>{t('adCode')}</th><th>{t('adActions')}</th></tr>
           </thead>
           <tbody>
             {rader.map(l => (
               <tr key={l.id}>
-                <td>{l.name}{l.club && <><br /><span className="muted">{l.club}</span></>}</td>
                 <td>
-                  <select value={l.parent_team_id || ''} aria-label={t('adParent')}
-                    onChange={e => settForelder(l.id, e.target.value)}>
-                    <option value="">{t('adParentNone')}</option>
-                    {mulige.filter(x => x.id !== l.id).map(x =>
-                      <option key={x.id} value={x.id}>{x.name}</option>)}
+                  {l.parent_team_id && <span className="muted">↳ </span>}{l.name}
+                  {l.is_school && <span className="ad-merke admin">{t('adSchool')}</span>}
+                </td>
+                <td>
+                  {l.is_school ? <span className="muted">–</span> : (
+                    <select value={l.parent_team_id || ''} aria-label={t('adParent')}
+                      onChange={e => kall('admin_set_parent_team', { p_team: l.id, p_parent: e.target.value || null })}>
+                      <option value="">{t('adParentNone')}</option>
+                      {mulige.filter(x => x.id !== l.id).map(x =>
+                        <option key={x.id} value={x.id}>{x.name}</option>)}
+                    </select>
+                  )}
+                </td>
+                <td>
+                  {/* Hovedtrener for et skigymnas settes her. Ingen kan ta det selv. */}
+                  <select value={l.owner_id || ''} aria-label={t('adOwner')}
+                    onChange={e => kall('admin_set_team_owner', { p_team: l.id, p_user: e.target.value || null })}>
+                    <option value="">{t('adNoOwner')}</option>
+                    {l.owner_id && !trenere.some(x => x.id === l.owner_id) &&
+                      <option value={l.owner_id}>{l.owner_name || l.owner_email}</option>}
+                    {trenere.map(x => <option key={x.id} value={x.id}>{x.full_name || x.email}</option>)}
                   </select>
                 </td>
-                <td>{l.owner_name || '–'}<br /><span className="muted">{l.owner_email}</span></td>
                 <td className="n">{l.lopere}</td>
-                <td className="n">{l.renn}</td>
                 <td><code className="ad-kode">{l.invite_code}</code></td>
-                <td>{dt(l.created_at)}</td>
+                <td>
+                  <div className="ad-handlinger">
+                    <button type="button" className="btn small" onClick={() => nyttNavn(l)}>{t('adRename')}</button>
+                    {!l.is_school && (
+                      <button type="button" className="btn small danger"
+                        onClick={() => confirm(t('adDeleteTeamConfirm').replace('{n}', l.name))
+                          && kall('admin_delete_team', { p_team: l.id })}>
+                        {t('adDelete')}
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

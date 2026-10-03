@@ -14,7 +14,7 @@ import TrainingLog from './components/TrainingLog.jsx'
 import Feedback from './components/Feedback.jsx'
 import Admin from './components/Admin.jsx'
 import { PassordSkjema } from './components/Passord.jsx'
-import { fangLagkode } from './join'
+import { fangLagkode, fangForeldrekode } from './join'
 import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
@@ -47,7 +47,7 @@ export default function App() {
 
   useEffect(() => {
     // Lagkoden fra en delt lenke må fanges før noe annet rekker å endre URL-en.
-    fangLagkode()
+    fangLagkode(); fangForeldrekode()
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
       // Kommer man hit fra en tilbakestillingslenke, er man innlogget - men

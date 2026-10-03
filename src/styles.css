@@ -969,3 +969,11 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .gr-liste li.na{border-color:var(--accent);background:var(--accent-soft)}
 .gr-na{margin-left:8px;font-size:11.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
 .ad-table select.flytt{width:auto;max-width:130px;padding:5px 8px;font-size:13px}
+
+/* Skigymnas: ventende løpere og koblinger i admin-oversikten. */
+.gr-liste li.gr-ledig{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ad-kobling{font-size:13px;line-height:1.45;color:var(--mute)}
+.ad-table td .ad-epost{font-size:12.5px}
+/* Tekstkolonnen i veiledningen får krympe; uten min-width:0 holder et
+   skjemafelt den bredere enn kortet på de smaleste skjermene. */
+.cs-steg li>.cs-tekst{flex:1 1 0;min-width:0}

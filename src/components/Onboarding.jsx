@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { hentLagkode, glemLagkode } from '../join'
+import { hentLagkode, glemLagkode, hentForeldrekode, glemForeldrekode } from '../join'
 import { detectLang, t } from '../i18n'
 import LangSwitch from './LangSwitch.jsx'
 
@@ -57,7 +57,12 @@ export default function Onboarding({ profile, onDone }) {
   // Kom man hit fra en delt lagkode, er valget allerede tatt: man skal bli
   // med i et lag, og koden står der.
   const fraLenke = hentLagkode()
-  const [mode, setMode] = useState(fraLenke ? 'team' : null)
+  const fraForelder = hentForeldrekode()
+  const [mode, setMode] = useState(fraLenke ? 'team' : fraForelder ? 'parent' : null)
+  // Skigymnasene finnes fra start, så en løper kan velge sitt uten å vente
+  // på at treneren har kommet i gang.
+  const [skoler, setSkoler] = useState([])
+  useEffect(() => { supabase.rpc('skigymnas').then(({ data }) => setSkoler(data || [])) }, [])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const L = t(lang)
@@ -94,7 +99,13 @@ export default function Onboarding({ profile, onDone }) {
           .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       } else if (mode === 'team') {
-        const { error } = await supabase.rpc('join_team', { code })
+        // Kode fra treneren går foran: den peker på en bestemt gruppe.
+        // Uten kode velges skigymnaset, og treneren henter løperen inn derfra.
+        const skole = f.get('school')
+        if (!code && !skole) throw new Error(L.schoolOrCode)
+        const { error } = code
+          ? await supabase.rpc('join_team', { code })
+          : await supabase.rpc('velg_skigymnas', { p_team: skole })
         if (error) throw error
         const { error: e2 } = await supabase.from('profiles')
           .update({ full_name: name, role: 'athlete', onboarded: true, lang }).eq('id', profile.id)
@@ -110,7 +121,7 @@ export default function Onboarding({ profile, onDone }) {
           .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       }
-      glemLagkode()
+      glemLagkode(); glemForeldrekode()
       onDone()
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
@@ -150,10 +161,21 @@ export default function Onboarding({ profile, onDone }) {
               <input name="team" required placeholder={L.teamPh} />
             </>)}
 
-            {(mode === 'team' || mode === 'parent') && (<>
-              <label>{mode === 'team' ? L.codeTeam : L.codeParent}</label>
-              <input name="code" required autoCapitalize="none" autoCorrect="off" spellCheck="false"
-                defaultValue={mode === 'team' ? fraLenke : ''} placeholder={L.codePh} />
+            {mode === 'team' && (<>
+              <label>{L.school}</label>
+              <select name="school" defaultValue="">
+                <option value="">{L.schoolPick}</option>
+                {skoler.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <label>{L.codeTeamOr}</label>
+              <input key="lagkode" name="code" autoCapitalize="none" autoCorrect="off" spellCheck="false"
+                defaultValue={fraLenke} placeholder={L.codePh} />
+            </>)}
+
+            {mode === 'parent' && (<>
+              <label>{L.codeParent}</label>
+              <input key="foreldrekode" name="code" required autoCapitalize="none" autoCorrect="off" spellCheck="false"
+                defaultValue={fraForelder} placeholder={L.codePh} />
             </>)}
 
             {mode === 'parent' && <p className="ob-hint">{L.parentHint}</p>}

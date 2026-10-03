@@ -549,6 +549,56 @@ Juniorgruppa er grupper under det. Hovedtreneren eier laget øverst.
 håndheves av triggeren `teams_ett_niva_trg`, ikke av disiplin. Et tre hadde
 vært mer generelt, men også noe ingen har bedt om.
 
+### Skigymnasene
+
+Ni lag finnes fra start, merket `teams.is_school`: NTG Bærum, NTG Geilo, NTG
+Lillehammer, Wang Toppidrett, Tryvis, Voss, Oppdal, Narvik og Dønski. De er
+hus - toppnivå - og kan stå uten eier (`owner_id` er nullbar).
+
+En løper velger sitt skigymnas uten kode (`velg_skigymnas`), også før noen
+trener har kommet i gang. Hun står da på huset, uten gruppe. Trenere som eier
+en gruppe i huset ser henne under «Løpere uten gruppe» (`ledige_lopere`) og
+henter henne inn med `flytt_loper`. Det er slik en trener kobler seg til en
+løper som alt har registrert seg.
+
+Fordi skigymnaset er åpent, gjelder to ting som ikke gjaldt da laget var en
+lukket krets:
+
+- Løpere som bare har valgt samme skigymnas ser ikke hverandre. `profiles
+  read` unntar lagkamerat-regelen på skigymnas-hus; den gjelder først i en
+  gruppe.
+- Hovedtrener settes av administrator (`admin_set_team_owner`, Admin → Lag).
+  Ingen kan ta et skigymnas selv.
+
+Nytt skigymnas legges til slik:
+
+```sql
+insert into public.teams (name, owner_id, is_school) values ('Navn', null, true);
+```
+
+Navn rettes fra Admin → Lag («Nytt navn»). Et lag blir ikke lenger slettet
+sammen med eieren: `teams_owner_id_fkey` er `on delete set null`, så et
+skigymnas overlever at hovedtreneren slutter. `admin_delete_user` rydder
+frittstående lag som ikke er skigymnas, slik cascade gjorde før.
+
+### Trenerrett følger av eierskap
+
+`is_coach_of(t)` svarte før ja til enhver som sto i laget med rollen trener.
+Rollen velger man selv ved registrering, og lagkoden deles i gruppechatter -
+så en løper kunne gjøre seg til trener for laget sitt. Den regelen er fjernet.
+Trener for et lag er nå den som eier det, eier huset det ligger under, eier en
+gruppe i et hus med «alle ser alt», eller har fått innsyn av hovedtreneren.
+Ingenting av det kan man gi seg selv. To trenere på samme gruppe løses med
+innsyn (`team_access`), ikke med lagkoden.
+
+### Foreldrekoden
+
+Forelder kobles til løper med en dedikert kode under løperens profil
+(`profiles.link_code`, seks lesbare tegn), delt som lenke: `/?forelder=K7RF2M`.
+FIS-koden kan ikke brukes: den er offentlig, og ville latt hvem som helst lese
+en løpers plan og logg. Løperen lager ny kode med `bytt_foreldrekode()`; de
+som alt er koblet til blir værende, og fjernes under Profil.
+
 ### Grupper: hvem lager dem, og hvordan man bytter
 
 Hver trener i huset kan opprette grupper under det, eie flere, og bytte
@@ -600,7 +650,7 @@ Står bryteren på, overstyrer den rutenettet, og rutenettet vises låst.
 
 Alt går gjennom `is_coach_of(t)`, som 26 RLS-regler kaller. Den svarer ja hvis:
 
-1. du er trener med `team_id = t`
+1. ~~du er trener med `team_id = t`~~ - fjernet, se «Trenerrett følger av eierskap»
 2. du eier laget `t`
 3. du eier laget som `t` ligger under - du er hovedtrener
 4. det finnes en rad i `team_access` for deg og `t`
