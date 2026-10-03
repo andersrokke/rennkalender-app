@@ -18,11 +18,16 @@ export default function SeasonMatrix({ team }) {
   const [f, setF] = useState({ year: 'all', gender: 'all', disc: 'all', maxPts: '', month: 'all', cat: 'all' })
   const drag = useRef(null)
 
+  // Rennene i matrisa er de team_race_athletes() gir: lagets plan pluss renn
+  // løperne selv har lagt inn.
+  const rennIder = [...new Set(rows.map(r => r.race_id))].sort((a, b) => a - b).join(',')
   useEffect(() => {
-    supabase.from('team_races').select('race:races(*)').eq('team_id', team.id)
-      .then(({ data }) => setRaces((data || []).map(x => x.race).filter(Boolean)
-        .sort((a, b) => a.start_date.localeCompare(b.start_date))))
-  }, [team.id])
+    if (!rennIder) { setRaces([]); return }
+    let av = false
+    supabase.from('races').select('*').in('id', rennIder.split(',').map(Number))
+      .then(({ data }) => { if (!av) setRaces((data || []).sort((a, b) => a.start_date.localeCompare(b.start_date))) })
+    return () => { av = true }
+  }, [rennIder])
 
   const stored = useMemo(() => new Set(rows.filter(r => r.assigned).map(r => key(r.athlete_id, r.race_id))), [rows])
   useEffect(() => { setDraft(new Set(stored)) }, [stored])

@@ -593,6 +593,27 @@ try { await as(FOR, `update race_plan_details set travel_mode='car' where athlet
 catch { ok('en foresatt kan ikke endre resten av reiseplanen') }
 
 
+// --- løperens egne renn kommer opp hos treneren ---
+const l1lag = G1, l1trener = C1
+const forL1 = (await q('select team_id t, role r from profiles where id=$1', [L1]))[0]
+const forC1 = (await q('select role r from profiles where id=$1', [C1]))[0].r
+await q(`update profiles set team_id=$2, role='athlete' where id=$1`, [L1, G1])
+await q(`update profiles set role='coach' where id=$1`, [C1])
+const hosTrener = async () => (await as(l1trener, 'select * from public.team_race_athletes()')).rows.filter(r => r.race_id === rennId)
+;(await hosTrener()).length === 0 ? ok('utgangspunkt: rennet er ikke i lagets plan, og treneren ser det ikke') : fail('rennet var synlig før noen la det inn')
+await as(L1, `insert into athlete_races(athlete_id, race_id, team_id, status) values ($1,$2,null,'wish')`, [L1, rennId])
+const etterOnske = await hosTrener()
+etterOnske.some(r => r.athlete_id === L1 && r.status === 'wish' && !r.assigned)
+  ? ok('et renn løperen selv legger inn kommer opp hos treneren, uten at treneren har lagt det i planen')
+  : fail(`treneren ser ikke løperens renn: ${JSON.stringify(etterOnske)}`)
+;(await q('select count(*)::int n from team_races where team_id=$1 and race_id=$2', [l1lag, rennId]))[0].n === 0
+  ? ok('rennet er fortsatt ikke i lagets plan - lagkameratene får det ikke i sin sesong') : fail('løperens renn havnet i lagets plan')
+await as(L1, `update athlete_races set status='unavailable' where athlete_id=$1 and race_id=$2`, [L1, rennId])
+;(await hosTrener()).length === 0 ? ok('«kan ikke» alene gjør ikke rennet til lagets sak') : fail('«kan ikke» ga treneren et renn')
+await as(L1, `delete from athlete_races where athlete_id=$1 and race_id=$2`, [L1, rennId])
+await q(`update profiles set team_id=$2, role=$3 where id=$1`, [L1, forL1.t, forL1.r])
+await q(`update profiles set role=$2 where id=$1`, [C1, forC1])
+
 // --- modusen bestemmer, også i databasen ---
 await ser(H, G1) ? ok('utgangspunkt: hovedtreneren er trener for gruppa') : fail('H er ikke trener i utgangspunktet')
 await as(H, `update profiles set role = 'parent' where id = $1`, [H])

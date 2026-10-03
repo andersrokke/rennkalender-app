@@ -10,7 +10,8 @@ import { useTeamAssign, hasAnswered } from './useTeamAssign'
 // Team season: races the coach has selected, with per-race athlete overview and notes.
 export default function CoachSeason({ team }) {
   const t = useT()
-  const [rows, setRows] = useState([])
+  const [lagRader, setLagRader] = useState([])
+  const [ekstra, setEkstra] = useState([])
   const [athletes, setAthletes] = useState([])
   const [statuses, setStatuses] = useState([])
   const [focus, setFocus] = useState(null)
@@ -23,10 +24,27 @@ export default function CoachSeason({ team }) {
       supabase.from('profiles').select('id, full_name, gender, birth_year').eq('team_id', team.id).eq('role', 'athlete').order('full_name'),
       supabase.from('athlete_races').select('*').eq('team_id', team.id)
     ])
-    setRows((tr || []).map(t => ({ ...t.race, tr: t })).sort((x, y) => x.start_date.localeCompare(y.start_date)))
+    setLagRader((tr || []).map(t => ({ ...t.race, tr: t })))
     setAthletes(a || []); setStatuses(s || [])
   }
   useEffect(() => { load() }, [team.id])
+
+  // Renn løperne har lagt inn selv, som treneren ikke har i lagets plan.
+  // team_race_athletes() tar dem med; her hentes selve rennene.
+  const ekstraIder = [...new Set(Object.keys(byRace).map(Number))].filter(id => !lagRader.some(r => r.id === id)).sort((a, b) => a - b).join(',')
+  useEffect(() => {
+    if (!ekstraIder) { setEkstra([]); return }
+    let av = false
+    supabase.from('races').select('*, venue:venues(*)').in('id', ekstraIder.split(',').map(Number))
+      .then(({ data }) => { if (!av) setEkstra(data || []) })
+    return () => { av = true }
+  }, [ekstraIder])
+  const rows = [...lagRader, ...ekstra.filter(e => !lagRader.some(r => r.id === e.id))]
+    .sort((x, y) => x.start_date.localeCompare(y.start_date))
+
+  async function leggIPlanen(r) {
+    await supabase.from('team_races').insert({ team_id: team.id, race_id: r.id }); await reload(); load()
+  }
 
   async function saveNote(tr, fields) {
     await supabase.from('team_races').update(fields).eq('id', tr.id); setEditing(null); load()
@@ -49,14 +67,27 @@ export default function CoachSeason({ team }) {
               <div className="row" style={{ fontSize: 13 }}>
                 {cl.length > 0 && <span className="tag warn">Overlapper: {cl.join(', ')}</span>}
               </div>
+              {!tr && (
+                <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+                  <span className="tag assigned">{t('csFromAthlete')}</span>
+                  <span className="muted" style={{ fontSize: 13 }}>
+                    {(byRace[r.id] || []).filter(x => x.status && x.status !== 'unavailable').map(x => x.full_name).join(', ')}
+                  </span>
+                </div>
+              )}
               <AssignRow raceId={r.id} rows={byRace[r.id] || []}
                 onApply={async (rid, add, rem) => { await apply(rid, add, rem); load() }} />
-              {(tr.coach_note || tr.entry_deadline || tr.travel_info) && editing !== tr.id && (
+              {!tr && (
+                <div className="row" style={{ marginTop: 6 }}>
+                  <button className="btn small primary" onClick={() => leggIPlanen(r)}>{t('csAddToPlan')}</button>
+                </div>
+              )}
+              {tr && (tr.coach_note || tr.entry_deadline || tr.travel_info) && editing !== tr.id && (
                 <div className="muted" style={{ marginTop: 4 }}>
                   {tr.entry_deadline && <>Frist {tr.entry_deadline} · </>}{tr.coach_note}{tr.travel_info && <> · {tr.travel_info}</>}
                 </div>
               )}
-              {editing === tr.id ? (
+              {!tr ? null : editing === tr.id ? (
                 <form onSubmit={e => { e.preventDefault(); const fd = new FormData(e.target); saveNote(tr, { coach_note: fd.get('n') || null, entry_deadline: fd.get('d') || null, travel_info: fd.get('t') || null }) }}>
                   <label>Notat til laget</label><input name="n" defaultValue={tr.coach_note || ''} />
                   <div className="row">
