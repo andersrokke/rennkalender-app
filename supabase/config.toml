@@ -436,6 +436,9 @@ verify_jwt = true
 [functions.fis-athlete]
 verify_jwt = true
 
+[functions.fis-calendar]
+verify_jwt = true
+
 [functions.fis-cup-standings]
 verify_jwt = true
 

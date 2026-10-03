@@ -15,8 +15,11 @@ export default function RaceMap({ races, focus, view = 'norden', routes, home, h
     if (map.current) return
     map.current = L.map(el.current).setView([64.5, 18.5], 5)
     map.current.attributionControl.setPrefix('')
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap-bidragsytere', maxZoom: 19
+    // Esri sitt topografiske kart: stedsnavn med latinske bokstaver over hele
+    // verden, og terreng. OpenStreetMap sine fliser skriver navn på lokalt
+    // språk, så Asia ble uleselig.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Kart: Esri &middot; &copy; OpenStreetMap', maxZoom: 18
     }).addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
     routeLayer.current = L.layerGroup().addTo(map.current)
