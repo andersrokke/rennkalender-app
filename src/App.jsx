@@ -172,6 +172,20 @@ export default function App() {
         <div className="spacer" />
         <Seg opts={[['no', 'NO'], ['en', 'EN']]} value={lang} onPick={v => setPref({ lang: v })} />
         <Seg opts={[['light', '☀'], ['dark', '☾']]} value={theme} onPick={v => setPref({ theme: v })} />
+        {/* Administrator kan se appen som trener, løper eller forelder. Rollen
+            byttes på ordentlig, ikke som en maske over: flere funksjoner i basen
+            spør om rollen, og en visning som sa noe annet enn basen ville gitt
+            feil man ikke kunne forklare. */}
+        {profile.is_admin && (
+          <span className="modus" title={d.modeTitle}>
+            <Seg opts={[['coach', d.coach], ['athlete', d.athlete], ['parent', d.parent]]} value={profile.role}
+              onPick={async r => {
+                const { error } = await supabase.rpc('admin_set_role', { p_user: profile.id, p_role: r })
+                if (error) return alert(error.message)
+                setTab(null); reload()
+              }} />
+          </span>
+        )}
         <span className="who">{profile.full_name} · {isCoach ? d.coach : profile.role === 'parent' ? d.parent : d.athlete}</span>
         <button className="btn small" onClick={() => supabase.auth.signOut()}>{d.signOut}</button>
       </header>

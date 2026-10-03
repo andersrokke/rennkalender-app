@@ -10,8 +10,29 @@ import {
 // Trips and cost for the races handed to it. Lives at the bottom of «Min sesong»;
 // the surrounding view owns the race list and the map, and gets the routes back
 // through onRoutes so it can draw them.
-export default function TripPlan({ profile, races, readOnly = false, onRoutes, onHome }) {
+// Kostnader vises bare når en foresatt ser på (forelder er satt). Løperen
+// planlegger reisen - hvor, hvordan, hvor mange netter - og de foresatte ser
+// hva den koster, med sine egne satser.
+export default function TripPlan({ profile, races, readOnly = false, forelder = null, onRoutes, onHome }) {
   const t = useT()
+  const visKost = !!forelder
+  const [satser, setSatser] = useState(() => {
+    const f = forelder?.plan_settings || {}
+    return { kmRate: f.kmRate ?? DEFAULT_PLAN.kmRate, hotel: f.hotel ?? DEFAULT_PLAN.hotel,
+      entry: f.entry ?? DEFAULT_PLAN.entry, lift: f.lift ?? DEFAULT_PLAN.lift }
+  })
+  async function lagreSats(key, value) {
+    const neste = { ...satser, [key]: +value }
+    setSatser(neste)
+    // På den foresattes egen profil: hver voksen har sine satser, og ingen
+    // trenger skriverett på løperens rad.
+    await supabase.from('profiles')
+      .update({ plan_settings: { ...(forelder.plan_settings || {}), ...neste } }).eq('id', forelder.id)
+  }
+  async function lagreFlypris(raceId, verdi) {
+    setDetails(d => ({ ...d, [raceId]: { ...(d[raceId] || { race_id: raceId }), flight_cost: verdi } }))
+    await supabase.rpc('sett_flypris', { p_athlete: profile.id, p_race: raceId, p_cost: verdi })
+  }
   const [home, setHome] = useState(profile.home_city || DEFAULT_HOME)
   const [plan, setPlan] = useState({ ...DEFAULT_PLAN, ...(profile.plan_settings || {}) })
   const [details, setDetails] = useState({})
@@ -46,7 +67,8 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
       { onConflict: 'athlete_id,race_id' })
   }
 
-  const trips = useMemo(() => buildTrips(races, home, plan, 'Hjem', details), [races, home, plan, details])
+  const trips = useMemo(() => buildTrips(races, home, visKost ? { ...plan, ...satser } : plan, 'Hjem', details),
+    [races, home, plan, details, satser, visKost])
   const tot = tripTotals(trips)
   const noVenue = races.length - trips.reduce((a, trip) => a + trip.races.length, 0)
 
@@ -61,7 +83,7 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
   return (
     <div className="tripplan">
       <div className="tripplan-head">
-        <h3>{t('travelAndCost')}</h3>
+        <h3>{visKost ? t('travelAndCost') : t('travelOnly')}</h3>
         <div className="group"><span>{t('home')}</span>
           {readOnly
             ? <span>{(HOMES[home] || [])[2] || home}</span>
@@ -79,11 +101,11 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
               <Kpi v={nok(tot.km)} label={`${t('km')} (${nok(tot.km / 10)} ${t('mil')})`} />
               <Kpi v={Math.round(tot.hours)} label={t('hours')} />
               <Kpi v={tot.nights} label={t('nights')} />
-              <Kpi v={nok(tot.cost)} label={t('cost')} />
+              {visKost && <Kpi v={nok(tot.cost)} label={t('cost')} />}
             </div>
-            <div className="legs-sum">
+            {visKost && <div className="legs-sum">
               {t('drive')} {nok(tot.drive)} · {t('flightW')} {nok(tot.flight)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)}
-            </div>
+            </div>}
             {tot.busTrips > 0 && <div className="covered">{t('coveredBySchool')}: {tot.busTrips} {t(tot.busTrips === 1 ? 'busTripWordOne' : 'busTripsWord')}</div>}
           </div>
 
@@ -93,15 +115,17 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
               <div className="when">{fmt({ start_date: trip.races[0].start_date, end_date: trip.races[trip.races.length - 1].end_date })}</div>
               <div className="kpis">
                 <Kpi v={nok(trip.km)} label={t('km')} /><Kpi v={trip.hours} label={t('hours')} />
-                <Kpi v={trip.nights} label={t('nights')} /><Kpi v={nok(trip.cost.total)} label={t('cost')} />
+                <Kpi v={trip.nights} label={t('nights')} />{visKost && <Kpi v={nok(trip.cost.total)} label={t('cost')} />}
               </div>
               <div className="legs">
                 {trip.legs.map((l, j) => <div key={j}><span>{l.from} → {l.to}</span><span>{nok(l.km)} {t('km')}</span></div>)}
-                <div><span>
-                  {trip.cost.drive > 0 && <>{t('drive')} {nok(trip.cost.drive)} · </>}
-                  {trip.cost.flight > 0 && <>{t('flightW')} {nok(trip.cost.flight)} · </>}
-                  {t('stay')} {nok(trip.cost.stay)} · {t('fees')} {nok(trip.cost.fees)} · {t('liftL')} {nok(trip.cost.lift)}
-                </span><span>{trip.starts} {t('startsL')}</span></div>
+                {visKost
+                  ? <div><span>
+                      {trip.cost.drive > 0 && <>{t('drive')} {nok(trip.cost.drive)} · </>}
+                      {trip.cost.flight > 0 && <>{t('flightW')} {nok(trip.cost.flight)} · </>}
+                      {t('stay')} {nok(trip.cost.stay)} · {t('fees')} {nok(trip.cost.fees)} · {t('liftL')} {nok(trip.cost.lift)}
+                    </span><span>{trip.starts} {t('startsL')}</span></div>
+                  : <div><span /><span>{trip.starts} {t('startsL')}</span></div>}
               </div>
               {trip.races.map((r, k) => {
                 const d = details[r.id]
@@ -114,11 +138,16 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
                       </span>
                     </div>
                     <div className="plan-race-opts">
+                      {visKost && mode === 'flight' && (
+                        <label className="mini">{t('flightCost')}
+                          <input type="number" min="0" step="100" value={d?.flight_cost ?? ''}
+                            onChange={e => lagreFlypris(r.id, e.target.value === '' ? null : +e.target.value)} />
+                        </label>
+                      )}
                       {readOnly ? (
                         <span className="muted">{t(mode === 'bus' ? 'modeBus' : mode === 'flight' ? 'modeFlight' : 'modeCar')}
                           {' · '}{raceNights(r, d)} {t('nightsLabel').toLowerCase()}
                           {' · '}{raceStarts(r, d)} {t('startsL')}
-                          {mode === 'flight' && d?.flight_cost ? ` · ${nok(d.flight_cost)} kr` : ''}
                         </span>
                       ) : (
                         <>
@@ -130,12 +159,6 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
                               </button>
                             ))}
                           </div>
-                          {mode === 'flight' && (
-                            <label className="mini">{t('flightCost')}
-                              <input type="number" min="0" step="100" value={d?.flight_cost ?? ''}
-                                onChange={e => saveDetail(r.id, { flight_cost: e.target.value === '' ? null : +e.target.value })} />
-                            </label>
-                          )}
                           <label className="mini">{t('nightsLabel')}
                             <input type="number" min="0" max="60" value={raceNights(r, d)}
                               onChange={e => saveDetail(r.id, { nights_override: e.target.value === '' ? null : +e.target.value })} />
@@ -160,12 +183,16 @@ export default function TripPlan({ profile, races, readOnly = false, onRoutes, o
       )}
 
       {noVenue > 0 && <div className="muted" style={{ padding: '0 20px 12px' }}>{noVenue} {t('noVenue')}</div>}
+      {visKost && (
+        <div className="settings">
+          <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={satser.kmRate} onChange={e => lagreSats('kmRate', e.target.value)} /></div>
+          <div><label>{t('hotel')}</label><input type="number" step="50" value={satser.hotel} onChange={e => lagreSats('hotel', e.target.value)} /></div>
+          <div><label>{t('entry')}</label><input type="number" step="50" value={satser.entry} onChange={e => lagreSats('entry', e.target.value)} /></div>
+          <div><label>{t('liftS')}</label><input type="number" step="50" value={satser.lift} onChange={e => lagreSats('lift', e.target.value)} /></div>
+        </div>
+      )}
       {!readOnly && (
         <div className="settings">
-          <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={plan.kmRate} onChange={e => savePlan('kmRate', e.target.value)} /></div>
-          <div><label>{t('hotel')}</label><input type="number" step="50" value={plan.hotel} onChange={e => savePlan('hotel', e.target.value)} /></div>
-          <div><label>{t('entry')}</label><input type="number" step="50" value={plan.entry} onChange={e => savePlan('entry', e.target.value)} /></div>
-          <div><label>{t('liftS')}</label><input type="number" step="50" value={plan.lift} onChange={e => savePlan('lift', e.target.value)} /></div>
           <div><label>{t('maxGap')}</label><input type="number" min="0" max="10" value={plan.maxGap} onChange={e => savePlan('maxGap', e.target.value)} /></div>
         </div>
       )}

@@ -599,6 +599,23 @@ FIS-koden kan ikke brukes: den er offentlig, og ville latt hvem som helst lese
 en løpers plan og logg. Løperen lager ny kode med `bytt_foreldrekode()`; de
 som alt er koblet til blir værende, og fjernes under Profil.
 
+### Kostnadene ligger hos de foresatte
+
+Løperen planlegger reisen - hvor, hvordan, hvor mange netter. Hva den koster
+vises bare i foreldreportalen (Mine barn → Sesong). Satsene for kilometer,
+hotell, startkontingent og heiskort lagres på den foresattes egen
+`profiles.plan_settings`, så hver voksen har sine, og ingen trenger skriverett
+på løperens rad. Flypris per renn føres av den foresatte gjennom
+`sett_flypris()`, som bare rører det ene feltet.
+
+### Administrator bytter modus
+
+Administrator har en bryter øverst (og øverst på Admin-siden på telefon) for å
+se appen som trener, løper eller forelder. Den bytter `profiles.role` på
+ordentlig gjennom `admin_set_role` - ikke en maske over - fordi flere
+funksjoner i basen spør om rollen. For å se foreldrevisningen for et barn må
+man være koblet til barnet med foreldrekoden, som alle andre.
+
 ### Grupper: hvem lager dem, og hvordan man bytter
 
 Hver trener i huset kan opprette grupper under det, eie flere, og bytte

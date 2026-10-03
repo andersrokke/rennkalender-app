@@ -68,7 +68,7 @@ export default function Children({ profile }) {
           <span className="muted">{t('readOnly')}</span>
         </div>
         {!child ? <div className="page muted">{t('loading')}</div>
-          : view === 'season' ? <MySeason profile={child} team={team} readOnly />
+          : view === 'season' ? <MySeason profile={child} team={team} readOnly forelder={profile} />
           : <Development profile={child} team={team} isCoach={false} readOnly />}
       </>
     )

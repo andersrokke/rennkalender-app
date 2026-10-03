@@ -47,6 +47,17 @@ export default function Admin({ profile }) {
       <div className="card">
         <h2>{t('adTitle')}</h2>
         <p className="muted">{t('adSub')}</p>
+        <label>{t('modeTitle')}</label>
+        <div className="row" style={{ gap: 6 }}>
+          {ROLLER.map(r => (
+            <button key={r} type="button" className={`chip ${profile.role === r ? 'on' : ''}`} aria-pressed={profile.role === r}
+              onClick={async () => {
+                const { error } = await supabase.rpc('admin_set_role', { p_user: profile.id, p_role: r })
+                if (error) alert(error.message); else location.reload()
+              }}>{t('adRole_' + r)}</button>
+          ))}
+        </div>
+        <p className="muted" style={{ marginTop: 6 }}>{t('modeSub')}</p>
         <div className="ad-tabs">
           {FANER.map(f => (
             <button key={f} className={`chip ${fane === f ? 'on' : ''}`}

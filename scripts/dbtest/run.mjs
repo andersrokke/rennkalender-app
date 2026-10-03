@@ -573,6 +573,25 @@ s2rad?.hus_navn === 'NTG Geilo' && s2rad.skigymnas && s2rad.pa_huset && s2rad.fo
   ? ok('admin-oversikten viser skigymnas, at løperen står uten gruppe, og foresatte')
   : fail(`admin_users: ${JSON.stringify(s2rad)}`)
 
+
+// --- kostnadene hører til de foresatte ---
+const rennId = (await q(`insert into races(start_date,end_date,place,host_nation,category,events,gender)
+  values (current_date + 10, current_date + 11, 'Åre', 'SWE', 'FIS', 'GS', 'M') returning id`))[0].id
+await as(FOR, 'select public.sett_flypris($1,$2,$3)', [S2, rennId, 2400])
+;(await q('select flight_cost::int c from race_plan_details where athlete_id=$1 and race_id=$2', [S2, rennId]))[0]?.c === 2400
+  ? ok('en foresatt førte flypris for barnet sitt') : fail('flyprisen ble ikke lagret')
+await as(S2, `insert into race_plan_details(athlete_id,race_id,travel_mode) values ($1,$2,'flight')
+  on conflict (athlete_id,race_id) do update set travel_mode='flight'`, [S2, rennId])
+await as(FOR, 'select public.sett_flypris($1,$2,$3)', [S2, rennId, 3100])
+const rpd = (await q('select flight_cost::int c, travel_mode m from race_plan_details where athlete_id=$1 and race_id=$2', [S2, rennId]))[0]
+rpd.c === 3100 && rpd.m === 'flight' ? ok('flyprisen endres uten å røre løperens reisemåte') : fail(`race_plan_details: ${JSON.stringify(rpd)}`)
+try { await as(H, 'select public.sett_flypris($1,$2,$3)', [S2, rennId, 1]); fail('en som ikke er foresatt førte flypris') }
+catch (e) { e.message.includes('Bare foresatte') ? ok('bare foresatte kan føre flypris') : fail(e.message) }
+try { await as(FOR, `update race_plan_details set travel_mode='car' where athlete_id=$1`, [S2])
+  const m = (await q('select travel_mode m from race_plan_details where athlete_id=$1 and race_id=$2', [S2, rennId]))[0].m
+  m === 'flight' ? ok('en foresatt kan ikke endre resten av reiseplanen') : fail('foresatt endret reisemåte') }
+catch { ok('en foresatt kan ikke endre resten av reiseplanen') }
+
 // --- rettighetsrevisjon: alt frontend kaller, som authenticated ---
 //
 // Smoke-testen i nettleseren mocker nettverket og kan aldri se en

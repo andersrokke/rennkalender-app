@@ -3,7 +3,7 @@ import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import { fmt } from '../util'
 import { fisPoints } from '../format'
-import { kmFromHome, homeLabel, nok, DEFAULT_PLAN } from '../travel'
+import { kmFromHome, homeLabel, nok } from '../travel'
 import GateLine from './GateLine.jsx'
 
 // «Neste renn»: skjermen som svarer på hva løperen trenger å vite nå.
@@ -120,10 +120,9 @@ export default function NextRace({ profile, team, onOpenRace }) {
       { weekday: 'long', hour: '2-digit', minute: '2-digit' })
     : null
 
-  const plan = { ...DEFAULT_PLAN, ...(profile.plan_settings || {}) }
   const oneWay = kmFromHome(next, profile.home_city)
   const roundTrip = oneWay != null ? oneWay * 2 : null
-  const drive = roundTrip != null ? roundTrip * plan.kmRate : null
+  const drive = roundTrip
 
   const inDraw = pred && pred.predicted_bib == null && pred.rank_by_points != null
   const cap = next.max_attendees || null
@@ -217,9 +216,7 @@ export default function NextRace({ profile, team, onOpenRace }) {
         <section className="nr-tile">
           <span className="lab">{t('nrTravel')}</span>
           {drive != null ? <>
-            <span className="big">{nok(drive)}<small> {t('cost')}</small></span>
-            <span className="sub">{t('nrTravelNote')
-              .replace('{km}', nok(roundTrip)).replace('{rate}', plan.kmRate)}</span>
+            <span className="big">{nok(roundTrip)}<small> {t('nrKmReturn')}</small></span>
           </> : <>
             <span className="big">–</span>
             <span className="sub">{t('nrNoVenue')}</span>

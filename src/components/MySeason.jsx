@@ -12,7 +12,7 @@ import { useT } from '../i18n'
 // coach and only shown as a badge.
 const CHOICES = ['wish', 'planned', 'unavailable']
 
-export default function MySeason({ profile, team, readOnly = false }) {
+export default function MySeason({ profile, team, readOnly = false, forelder = null }) {
   const t = useT()
   const [mine, setMine] = useState([])
   const [teamRows, setTeamRows] = useState([])
@@ -130,7 +130,7 @@ export default function MySeason({ profile, team, readOnly = false }) {
               )
             }} />
           )}
-          <TripPlan profile={profile} races={planned} readOnly={readOnly}
+          <TripPlan profile={profile} races={planned} readOnly={readOnly} forelder={forelder}
             onRoutes={setRoutes} onHome={setHomePt} />
         </div>
       </div>
