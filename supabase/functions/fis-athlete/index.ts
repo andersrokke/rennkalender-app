@@ -85,7 +85,9 @@ async function fetchAthlete(competitorId: string) {
   const base = `https://www.fis-ski.com/DB/general/athlete-biography.html?sectorcode=AL&competitorid=${competitorId}`;
   const [hp, hr] = await Promise.all([
     fetch(base + "&type=fispoints", { headers: UA }).then((r) => r.text()),
-    fetch(base + "&type=result", { headers: UA }).then((r) => r.text()),
+    // Uten limit gir FIS bare de 50 siste rennene. Historikken i appen går
+    // tilbake til 2023/24, så hele lista hentes.
+    fetch(base + "&type=result&limit=1000", { headers: UA }).then((r) => r.text()),
   ]);
   const name = (hp.match(/<h1[^>]*>\s*([^<]+?)\s*<\/h1>/) || [])[1]?.trim() || null;
   const fisCode = (hp.match(/FIS Code[\s\S]{0,200}?(\d{5,7})/) || [])[1] || null;

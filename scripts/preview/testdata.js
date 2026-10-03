@@ -92,9 +92,9 @@ export const FIS_POINTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
     fetched_at: '2026-09-20' })))
 
 export const FIS_RESULTS = LOPERE.filter(p => p.fis_code).flatMap(p =>
-  Array.from({ length: 8 }, (_, i) => ({ fis_code: p.fis_code, fis_race_id: 70000 + i, race_date: iso(dager(-30 * i - 200)),
-    place: velg(VENUES).name, discipline: velg(GRENER), nation: 'NOR', category: 'FIS', category_name: 'FIS',
-    position: String(1 + rnd(40)), fis_points: 50 + rnd(60), cup_points: null, fetched_at: '2026-09-20' })))
+  Array.from({ length: 30 }, (_, i) => { const ute = i % 7 === 3; return ({ fis_code: p.fis_code, fis_race_id: 70000 + i, race_date: iso(dager(-32 * i - 200)),
+    place: velg(VENUES).name, discipline: velg(GRENER), nation: 'NOR', category: i % 5 ? 'FIS' : 'NJR', category_name: 'FIS',
+    position: ute ? 'DNF1' : String(1 + rnd(40)), fis_points: ute ? null : 50 + rnd(60) + i, cup_points: null, fetched_at: '2026-09-20' }) }))
 
 // Ruter en PostgREST-forespørsel til riktig testdata. Joins er lagt inn på
 // radene på forhånd (race.venue, slope), slik select=*,race:races(*,venue:venues(*))

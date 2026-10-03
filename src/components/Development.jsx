@@ -8,6 +8,7 @@ import { fetchFromFis, fisSummary } from '../fis'
 import { useCupStandings } from './useCupStandings'
 import CupStandings from './CupStandings.jsx'
 import Timing from './Timing.jsx'
+import ResultHistory from './ResultHistory.jsx'
 import {
   DISC, COUNT_DISC, DISC_COLOR, useDevelopment, useCurrentList, toChartRows, countingResults,
   officialPoints, seasonSummary, currentSeasonStart, discCode, isFinish, shortLabel
@@ -39,6 +40,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const { byCode: cups } = useCupStandings()
   const [fisBusy, setFisBusy] = useState(false)
   const [fisMsg, setFisMsg] = useState(null)
+  const [hentet, setHentet] = useState(0)
 
   // Same Edge Function as in Settings, so the athlete can refresh on demand
   // instead of waiting for the nightly job.
@@ -47,7 +49,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
     const res = await fetchFromFis(code)
     setFisBusy(false)
     setFisMsg(res.error ? res.error : fisSummary(res.athlete, t))
-    if (!res.error) reload()
+    if (!res.error) { reload(); setHentet(x => x + 1) }
   }
   const lastFetched = updatedAt[profile.fis_code]
   const rows = useMemo(() => toChartRows(points), [points])
@@ -235,6 +237,11 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           </div>
         )
       })}
+      {/* Hele historikken tegnes for én løper om gangen. En trener med hele
+          laget valgt får beskjed om å velge én, i stedet for ti kort på rad. */}
+      {shown.length === 1
+        ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet} />
+        : shown.length > 1 && <div className="card"><h2>{t('rhTitle')}</h2><p className="muted">{t('rhPickOne')}</p></div>}
       <Timing profile={profile} team={team} isCoach={isCoach} />
     </div>
   )

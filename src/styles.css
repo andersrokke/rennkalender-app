@@ -981,3 +981,18 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 /* Modusbyttet står i toppen på alle skjermer. Det er veien tilbake når man
    har byttet til forelder eller løper, og kan ikke være gjemt på telefon. */
 .topbar .modus .seg button{text-transform:capitalize}
+
+/* Resultathistorikk */
+.rh-filter{display:flex;flex-direction:column;gap:8px;margin:12px 0 6px}
+.rh-filter .row{flex-wrap:wrap}
+.rh-kryss{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:500;color:var(--slate)}
+.rh-kryss input{width:auto;margin:0}
+.rh-grafhode{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+.rh-grafhode h3{margin:0}
+.rh-note{font-size:12px;margin:4px 0 0}
+.rh-tabell td,.rh-tabell th{padding:8px 12px 8px 0}
+.rh-tabell td{border-bottom:1px solid var(--line)}
+.rh-tabell .tall{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rh-tabell .nobr{white-space:nowrap}
+.rh-sort{background:none;border:0;padding:0;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;white-space:nowrap}
+.rh-sort:hover{color:var(--slate)}
