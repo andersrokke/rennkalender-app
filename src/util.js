@@ -5,6 +5,14 @@ export const color = c => COLORS[c] || '#7B4FBF'
 // Far East Cup går i Kina, Korea og Japan; alt annet utenfor Norden er Europa.
 export const ASIA = ['CHN', 'KOR', 'JPN', 'KAZ', 'MGL']
 export const grp = c => ['NOR', 'SWE', 'FIN'].includes(c) ? c : ASIA.includes(c) ? 'ASIA' : 'EUR'
+// Gruppen et renn hører til i filteret og fargene. Utenfor Norden skilles
+// Europacupen fra resten: EC er det laget planlegger sesongen rundt, mens de
+// øvrige rennene i Alpene er mange og skal kunne slås av og på for seg.
+export const gruppe = r => {
+  const g = grp(r.host_nation)
+  if (g !== 'EUR') return g
+  return String(r.category || '').split(' • ').some(c => c === 'EC') ? 'EUR' : 'ALP'
+}
 export function fmt(r) {
   const [, m1, d1] = r.start_date.split('-'), [, m2, d2] = r.end_date.split('-')
   if (r.start_date === r.end_date) return `${+d1}. ${MN[+m1]}`

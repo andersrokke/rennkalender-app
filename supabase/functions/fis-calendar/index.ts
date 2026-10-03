@@ -65,10 +65,11 @@ Deno.serve(async (req) => {
     try {
       const r = await fetch(`https://www.fis-ski.com/DB/alpine-skiing/calendar-results.html?sectorcode=AL&seasoncode=${season}&categorycode=${u.cup ?? ""}&nationcode=${u.nasjon ?? ""}&seasonmonth=X-${season}&saveselection=-1`, { headers: UA });
       if (!r.ok) { logg.push({ cup, feil: `FIS svarte ${r.status}` }); continue; }
-      // I et landutvalg er landet vi spurte om vertslandet, og nasjonen FIS
-      // viser er arrangøren. I et cuputvalg finnes bare den FIS viser.
-      const funnet = lesKalender(await r.text()).filter((x: any) => !u.cup || x.category === u.cup)
-        .map((x: any) => ({ ...x, host_nation: u.nasjon ?? x.nation, organiser_nation: u.nasjon && x.nation !== u.nasjon ? x.nation : null }));
+      // Et landutvalg hos FIS gir både renn som går i landet og renn landet
+      // arrangerer andre steder. Vertslandet leses av stedsnavnet; bare renn
+      // som faktisk går i landet tas med.
+      const funnet = lesKalender(await r.text()).filter((x: any) => u.cup ? x.category === u.cup : x.host === u.nasjon)
+        .map((x: any) => ({ ...x, host_nation: x.host, organiser_nation: x.nation !== x.host ? x.nation : null }));
       if (!funnet.length) { logg.push({ cup, funnet: 0, merknad: "Ingen rader lest - ingenting endret" }); continue; }
 
       const navn = [...new Set(funnet.map((x: any) => x.place))];

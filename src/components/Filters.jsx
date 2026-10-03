@@ -1,11 +1,11 @@
-import { grp } from '../util'
+import { gruppe } from '../util'
 import { useT } from '../i18n'
 
-export const initialFilter = { country: new Set(['NOR', 'SWE', 'FIN', 'EUR', 'ASIA']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() }
+export const initialFilter = { country: new Set(['NOR', 'SWE', 'FIN', 'EUR', 'ALP', 'ASIA']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() }
 
 export function applyFilter(races, f) {
   return races.filter(r => {
-    if (!f.country.has(grp(r.host_nation))) return false
+    if (!f.country.has(gruppe(r))) return false
     if (!r.gender.split(' ').some(g => f.gender.has(g))) return false
     if (f.month !== 'all' && !(r.start_date.startsWith(f.month) || r.end_date.startsWith(f.month))) return false
     if (f.disc.size && ![...f.disc].some(d => r.events.includes(d))) return false
@@ -26,6 +26,7 @@ export default function Filters({ f, setF, view, setView, extra, onDone }) {
       <div className="group"><span>{t('country')}</span>
         <Chip k="country" v="NOR" cls="nor" label={t('norway')} /><Chip k="country" v="SWE" cls="swe" label={t('sweden')} />
         <Chip k="country" v="FIN" cls="fin" label={t('finland')} /><Chip k="country" v="EUR" cls="eur" label={t('ecLands')} />
+        <Chip k="country" v="ALP" cls="alp" label={t('alpLands')} />
         <Chip k="country" v="ASIA" cls="asia" label={t('asia')} />
       </div>
       {setView && <div className="group"><span>{t('mapF')}</span>
@@ -36,7 +37,7 @@ export default function Filters({ f, setF, view, setView, extra, onDone }) {
         {MONTHS.map(([k, l]) => <button key={k} className={`chip ${f.month === k ? 'on' : ''}`} onClick={() => setF(p => ({ ...p, month: k }))}>{k === 'all' ? t('allM') : l}</button>)}
       </div>
       <div className="group"><span>{t('disc')}</span>{['SL', 'GS', 'SG', 'DH'].map(d => <Chip key={d} k="disc" v={d} label={d} />)}</div>
-      <div className="group"><span>{t('cat')}</span>{['FIS', 'ENL', 'NJR', 'NJC', 'NC', 'EC', 'FEC'].map(c => <Chip key={c} k="cat" v={c} label={c} />)}</div>
+      <div className="group"><span>{t('cat')}</span>{['FIS', 'ENL', 'NJR', 'NJC', 'NC', 'CIT', 'EC', 'FEC', 'WC'].map(c => <Chip key={c} k="cat" v={c} label={c} />)}</div>
       {extra}
     </div>
   )

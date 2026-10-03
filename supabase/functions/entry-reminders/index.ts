@@ -19,7 +19,7 @@ function body(g: any) {
   return `<!doctype html><html lang="no"><body style="margin:0;background:#F3F6FA;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0F1B2D">
   <div style="max-width:520px;margin:24px auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden">
     <div style="background:linear-gradient(120deg,#E23B4E,#2F6FE0);padding:18px 22px;color:#fff">
-      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Rennkalender</div>
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Ski Competition</div>
       <div style="font-size:20px;font-weight:800;margin-top:4px">Påmeldingsfrist i morgen</div>
     </div>
     <div style="padding:22px">
@@ -30,7 +30,7 @@ function body(g: any) {
         <tr><td style="padding:6px 0;color:#6B7A8C">Påmeldingsfrist</td><td style="padding:6px 0;font-weight:600;color:#C2410C">${fmtTime(g.deadline)}</td></tr>
       </table>
       <a href="https://isonen.no" style="display:inline-block;background:#0F1B2D;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;font-size:15px">Meld deg på i iSonen</a>
-      <p style="margin:18px 0 0;font-size:12.5px;color:#6B7A8C;line-height:1.5">Du får denne e-posten fordi rennet ligger i planen din i Rennkalender. <a href="${APP_URL}" style="color:#2F6FE0">Åpne planen</a></p>
+      <p style="margin:18px 0 0;font-size:12.5px;color:#6B7A8C;line-height:1.5">Du får denne e-posten fordi rennet ligger i planen din i Ski Competition. <a href="${APP_URL}" style="color:#2F6FE0">Åpne planen</a></p>
     </div>
   </div></body></html>`;
 }

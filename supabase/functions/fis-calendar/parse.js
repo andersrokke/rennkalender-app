@@ -41,13 +41,18 @@ export function lesKalender(html) {
     const graa = [...del.matchAll(/<span class="gray clip">([\s\S]*?)<\/span>/g)].map(m => ren(m[1]))
     const d = dato && lesDatoer(dato[1])
     if (!d || !sted || !nasjon || graa.length < 2) continue
+    // «Pass Thurn (AUT)»: landet i parentes er der rennet går, når det er et
+    // annet enn arrangørens. Navnet lagres uten parentesen.
+    const fullt = ren(sted[1])
+    const vert = /\(([A-Z]{3})\)\s*$/.exec(fullt)
     const kjonn = [/gender__item_l">\s*W\s*</.test(del) && 'W', /gender__item_m">\s*M\s*</.test(del) && 'M'].filter(Boolean).join(' ')
     sett.add(id[1])
     ut.push({
       // Nasjonen FIS viser er arrangørens. Som oftest er det også landet
       // rennet går i, men ikke alltid: Luxembourg kjører mesterskapet sitt i
-      // Østerrike. Den som kaller avgjør hva som er vertsland.
-      fis_event_id: +id[1], start_date: d.start, end_date: d.end, place: ren(sted[1]), nation: nasjon[1],
+      // Østerrike.
+      fis_event_id: +id[1], start_date: d.start, end_date: d.end,
+      place: vert ? fullt.slice(0, vert.index).trim() : fullt, nation: nasjon[1], host: vert ? vert[1] : nasjon[1],
       category: graa[0], events: graa[1], gender: kjonn || 'W M',
       // FIS skriver «Not cancelled» på renn som går; «Cancelled» alene betyr avlyst.
       cancelled: /title="Cancelled"/.test(del)

@@ -1,4 +1,4 @@
-import { fmt, fisUrl, grp, MONTHS } from '../util'
+import { gruppe, fmt, fisUrl, grp, MONTHS } from '../util'
 
 // races: array; renderExtra(race) -> node; onSelect(race)
 export default function RaceList({ races, onSelect, active, renderExtra, selectedIds }) {
@@ -12,7 +12,7 @@ export default function RaceList({ races, onSelect, active, renderExtra, selecte
       const n = races.filter(x => x.start_date.slice(0, 7) === mk).length
       out.push(<div className="month" key={'m' + mk}>{MONTHS[mk] || mk}<em>{n} renn</em></div>)
     }
-    const g = grp(r.host_nation)
+    const g = gruppe(r)
     out.push(
       <div key={r.id}
         className={`race ${g.toLowerCase()} ${onSelect ? 'clickable' : ''} ${active?.id === r.id ? 'active' : ''} ${selectedIds?.has(r.id) ? 'selected' : ''}`}
