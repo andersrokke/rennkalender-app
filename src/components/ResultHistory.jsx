@@ -65,9 +65,12 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const grener = useMemo(() => GRENER.filter(g => alle.some(r => r.gren === g)), [alle])
   const kategorier = useMemo(() => [...new Set(alle.map(r => r.category).filter(Boolean))].sort(), [alle])
 
-  const utvalg = useMemo(() => filtrer(alle, { sesong, gren, kategori, bareFullfort }), [alle, sesong, gren, kategori, bareFullfort])
+  // Tallene og grafene regnes alltid av alle starter i utvalget. «Bare
+  // fullførte» gjelder bare rennlista: brukt på tallene ville den gitt
+  // 100 % fullført, som ikke sier noe.
+  const utvalg = useMemo(() => filtrer(alle, { sesong, gren, kategori }), [alle, sesong, gren, kategori])
   const n = useMemo(() => nokkeltall(utvalg), [utvalg])
-  const liste = useMemo(() => sorter(utvalg, kol, retning), [utvalg, kol, retning])
+  const liste = useMemo(() => sorter(bareFullfort ? utvalg.filter(r => r.plass != null) : utvalg, kol, retning), [utvalg, bareFullfort, kol, retning])
   const tid = useMemo(() => poengOverTid(utvalg), [utvalg])
   const felt = useMemo(() => sesongFelt(tid), [tid])
   // Sesonggrafen sammenligner sesonger, så den ser bort fra sesongfilteret.
@@ -117,7 +120,6 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
             <option value="alle">{t('rhAllCat')}</option>
             {kategorier.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
-          <label className="rh-kryss"><input type="checkbox" checked={bareFullfort} onChange={e => setBareFullfort(e.target.checked)} /> {t('rhOnlyFinished')}</label>
         </div>
       </div>
 
@@ -265,7 +267,10 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
           </table>
         </div>
 
-        <h3>{t('rhAllRaces')} <span className="muted">({liste.length})</span></h3>
+        <div className="rh-grafhode">
+          <h3>{t('rhAllRaces')} <span className="muted">({liste.length})</span></h3>
+          <label className="rh-kryss"><input type="checkbox" checked={bareFullfort} onChange={e => setBareFullfort(e.target.checked)} /> {t('rhOnlyFinished')}</label>
+        </div>
         <div className="ad-scroll">
           <table className="ad-table rh-tabell">
             <thead><tr>
