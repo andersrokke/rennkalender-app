@@ -24,6 +24,10 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const [people, setPeople] = useState([])
   const [disc, setDisc] = useState('GS')
   const [only, setOnly] = useState('all')   // coach: show every athlete, or one
+  // Løper og forelder: én gren for hele siden, eller alle. Treneren har sin
+  // egen grenvelger for lagsgrafen, der «alle» ville gitt en linje per løper
+  // per gren.
+  const [gren, setGren] = useState('alle')
 
   useEffect(() => {
     if (isCoach && team) {
@@ -78,6 +82,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         .filter(s => only === 'all' || s.key.startsWith(only + '|'))
     : DISC.map(d => ({ key: `${profile.fis_code}|${d}`, name: d, color: DISC_COLOR[d] }))
         .filter(s => rows.some(r => r[s.key] != null))
+        .filter(s => gren === 'alle' || s.name === gren)
+  const iGren = d => isCoach || gren === 'alle' || d === gren
+  const resultaterIGren = isCoach || gren === 'alle' ? results : results.filter(r => discCode(r.discipline) === gren)
 
   if (!codes.length) {
     return <div className="page"><div className="card">
@@ -105,6 +112,12 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           <div className="fis-head"><span>{t('fisLastUpdated')} {dateTime(lastFetched, t.lang)}</span></div>
         )}
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
+        {!isCoach && (
+          <div className="row" style={{ margin: '10px 0', gap: 4, flexWrap: 'wrap' }}>
+            <button className={`chip ${gren === 'alle' ? 'on' : ''}`} aria-pressed={gren === 'alle'} onClick={() => setGren('alle')}>{t('rhAllDisc')}</button>
+            {DISC.map(d => <button key={d} className={`chip ${gren === d ? 'on' : ''}`} aria-pressed={gren === d} onClick={() => setGren(d)}>{d}</button>)}
+          </div>
+        )}
         {isCoach && (
           <div className="row" style={{ margin: '10px 0', gap: 14 }}>
             <div className="row" style={{ gap: 4 }}>
@@ -174,16 +187,16 @@ export default function Development({ profile, team, isCoach, readOnly = false }
       {shown.map(p => {
         const official = officialPoints(points, p.fis_code)
         const counting = countingResults(results, p.fis_code, season, official)
-        const sum = seasonSummary(results, p.fis_code, season)
+        const sum = seasonSummary(resultaterIGren, p.fis_code, season)
         const mine = results.filter(r => r.fis_code === p.fis_code)
         return (
           <div className="card" key={p.fis_code}>
             <h2>{p.full_name}</h2>
             <h3>{t('countingResults')}</h3>
             {mine.length === 0 ? <p className="muted">{t('devNoResults')}</p>
-              : Object.keys(counting).length === 0 ? <p className="muted">{t('devNoResults')}</p> : (
+              : !COUNT_DISC.some(d => counting[d] && iGren(d)) ? <p className="muted">{t('devNoResults')}</p> : (
               <div className="counting">
-                {COUNT_DISC.filter(d => counting[d]).map(d => {
+                {COUNT_DISC.filter(d => counting[d] && iGren(d)).map(d => {
                   const c = counting[d]
                   return (
                     <div key={d} className="count-disc">
@@ -214,7 +227,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
                 })}
               </div>
             )}
-            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}</h3>
+            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}{!isCoach && gren !== 'alle' ? ` · ${gren}` : ''}</h3>
             {/* counts only, so every number on this row means the same kind of thing */}
             <div className="kpis">
               <div className="kpi"><b>{sum.starts}</b><span>{t('startsL')}</span></div>
@@ -240,7 +253,8 @@ export default function Development({ profile, team, isCoach, readOnly = false }
       {/* Hele historikken tegnes for én løper om gangen. En trener med hele
           laget valgt får beskjed om å velge én, i stedet for ti kort på rad. */}
       {shown.length === 1
-        ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet} />
+        ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet}
+            grenUtenfra={isCoach ? null : gren} />
         : shown.length > 1 && <div className="card"><h2>{t('rhTitle')}</h2><p className="muted">{t('rhPickOne')}</p></div>}
       <Timing profile={profile} team={team} isCoach={isCoach} />
     </div>

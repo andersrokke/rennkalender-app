@@ -17,13 +17,16 @@ const TIPS = { background: 'var(--snow)', border: '1px solid var(--line)', color
 // utvikling i grafer, oppsummering per sesong og gren, og hele lista - alt
 // styrt av de samme filtrene. Henter sine egne rader for én løper om gangen,
 // så et stort lag ikke støter mot radgrensen i API-et.
-export default function ResultHistory({ fisCode, name, nonce = 0 }) {
+export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = null }) {
   const t = useT()
   const p1 = v => fisPoints(v, t.lang)
   const [raa, setRaa] = useState(null)
   const [sesong, setSesong] = useState('alle')
   const [gren, setGren] = useState('alle')
   const [kategori, setKategori] = useState('alle')
+  // Grenvelgeren øverst på siden styrer også her. Brikkene under virker
+  // fortsatt, så man kan se en annen gren i historikken uten å bytte for alt.
+  useEffect(() => { if (grenUtenfra) setGren(grenUtenfra) }, [grenUtenfra])
   const [bareFullfort, setBareFullfort] = useState(false)
   const [kol, setKol] = useState('dato')
   const [retning, setRetning] = useState('ned')
