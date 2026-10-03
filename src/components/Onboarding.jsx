@@ -117,11 +117,15 @@ export default function Onboarding({ profile, onDone }) {
           .update({ full_name: name, role: 'athlete', team_id: null, onboarded: true, lang }).eq('id', profile.id)
         if (error) throw error
       } else if (mode === 'parent') {
-        const { data: barn, error } = await supabase.rpc('link_guardian', { code })
-        if (error) throw error
-        if (!barn?.length) throw new Error(L.codeInvalid)
+        // Koden kommer fra barnets egen profil, ikke på e-post. Har man den
+        // ikke ennå, skal man likevel komme inn - og koble til under Mine barn.
+        if (code) {
+          const { data: barn, error } = await supabase.rpc('link_guardian', { code })
+          if (error) throw error
+          if (!barn?.length) throw new Error(L.codeInvalid)
+        }
         const { error: e2 } = await supabase.from('profiles')
-          .update({ full_name: name, onboarded: true, lang }).eq('id', profile.id)
+          .update({ full_name: name, role: 'parent', onboarded: true, lang }).eq('id', profile.id)
         if (e2) throw e2
       }
       glemLagkode(); glemForeldrekode()
@@ -177,7 +181,7 @@ export default function Onboarding({ profile, onDone }) {
 
             {mode === 'parent' && (<>
               <label>{L.codeParent}</label>
-              <input key="foreldrekode" name="code" required autoCapitalize="none" autoCorrect="off" spellCheck="false"
+              <input key="foreldrekode" name="code" autoCapitalize="none" autoCorrect="off" spellCheck="false"
                 defaultValue={fraForelder} placeholder={L.codePh} />
             </>)}
 
