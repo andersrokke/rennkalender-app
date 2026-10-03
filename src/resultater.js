@@ -31,9 +31,11 @@ export function berik(rader) {
 }
 
 export function filtrer(rader, { sesong = 'alle', gren = 'alle', kategori = 'alle', bareFullfort = false } = {}) {
+  // Gren kan være én kode, 'alle', eller en liste. Tom liste betyr alle.
+  const grener = Array.isArray(gren) ? gren : gren === 'alle' ? [] : [gren]
   return rader.filter(r =>
     (sesong === 'alle' || r.sesong === Number(sesong)) &&
-    (gren === 'alle' || r.gren === gren) &&
+    (!grener.length || grener.includes(r.gren)) &&
     (kategori === 'alle' || r.category === kategori) &&
     (!bareFullfort || r.plass != null))
 }

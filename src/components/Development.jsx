@@ -24,10 +24,11 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const [people, setPeople] = useState([])
   const [disc, setDisc] = useState('GS')
   const [only, setOnly] = useState('all')   // coach: show every athlete, or one
-  // Løper og forelder: én gren for hele siden, eller alle. Treneren har sin
+  // Løper og forelder: én eller flere grener for hele siden, eller alle. Treneren har sin
   // egen grenvelger for lagsgrafen, der «alle» ville gitt en linje per løper
   // per gren.
-  const [gren, setGren] = useState('alle')
+  const [gren, setGren] = useState([])      // valgte grener; tom = alle
+  const vippGren = d => setGren(v => v.includes(d) ? v.filter(x => x !== d) : [...v, d])
 
   useEffect(() => {
     if (isCoach && team) {
@@ -82,9 +83,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         .filter(s => only === 'all' || s.key.startsWith(only + '|'))
     : DISC.map(d => ({ key: `${profile.fis_code}|${d}`, name: d, color: DISC_COLOR[d] }))
         .filter(s => rows.some(r => r[s.key] != null))
-        .filter(s => gren === 'alle' || s.name === gren)
-  const iGren = d => isCoach || gren === 'alle' || d === gren
-  const resultaterIGren = isCoach || gren === 'alle' ? results : results.filter(r => discCode(r.discipline) === gren)
+        .filter(s => !gren.length || gren.includes(s.name))
+  const iGren = d => isCoach || !gren.length || gren.includes(d)
+  const resultaterIGren = isCoach || !gren.length ? results : results.filter(r => gren.includes(discCode(r.discipline)))
 
   if (!codes.length) {
     return <div className="page"><div className="card">
@@ -114,8 +115,8 @@ export default function Development({ profile, team, isCoach, readOnly = false }
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
         {!isCoach && (
           <div className="row" style={{ margin: '10px 0', gap: 4, flexWrap: 'wrap' }}>
-            <button className={`chip ${gren === 'alle' ? 'on' : ''}`} aria-pressed={gren === 'alle'} onClick={() => setGren('alle')}>{t('rhAllDisc')}</button>
-            {DISC.map(d => <button key={d} className={`chip ${gren === d ? 'on' : ''}`} aria-pressed={gren === d} onClick={() => setGren(d)}>{d}</button>)}
+            <button className={`chip ${!gren.length ? 'on' : ''}`} aria-pressed={!gren.length} onClick={() => setGren([])}>{t('rhAllDisc')}</button>
+            {DISC.map(d => <button key={d} className={`chip ${gren.includes(d) ? 'on' : ''}`} aria-pressed={gren.includes(d)} onClick={() => vippGren(d)}>{d}</button>)}
           </div>
         )}
         {isCoach && (
@@ -227,7 +228,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
                 })}
               </div>
             )}
-            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}{!isCoach && gren !== 'alle' ? ` · ${gren}` : ''}</h3>
+            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}{!isCoach && gren.length ? ` · ${DISC.filter(d => gren.includes(d)).join(', ')}` : ''}</h3>
             {/* counts only, so every number on this row means the same kind of thing */}
             <div className="kpis">
               <div className="kpi"><b>{sum.starts}</b><span>{t('startsL')}</span></div>

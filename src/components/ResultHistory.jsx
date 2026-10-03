@@ -22,11 +22,13 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const p1 = v => fisPoints(v, t.lang)
   const [raa, setRaa] = useState(null)
   const [sesong, setSesong] = useState('alle')
-  const [gren, setGren] = useState('alle')
+  const [gren, setGren] = useState([])            // valgte grener; tom = alle
   const [kategori, setKategori] = useState('alle')
   // Grenvelgeren øverst på siden styrer også her. Brikkene under virker
   // fortsatt, så man kan se en annen gren i historikken uten å bytte for alt.
   useEffect(() => { if (grenUtenfra) setGren(grenUtenfra) }, [grenUtenfra])
+  const medGren = g => !gren.length || gren.includes(g)
+  const vipp = g => setGren(v => v.includes(g) ? v.filter(x => x !== g) : [...v, g])
   const [bareFullfort, setBareFullfort] = useState(false)
   const [kol, setKol] = useState('dato')
   const [retning, setRetning] = useState('ned')
@@ -84,8 +86,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
           {sesonger.map(s => <Brikke key={s} pa={sesong === s} onClick={() => setSesong(s)}>{sesongNavn(s)}</Brikke>)}
         </div>
         <div className="row" style={{ gap: 4 }}>
-          <Brikke pa={gren === 'alle'} onClick={() => setGren('alle')}>{t('rhAllDisc')}</Brikke>
-          {grener.map(g => <Brikke key={g} pa={gren === g} onClick={() => setGren(g)}>{g}</Brikke>)}
+          <Brikke pa={!gren.length} onClick={() => setGren([])}>{t('rhAllDisc')}</Brikke>
+          {grener.map(g => <Brikke key={g} pa={gren.includes(g)} onClick={() => vipp(g)}>{g}</Brikke>)}
         </div>
         <div className="row" style={{ gap: 10 }}>
           <select style={{ width: 'auto' }} value={kategori} aria-label={t('rhCat')} onChange={e => setKategori(e.target.value)}>
@@ -157,7 +159,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                 <YAxis tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={p1} />
                 <Tooltip contentStyle={TIPS} cursor={{ fill: 'var(--ice)' }} formatter={v => `${p1(v)} p`} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                {grener.filter(g => gren === 'alle' || g === gren).map(g => (
+                {grener.filter(medGren).map(g => (
                   <Bar key={g} dataKey={`${mal}_${g}`} name={g} fill={farge(g)} radius={[4, 4, 0, 0]} isAnimationActive={false} />
                 ))}
               </BarChart>

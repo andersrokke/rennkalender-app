@@ -28,6 +28,8 @@ sjekk('poeng som tekst blir tall', R[4].poeng === 48.2)
 
 sjekk('filter på sesong', filtrer(R, { sesong: 2024 }).length === 3)
 sjekk('filter på gren', filtrer(R, { gren: 'GS' }).length === 3)
+sjekk('filter på flere grener', filtrer(R, { gren: ['GS', 'SG'] }).length === 4)
+sjekk('tom grenliste er alle grener', filtrer(R, { gren: [] }).length === 6)
 sjekk('filter på kategori', filtrer(R, { kategori: 'NJR' }).length === 1)
 sjekk('filter bare fullførte', filtrer(R, { bareFullfort: true }).length === 4)
 sjekk('filtre virker sammen', filtrer(R, { sesong: 2023, gren: 'GS', bareFullfort: true }).length === 1)
