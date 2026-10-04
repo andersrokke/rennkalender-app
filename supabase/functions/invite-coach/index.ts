@@ -27,12 +27,12 @@ function html(link: string, note: string | null, fra: string | null) {
   return `<!doctype html><html lang="no"><body style="margin:0;background:#F3F6FA;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0F1B2D">
   <div style="max-width:560px;margin:24px auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden">
     <div style="background:linear-gradient(120deg,#E23B4E,#2F6FE0);padding:22px;color:#fff">
-      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Ski Competition</div>
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Alpinrace</div>
       <div style="font-size:22px;font-weight:800;margin-top:4px">Du er invitert som trener</div>
     </div>
     <div style="padding:22px">
       <p style="margin:0 0 16px;font-size:15px;line-height:1.55">
-        ${fra ? `${esc(fra)} har invitert deg` : "Du er invitert"} til å bruke Ski Competition som trener.
+        ${fra ? `${esc(fra)} har invitert deg` : "Du er invitert"} til å bruke Alpinrace som trener.
         Her planlegger du sesongen for laget, setter opp treningsdager og ser hvor løperne dine ligger an.
       </p>
       ${note ? `<p style="margin:0 0 16px;padding:12px 14px;background:#EBF1FE;border-radius:10px;font-size:14.5px;line-height:1.5">${esc(note)}</p>` : ""}
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
   const fra = (inv as any).invited_by?.full_name ?? null;
   const r = await sendMail({
     to: [inv.email],
-    subject: "Du er invitert som trener i Ski Competition",
+    subject: "Du er invitert som trener i Alpinrace",
     html: html(link.properties.action_link, inv.note, fra),
   });
   if (!r.ok) return giUpp(`${r.via}: ${r.error}`);

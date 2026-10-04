@@ -14,13 +14,13 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 const GMAIL_USER = Deno.env.get("GMAIL_USER");
 const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM = Deno.env.get("REMINDER_FROM") ?? "Ski Competition <no-reply@rennkalender.app>";
+const FROM = Deno.env.get("REMINDER_FROM") ?? "Alpinrace <no-reply@rennkalender.app>";
 
 // Gmail skriver om avsenderadressen til den kontoen som faktisk logget inn,
 // så et REMINDER_FROM som peker et annet sted blir stille overstyrt. Vi tar
 // vare på visningsnavnet og bruker kontoens egen adresse.
 function gmailFrom() {
-  const navn = FROM.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim() || "Ski Competition";
+  const navn = FROM.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim() || "Alpinrace";
   return `${navn} <${GMAIL_USER}>`;
 }
 

@@ -33,12 +33,12 @@ function body(g: any, tilForesatt: boolean) {
       ? `Du har <b>${sted}</b> i sesongplanen din, men vi finner deg ikke på deltakerlisten i iSonen.`
       : `Du har <b>${sted}</b> i sesongplanen din. Vi kan ikke se deltakerlisten for dette rennet, så husk å sjekke at du er påmeldt.`);
   const fot = tilForesatt
-    ? `Du får denne e-posten fordi du er koblet til ${navn} som foresatt i Ski Competition. Varslene slår du av under «Påmelding» i appen.`
-    : `Du får denne e-posten fordi rennet ligger i planen din i Ski Competition.`;
+    ? `Du får denne e-posten fordi du er koblet til ${navn} som foresatt i Alpinrace. Varslene slår du av under «Påmelding» i appen.`
+    : `Du får denne e-posten fordi rennet ligger i planen din i Alpinrace.`;
   return `<!doctype html><html lang="no"><body style="margin:0;background:#F3F6FA;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0F1B2D">
   <div style="max-width:520px;margin:24px auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden">
     <div style="background:linear-gradient(120deg,#E23B4E,#2F6FE0);padding:18px 22px;color:#fff">
-      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Ski Competition</div>
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Alpinrace</div>
       <div style="font-size:20px;font-weight:800;margin-top:4px">${overskrift(g)}</div>
     </div>
     <div style="padding:22px">

@@ -9,17 +9,17 @@ export default function Personvern() {
   return (
     <div className="pv">
       <header className="pv-topp">
-        <a className="pv-merke" href="/"><span className="merke" aria-hidden="true" />Ski Competition</a>
+        <a className="pv-merke" href="/"><span className="merke" aria-hidden="true" />Alpinrace</a>
         <a className="btn small" href="/">Til innlogging</a>
       </header>
       <main className="pv-innhold">
         <p className="pv-lab">Personvern</p>
         <h1>Personvernerklæring</h1>
-        <p className="pv-ingress">Her står hvilke opplysninger Ski Competition lagrer om deg, hva de brukes til,
+        <p className="pv-ingress">Her står hvilke opplysninger Alpinrace lagrer om deg, hva de brukes til,
           hvem som ser dem, og hvordan du får dem slettet.</p>
 
         <h2>Hvem er ansvarlig</h2>
-        <p>Ski Competition drives av Anders Røkke, som er behandlingsansvarlig for opplysningene i tjenesten.
+        <p>Alpinrace drives av Anders Røkke, som er behandlingsansvarlig for opplysningene i tjenesten.
           Spørsmål om personvern sendes til <b>{KONTAKT}</b>.</p>
 
         <h2>Hva vi lagrer</h2>

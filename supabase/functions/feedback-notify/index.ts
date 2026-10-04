@@ -23,7 +23,7 @@ function html(f: any, who: string) {
   return `<!doctype html><html lang="no"><body style="margin:0;background:#F3F6FA;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#0F1B2D">
   <div style="max-width:560px;margin:24px auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden">
     <div style="background:${accent};padding:18px 22px;color:#fff">
-      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Ski Competition</div>
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Alpinrace</div>
       <div style="font-size:20px;font-weight:800;margin-top:4px">${KIND[f.kind as keyof typeof KIND] ?? "Tilbakemelding"} fra ${esc(who)}</div>
     </div>
     <div style="padding:22px">
