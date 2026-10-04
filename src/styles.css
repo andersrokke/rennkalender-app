@@ -1160,3 +1160,38 @@ html[data-look="ny"] .topbar{background:var(--snow)}
 html[data-look="ny"] .controls{background:var(--snow)}
 html[data-look="ny"] .tabbar button{font-weight:500}
 html[data-look="ny"] .tabbar button.on{font-weight:600}
+
+/* Forsiden: lys hero i stedet for nattbildet. Samme grep som resten - hvit
+   grunn, grønt skjær, marineblå tekst - så innloggingen ikke ser ut som en
+   annen tjeneste enn appen bak. */
+html[data-look="ny"] .auth-wrap{background:var(--snow)}
+html[data-look="ny"] .auth-hero{background:
+    radial-gradient(900px 520px at 85% 110%, rgba(33,99,81,.20), transparent 62%),
+    radial-gradient(700px 420px at 0% 0%, rgba(33,99,81,.10), transparent 60%),
+    linear-gradient(180deg,#F4F8F6 0,#E3EFEA 100%);
+  color:var(--slate)}
+html[data-look="ny"][data-theme=dark] .auth-hero{background:
+    radial-gradient(900px 520px at 85% 110%, rgba(99,199,166,.16), transparent 62%),
+    linear-gradient(180deg,#0A1A1C 0,#07111A 100%)}
+html[data-look="ny"] .hero-art,html[data-look="ny"] .ob-hero svg{display:none}
+html[data-look="ny"] .brand{background:var(--snow);border:1px solid var(--line);color:var(--slate);backdrop-filter:none;
+  font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.1em;border-radius:6px;padding:8px 12px}
+html[data-look="ny"] .brand .dot{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+html[data-look="ny"] .hero-copy h1{font-weight:500;letter-spacing:-.035em;text-shadow:none;color:var(--slate)}
+html[data-look="ny"] .hero-copy h1 em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--accent)}
+html[data-look="ny"] .hero-copy p{color:var(--mute);text-shadow:none;font-size:16.5px;line-height:1.55}
+html[data-look="ny"] .hero-points li{color:var(--slate)}
+html[data-look="ny"] .hero-points li::before{background:var(--accent);border-radius:3px;width:10px;height:10px;top:8px}
+html[data-look="ny"] .hero-points b{color:var(--slate);font-weight:600}
+html[data-look="ny"] .hero-stats div{background:var(--snow);border:1px solid var(--line);border-radius:10px;backdrop-filter:none;padding:12px 18px}
+html[data-look="ny"] .hero-stats b{font-weight:500;font-size:26px;letter-spacing:-.03em;color:var(--slate)}
+html[data-look="ny"] .hero-stats span{font-family:var(--mono);color:var(--mute);letter-spacing:.08em}
+html[data-look="ny"] .langsw.dark{background:var(--snow);border-color:var(--line);backdrop-filter:none;border-radius:8px}
+html[data-look="ny"] .langsw.dark button{color:var(--mute);border-radius:6px}
+html[data-look="ny"] .langsw.dark button.on{background:var(--accent);color:var(--accent-fg)}
+/* Oppstarten etter innlogging har samme bakgrunn. */
+html[data-look="ny"] .ob-hero{background:linear-gradient(180deg,#E3EFEA 0,var(--ice) 100%)}
+html[data-look="ny"][data-theme=dark] .ob-hero{background:linear-gradient(180deg,#0C1F1C 0,var(--ice) 100%)}
+html[data-look="ny"] .ob-hero-text{color:var(--slate)}
+html[data-look="ny"] .ob-hero-text h1{font-weight:500;text-shadow:none}
+html[data-look="ny"] .ob-hero-text p{color:var(--mute);text-shadow:none}

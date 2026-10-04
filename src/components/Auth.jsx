@@ -166,9 +166,9 @@ export default function Auth() {
           </ul>
         </div>
         <div className="hero-stats">
-          <div><b>120</b><span>{L.races}</span></div>
-          <div><b>81</b><span>{L.venues}</span></div>
-          <div><b>11</b><span>{L.countries}</span></div>
+          <div><b>460+</b><span>{L.races}</span></div>
+          <div><b>280+</b><span>{L.venues}</span></div>
+          <div><b>14</b><span>{L.countries}</span></div>
         </div>
       </section>
 
