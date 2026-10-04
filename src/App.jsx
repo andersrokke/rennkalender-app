@@ -3,6 +3,7 @@ import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
 import { tabForNav, navForState, rolleFlagg, fanerFor } from './nav'
 import { supabase } from './supabase'
+import { PROFIL_FELT } from './profil'
 import Auth from './components/Auth.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import RaceBrowser from './components/RaceBrowser.jsx'
@@ -67,7 +68,7 @@ export default function App() {
   const [grupper, setGrupper] = useState([])
 
   const loadProfile = useCallback(async uid => {
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', uid).single()
+    const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', uid).single()
     setProfile(p)
     if (p?.role === 'coach') supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))
     else setGrupper([])

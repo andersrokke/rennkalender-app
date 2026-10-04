@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { PROFIL_FELT } from '../profil'
 import { useT } from '../i18n'
 import { fmt } from '../util'
 import MySeason from './MySeason.jsx'
@@ -31,7 +32,7 @@ export default function Children({ profile }) {
   // travel cost view needs. RLS lets a guardian read it.
   async function openChild(kid, view) {
     setOpen({ kid, view }); setChild(null); setTeam(null)
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', kid.athlete_id).single()
+    const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', kid.athlete_id).single()
     setChild(p || null)
     if (p?.team_id) {
       const { data: tm } = await supabase.from('teams').select('*').eq('id', p.team_id).single()

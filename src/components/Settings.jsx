@@ -87,7 +87,11 @@ export default function Settings({ profile, team, isCoach, onChange }) {
     if (error) setJoinErr(error.message); else onChange()
   }
   const [fkode, setFkode] = useState(null)
-  const foreldrekode = fkode || profile.link_code
+  // Koden ligger ikke i profilen klienten leser; løperen henter sin egen.
+  useEffect(() => {
+    if (profile.role === 'athlete') supabase.rpc('min_foreldrekode').then(({ data }) => setFkode(data || null))
+  }, [profile.id, profile.role])
+  const foreldrekode = fkode
   const foreldrelenke = `${window.location.origin}/?forelder=${encodeURIComponent(foreldrekode || '')}`
   async function nyForeldrekode() {
     if (!confirm(t('linkedNewConfirm'))) return

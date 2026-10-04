@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { PROFIL_FELT } from '../profil'
 import { STATUS, fmt, days } from '../util'
 import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
@@ -53,7 +54,7 @@ export default function Athletes({ team }) {
 
   async function load() {
     const [{ data: a }, { data: tr }, { data: s }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('team_id', team.id).order('full_name'),
+      supabase.from('profiles').select(PROFIL_FELT).eq('team_id', team.id).order('full_name'),
       supabase.from('team_races').select('race:races(*)').eq('team_id', team.id),
       supabase.from('athlete_races').select('*').eq('team_id', team.id)
     ])

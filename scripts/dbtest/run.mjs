@@ -400,18 +400,19 @@ catch { ok('ugyldig vær avvises fortsatt') }
 const NYT = 'cccccccc-0000-0000-0000-000000000001'
 await c.query(`insert into auth.users(id,email,raw_user_meta_data)
   values ($1,'fersk@test.no',jsonb_build_object('full_name','Fersk Trener','role','coach'))`, [NYT])
-// Rett innsetting, slik «Opprett lag»-skjermen gjorde det: default-verdien
-// invite_code kjøres da med brukerens egne rettigheter.
+// Rett innsetting i lagtabellen er stengt: lag opprettes gjennom funksjonene,
+// som kontrollerer hvem man er. Ellers kunne hvem som helst lage en gruppe
+// under et lag de ikke hører til.
 try {
   await as(NYT, `insert into teams(name,owner_id) values ('Rett inn',$1)`, [NYT])
-  ok('en innlogget bruker kan sette inn et lag direkte (default-verdien virker)')
-} catch (e) { fail(`direkte innsetting: ${e.message}`) }
+  fail('en innlogget bruker satte inn et lag direkte')
+} catch { ok('lag kan ikke settes inn direkte i tabellen') }
 const viaFn = await as(NYT, `select public.create_coach_team('Via funksjon','Testklubben') as id`)
 const nyRad = await q('select name, club from teams where id=$1', [viaFn.rows[0].id])
 nyRad[0].club === 'Testklubben' ? ok('create_coach_team tar imot klubb') : fail('klubb ble ikke satt')
-const nyeKoder = await q(`select invite_code from teams where name in ('Rett inn','Via funksjon')`)
-nyeKoder.length === 2 && nyeKoder.every(k => /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(k.invite_code))
-  ? ok('begge nye lag fikk en lesbar kode') : fail(`koder: ${JSON.stringify(nyeKoder)}`)
+const nyeKoder = await q(`select invite_code from teams where name in ('Via funksjon')`)
+nyeKoder.length === 1 && nyeKoder.every(k => /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(k.invite_code))
+  ? ok('det nye laget fikk en lesbar kode') : fail(`koder: ${JSON.stringify(nyeKoder)}`)
 
 
 
@@ -514,8 +515,9 @@ serAndre.rows.length === 0 ? ok('to løpere som bare har valgt samme skigymnas s
 try { await as(S1, 'select public.velg_skigymnas($1)', [G1]); fail('valgte et lag som ikke er skigymnas') }
 catch (e) { e.message.includes('ikke et skigymnas') ? ok('bare skigymnas kan velges uten kode') : fail(e.message) }
 
-// Selverklært trener: setter rollen selv og går inn med lagkoden.
-await as(SX, `update profiles set role = 'coach' where id = $1`, [SX])
+// Selverklært trener: rollen settes her som om registreringen hadde gitt den
+// (direkte endring er stengt), og så går hun inn med lagkoden.
+await q(`update profiles set role = 'coach' where id = $1`, [SX])
 const g2k = (await q('select invite_code k from teams where id=$1', [G2]))[0].k
 await as(SX, 'select public.join_team($1)', [g2k])
 !(await ser(SX, G2)) ? ok('rollen «trener» pluss lagkoden gir ikke trenerrett - det gjør bare eierskap')
@@ -686,6 +688,33 @@ ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) ==
 await q(`delete from follows where fis_code in ('990001','990002')`)
 await q(`delete from fis_list_athletes where fis_code in ('990001','990002')`)
 
+// --- herding: lag, rolle og foreldrekode ---
+const stoppet = async (hvem, sql, p) => { try { await as(hvem, sql, p); return false } catch { return true } }
+await stoppet(S2, `insert into teams(name, owner_id, parent_team_id) values ('Snik', $1, $2)`, [S2, P])
+  ? ok('en løper kan ikke opprette en gruppe under et lag rett i tabellen') : fail('gruppe opprettet direkte under et hus')
+await stoppet(S2, `update profiles set role = 'coach' where id = $1`, [S2])
+  ? ok('ingen kan gjøre seg selv til trener ved å endre profilen') : fail('rolle satt til trener direkte')
+;(await as(S2, `update profiles set role = 'athlete' where id = $1 returning role`, [S2])).rows.length === 1
+  ? ok('rollen kan fortsatt settes til løper eller forelder') : fail('rolle løper ble stoppet')
+await stoppet(C1, `update teams set parent_team_id = null where id = $1`, [G1])
+  ? ok('en gruppetrener kan ikke flytte gruppa si ut av huset') : fail('parent_team_id endret direkte')
+await stoppet(C1, `update teams set coaches_see_all = true where id = $1`, [G1])
+  ? ok('«alle ser alt» kan ikke slås på rett i tabellen') : fail('coaches_see_all endret direkte')
+await stoppet(C1, `update teams set owner_id = $2 where id = $1`, [G1, S2])
+  ? ok('eierskap til et lag kan ikke gis bort rett i tabellen') : fail('owner_id endret direkte')
+await stoppet(S2, `select link_code from profiles where id = $1`, [S2])
+  ? ok('foreldrekoden kan ikke leses rett fra profiltabellen') : fail('link_code lesbar direkte')
+;(await as(S2, 'select public.min_foreldrekode() as k')).rows[0].k === (await q('select link_code k from profiles where id=$1', [S2]))[0].k
+  ? ok('løperen får sin egen foreldrekode gjennom funksjonen') : fail('min_foreldrekode ga feil kode')
+;(await as(FOR, 'select public.min_foreldrekode() as k')).rows[0].k === null
+  ? ok('en forelder får ingen kode') : fail('min_foreldrekode svarte en forelder')
+await stoppet(S2, `update profiles set link_code = 'AAAAAA' where id = $1`, [S2])
+  ? ok('foreldrekoden kan ikke settes direkte') : fail('link_code satt direkte')
+await stoppet(S2, `insert into guardians(parent_id, athlete_id) values ($1, $2)`, [H, S2])
+  ? ok('foresatte kan ikke legges inn rett i tabellen') : fail('guardians satt inn direkte')
+;(await as(S2, `select id, full_name, role from profiles where id = $1`, [S2])).rows.length === 1
+  ? ok('resten av profilen leses som før') : fail('profilen kunne ikke leses')
+
 // --- modusen bestemmer, også i databasen ---
 await ser(H, G1) ? ok('utgangspunkt: hovedtreneren er trener for gruppa') : fail('H er ikke trener i utgangspunktet')
 await as(H, `update profiles set role = 'parent' where id = $1`, [H])
@@ -729,7 +758,9 @@ for (const [tabell, ops] of Object.entries(bruk.tabeller)) {
     where n.nspname='public' and c.relname=$1 and c.relkind in ('r','v')`, [tabell])
   if (!finnes.length) { fail(`frontend bruker tabellen «${tabell}», som ikke finnes`); revFeil++; continue }
   for (const op of ops) for (const priv of OP[op]) {
-    const ok = (await q(`select has_table_privilege('authenticated', 'public.' || $1, $2) as ok`, [tabell, priv]))[0].ok
+    // Lesetilgang kan være gitt per kolonne (profiles: alt unntatt foreldrekoden).
+    const ok = (await q(`select has_table_privilege('authenticated', 'public.' || $1, $2)
+      or ($2 = 'SELECT' and has_any_column_privilege('authenticated', 'public.' || $1, 'SELECT')) as ok`, [tabell, priv]))[0].ok
     if (!ok) { fail(`authenticated mangler ${priv} på ${tabell} (frontend gjør ${op})`); revFeil++ }
   }
 }
@@ -781,6 +812,19 @@ for (const v of views) {
   /security_invoker=(true|on)/.test(v.opts) ? ok(`view ${v.relname} har security_invoker`)
     : (fail(`view ${v.relname} mangler security_invoker - RLS omgås gjennom den`), revFeil++)
 }
+// Ingen klientrolle skal ha TRUNCATE, og uinnloggede skal ikke kunne skrive.
+const forMye = await q(`select table_name, grantee, privilege_type from information_schema.role_table_grants
+  where table_schema = 'public' and ((grantee in ('anon', 'authenticated') and privilege_type in ('TRUNCATE', 'TRIGGER', 'REFERENCES'))
+     or (grantee = 'anon' and privilege_type in ('INSERT', 'UPDATE', 'DELETE'))) order by 1, 2, 3`)
+forMye.length === 0 ? ok('ingen klientrolle har TRUNCATE, og uinnloggede har ingen skriverett')
+  : (fail(`for vide rettigheter: ${forMye.slice(0, 5).map(r => `${r.grantee} ${r.privilege_type} ${r.table_name}`).join(', ')}`), revFeil++)
+// Kolonnene i profiles som klienten får lese må stemme med lista i appen.
+const lesbare = (await q(`select column_name c from information_schema.columns where table_schema='public' and table_name='profiles'
+  and has_column_privilege('authenticated', 'public.profiles', column_name, 'SELECT') order by 1`)).map(r => r.c)
+const iAppen = (await import('../../src/profil.js')).PROFIL_FELT.split(',').map(x => x.trim()).sort()
+JSON.stringify(lesbare) === JSON.stringify(iAppen) ? ok('appens profilkolonner er nøyaktig de klienten får lese')
+  : (fail(`profilkolonner: basen gir ${lesbare.join(',')} - appen ber om ${iAppen.join(',')}`), revFeil++)
+!lesbare.includes('link_code') ? ok('foreldrekoden er ikke blant kolonnene klienten får lese') : (fail('link_code er lesbar'), revFeil++)
 if (!revFeil) ok('rettighetsrevisjon: ingen avvik')
 
 // Lukk klienten først; ellers svarer serveren med «terminating connection»
