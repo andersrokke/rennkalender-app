@@ -7,9 +7,9 @@ import { fanerFor, rolleFlagg } from '../../src/nav.js'
 let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
-const TRENER = ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'favoritter', 'settings', 'feedback']
-const LOPER = ['training', 'next', 'mine', 'races', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
-const FORELDER = ['children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
+const TRENER = ['season', 'matrix', 'athletes', 'races', 'training', 'dev', 'favoritter', 'settings', 'feedback']
+const LOPER = ['next', 'mine', 'races', 'training', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
+const FORELDER = ['kidnext', 'children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
 const trenerfaner = ['season', 'matrix', 'athletes']
 
 // Administratoren som eier et lag, i hver av de tre modusene.
@@ -23,6 +23,9 @@ sjekk('admin som løper: løperfaner pluss admin', lik(fanerFor(eier('athlete'),
 sjekk('admin som løper: ingen trenerfaner', !fanerFor(eier('athlete'), true).some(f => trenerfaner.includes(f)))
 sjekk('admin som trener: trenerfaner pluss admin', lik(fanerFor(eier('coach'), true), [...TRENER, 'admin']))
 sjekk('admin uten lag lander på admin', fanerFor(eier('parent'), false)[0] === 'admin')
+
+sjekk('første fane: neste renn for løper og forelder, lagets sesong for trener',
+  fanerFor({ role: 'athlete' }, true)[0] === 'next' && fanerFor({ role: 'parent' }, false)[0] === 'kidnext' && fanerFor({ role: 'coach' }, true)[0] === 'season')
 
 // Vanlige brukere.
 sjekk('forelder uten admin: nøyaktig foreldrefanene', lik(fanerFor({ role: 'parent' }, false), FORELDER))

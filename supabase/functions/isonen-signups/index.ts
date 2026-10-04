@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Collects aggregated signup counts from iSonen's public GraphQL API for Norwegian alpine races,
+// Collects aggregated signup counts from iSonen's public GraphQL API for Norwegian and Swedish alpine races,
 // and (for start-order prediction) matches each entry to the FIS points list by name + club.
 // Names are used for matching only and are never stored.
 
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const url = new URL(req.url);
   const force = url.searchParams.get("relink") === "1";
-  const { data: races, error } = await supabase.from("races").select("id, place, start_date, end_date, isonen_id").eq("host_nation", "NOR").order("start_date");
+  const { data: races, error } = await supabase.from("races").select("id, place, start_date, end_date, isonen_id").in("host_nation", ["NOR", "SWE"]).order("start_date");
   if (error) return new Response(error.message, { status: 500 });
   const log: string[] = []; let linked = 0, counted = 0, entries = 0, matched = 0;
   const batch = new Date().toISOString();
@@ -41,7 +41,9 @@ Deno.serve(async (req) => {
         if (r.place === "TBD") continue;
         const from = new Date(r.start_date + "T00:00:00Z").getTime() - 2 * 864e5, to = new Date(r.end_date + "T00:00:00Z").getTime() + 2 * 864e5;
         const d = await gql("findEvents", SEARCH, { where: { sfName: "Norges Skiforbund", sport: "Alpint", startDate: String(from), endDate: String(to) }, pagination: { take: 30, skip: 0 } });
-        const hit = (d.publicEventSearch.publicEvents as any[]).find((e) => matches(r.place, e));
+        // Norske løpere melder seg også på svenske renn i iSonen. Samlinger
+        // på samme sted er ikke renn og skal ikke kobles.
+        const hit = (d.publicEventSearch.publicEvents as any[]).find((e) => matches(r.place, e) && !/samling/i.test(e.title || ""));
         if (!hit) { log.push(`no match ${r.place} ${r.start_date}`); continue; }
         await supabase.from("races").update({ isonen_id: hit.id, isonen_title: hit.title, signup_deadline: hit.scheduleSignUpEndDateTime }).eq("id", r.id);
         r.isonen_id = hit.id; linked++; log.push(`linked ${r.place} ${r.start_date} -> ${hit.title}`);

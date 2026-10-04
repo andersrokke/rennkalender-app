@@ -45,3 +45,26 @@ export function ordne(rader, na = Date.now()) {
   }
   return ut
 }
+
+// Hvor et renn meldes på, og når fristen er - slik det vises under hvert renn
+// i kalenderen.
+//   Norske og svenske renn meldes på i iSonen. Er rennet funnet der, går
+//   lenka rett til arrangementet og fristen er iSonens.
+//   Renn i andre land meldes på av trener eller klubb gjennom Skiforbundet,
+//   med frist 20 dager før start.
+// Svenske renn som ikke er åpnet i iSonen ennå, viser forbundets frist til
+// iSonens er kjent.
+export const ISONEN = 'https://isonen.no'
+export const isonenLenke = id => id ? `${ISONEN}/event/${id}/` : ISONEN
+export function pameldingInfo(r) {
+  const iIsonen = r.host_nation === 'NOR' || r.host_nation === 'SWE'
+  const forbundsfrist = () => {
+    const d = new Date(r.start_date + 'T23:59:00')
+    d.setDate(d.getDate() - 20)
+    return d.toISOString()
+  }
+  if (r.signup_deadline) return { frist: r.signup_deadline, kilde: 'isonen', lenke: isonenLenke(r.isonen_id), apnet: !!r.isonen_id, iIsonen: true }
+  if (r.isonen_id) return { frist: null, kilde: null, lenke: isonenLenke(r.isonen_id), apnet: true, iIsonen: true }
+  if (r.host_nation === 'NOR') return { frist: null, kilde: null, lenke: ISONEN, apnet: false, iIsonen: true }
+  return { frist: forbundsfrist(), kilde: 'forbund', lenke: iIsonen ? ISONEN : null, apnet: false, iIsonen }
+}

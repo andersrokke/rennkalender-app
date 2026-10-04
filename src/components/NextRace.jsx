@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import { isonenLenke } from '../pamelding'
 import { fmt } from '../util'
 import { fisPoints } from '../format'
 import { kmFromHome, homeLabel, nok } from '../travel'
@@ -149,7 +150,7 @@ export default function NextRace({ profile, team, onOpenRace }) {
             <div className="nr-alert">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 16.5v.01" /><circle cx="12" cy="12" r="9" /></svg>
               <span>{t('nrDeadline')} {deadlineText}</span>
-              <a href="https://isonen.no" target="_blank" rel="noopener">{t('nrEnter')}</a>
+              <a href={isonenLenke(next.isonen_id)} target="_blank" rel="noopener">{t('nrEnter')}</a>
             </div>
           )}
 

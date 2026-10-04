@@ -6,6 +6,7 @@ import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
 import { useSignups, heatColor, daysUntil } from './useSignups'
+import { pameldingInfo } from '../pamelding'
 import { useStartNumbers } from './useStartNumbers'
 import StartNumbers from './StartNumbers.jsx'
 import { useFriends } from './useFriends'
@@ -74,20 +75,33 @@ export default function RaceBrowser({ profile, team, isCoach, readOnly = false }
   }
 
   // "87 påmeldte · +12 siste 7 d · frist 12. jan (4 d)" — deadline turns amber under a week.
+  // Under hvert renn: påmeldte (når iSonen har tall), fristen og hvor man
+  // melder seg på. Fristen blir gul når det er under en uke igjen.
   const Signups = ({ r }) => {
     const sg = byRace[r.id]
-    if (!sg) return <div className="signup none">{t('noNumbers')}</div>
-    const dd = daysUntil(r.signup_deadline)
+    const pm = pameldingInfo(r)
+    const dd = daysUntil(pm.frist)
     const soon = dd != null && dd >= 0 && dd <= 7
+    const dato = pm.frist ? fmt({ start_date: pm.frist.slice(0, 10), end_date: pm.frist.slice(0, 10) }) : null
     return (
-      <div className="signup">
-        <span className="bar"><i style={{ width: `${Math.round(100 * (sg.participants || 0) / max)}%`, background: heatColor(sg.participants, max) }} /></span>
-        <span>{sg.participants} {t('signed')}{r.max_attendees ? ` ${t('ofCap')} ${r.max_attendees}` : ''}</span>
-        {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} {t('week')}</span>}
-        {r.signup_deadline && <span className={soon ? 'soon' : ''}>
-          {t('deadline')} {fmt({ start_date: r.signup_deadline.slice(0, 10), end_date: r.signup_deadline.slice(0, 10) })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} ${t('dShort')})` : ''}
-        </span>}
-      </div>
+      <>
+        {sg && (
+          <div className="signup">
+            <span className="bar"><i style={{ width: `${Math.round(100 * (sg.participants || 0) / max)}%`, background: heatColor(sg.participants, max) }} /></span>
+            <span>{sg.participants} {t('signed')}{r.max_attendees ? ` ${t('ofCap')} ${r.max_attendees}` : ''}</span>
+            {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} {t('week')}</span>}
+          </div>
+        )}
+        <div className="pm-linje">
+          {dato
+            ? <span className={soon ? 'soon' : ''}><b>{t('pmDeadlineL')} {dato}</b>{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} ${t('dShort')})` : ''}
+                {pm.kilde === 'forbund' && <span className="muted"> · {t('pmFedShort')}</span>}</span>
+            : <span className="muted">{t('pmNotOpen')}</span>}
+          {pm.lenke
+            ? <a href={pm.lenke} target="_blank" rel="noopener">{pm.apnet ? t('pmEnterIsonen') : t('pmOpenIsonen')} ↗</a>
+            : <span className="muted">{t('pmViaCoach')}</span>}
+        </div>
+      </>
     )
   }
   const rows = applyFilter(races, f)

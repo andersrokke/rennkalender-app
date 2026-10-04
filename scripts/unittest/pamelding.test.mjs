@@ -1,5 +1,5 @@
 // Foreldrenes påmeldingsoversikt. Kjøres med: npm run test:unit
-import { pameldt, dagerIgjen, gruppeFor, ordne } from '../../src/pamelding.js'
+import { pameldt, dagerIgjen, gruppeFor, ordne, pameldingInfo } from '../../src/pamelding.js'
 
 let feil = 0
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
@@ -32,6 +32,15 @@ sjekk('ukjent frist er sortert på rennets dato', o.ukjent.map(r => r.place).joi
 sjekk('hver rad får dager og påmeldingsstatus', o.haster[0].dager === 1 && o.pameldt[0].pameldt === 'bekreftet')
 sjekk('alle rader havner i nøyaktig én gruppe', Object.values(o).flat().length === 6)
 sjekk('tom liste gir tomme grupper', Object.values(ordne([], NA)).every(g => g.length === 0))
+
+const pi = o => pameldingInfo({ start_date: '2027-01-20', host_nation: 'NOR', ...o })
+sjekk('renn funnet i iSonen: lenke rett til arrangementet og iSonens frist',
+  pi({ isonen_id: 'abc', signup_deadline: '2027-01-14T22:59:00Z' }).lenke === 'https://isonen.no/event/abc/' && pi({ isonen_id: 'abc', signup_deadline: '2027-01-14T22:59:00Z' }).kilde === 'isonen')
+sjekk('norsk renn som ikke er åpnet: lenke til iSonen, ingen frist', pi({}).lenke === 'https://isonen.no' && pi({}).frist === null && !pi({}).apnet)
+sjekk('svensk renn meldes også på i iSonen', pi({ host_nation: 'SWE' }).iIsonen && pi({ host_nation: 'SWE' }).lenke === 'https://isonen.no')
+sjekk('svensk renn uten iSonen-frist viser forbundets 20 dager', pi({ host_nation: 'SWE' }).kilde === 'forbund' && pi({ host_nation: 'SWE' }).frist.slice(0, 10) <= '2027-01-01')
+sjekk('renn i Alpene: forbundets frist, ingen iSonen-lenke', pi({ host_nation: 'ITA' }).kilde === 'forbund' && pi({ host_nation: 'ITA' }).lenke === null && !pi({ host_nation: 'ITA' }).iIsonen)
+sjekk('forbundets frist er 20 dager før start', new Date(pi({ host_nation: 'ITA' }).frist).getDate() === 31 && new Date(pi({ host_nation: 'ITA' }).frist).getMonth() === 11)
 
 console.log(feil ? `\n${feil} feil` : '\nAlt gikk gjennom')
 process.exit(feil ? 1 : 0)

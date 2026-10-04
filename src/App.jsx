@@ -24,6 +24,7 @@ import ChildDev from './components/ChildDev.jsx'
 import GoodVenues from './components/GoodVenues.jsx'
 import Pamelding from './components/Pamelding.jsx'
 import FavTab from './components/FavTab.jsx'
+import ChildNext from './components/ChildNext.jsx'
 import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
@@ -44,6 +45,7 @@ const IKON = {
   pamelding: 'M9 5h6m-6 0a2 2 0 0 0-2 2H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1a2 2 0 0 0-2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4',
   kidraces: 'M5 21V4m0 1h11l-2 3.5 2 3.5H5',
   kiddev: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  kidnext: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   settings: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1',
   feedback: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z',
   admin: 'M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6Zm-3 9 2 2 4-4'
@@ -144,7 +146,7 @@ export default function App() {
   const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
   const ETIKETT = {
-    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.nextTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
     next: d.nextTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
@@ -215,10 +217,10 @@ export default function App() {
         <span className="who">{profile.full_name} · {isCoach ? d.coach : profile.role === 'parent' ? d.parent : d.athlete}</span>
         <button className="btn small" onClick={() => supabase.auth.signOut()}>{d.signOut}</button>
       </header>
-      <main className="app-main">
+      <main className="app-main" data-fane={active}>
       {/* Sidens navn står øverst på skjermene som ikke åpner med et eget
           kort med overskrift - kalenderen, sesongen og matrisa. */}
-      {['races', 'season', 'mine', 'matrix', 'next', 'children'].includes(active) && (
+      {['races', 'season', 'mine', 'matrix', 'next', 'kidnext', 'children'].includes(active) && (
         <div className="side-hode"><h2>{ETIKETT[active]}</h2>{team && !isParent && <span>{team.name}</span>}</div>
       )}
       <InstallPrompt />
@@ -234,6 +236,7 @@ export default function App() {
       {active === 'children' && <Children profile={profile} />}
       {active === 'kidraces' && <ChildRaces />}
       {active === 'kiddev' && <ChildDev />}
+      {active === 'kidnext' && <ChildNext onOpenRace={() => setTab('children')} />}
       {active === 'favoritter' && <FavTab profile={profile} isCoach={isCoach} />}
       {active === 'pamelding' && <Pamelding />}
       {active === 'steder' && <GoodVenues fisCode={profile.fis_code} gender={profile.gender} />}

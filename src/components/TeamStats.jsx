@@ -16,7 +16,8 @@ export default function TeamStats({ people, valgt, onPick }) {
   const t = useT()
   const p1 = v => fisPoints(v, t.lang)
   const [perKode, setPerKode] = useState(null)
-  const [sesong, setSesong] = useState('alle')
+  const [sesong, setSesong] = useState([])   // valgte sesonger; tom = alle
+  const vippSesong = x => setSesong(v => v.includes(x) ? v.filter(y => y !== x) : [...v, x])
   const [gren, setGren] = useState([])
   const [kol, setKol] = useState('navn')
   const [retning, setRetning] = useState('opp')
@@ -45,12 +46,12 @@ export default function TeamStats({ people, valgt, onPick }) {
 
   return (
     <div className="card rh">
-      <h2>{t('tsTitle')}</h2>
-      <p className="muted">{t('tsSub')}</p>
+      <h2>{t('lagTitle')}</h2>
+      <p className="muted">{t('lagSub')}</p>
       <div className="rh-filter">
         <div className="row" style={{ gap: 4 }}>
-          <button className={`chip ${sesong === 'alle' ? 'on' : ''}`} aria-pressed={sesong === 'alle'} onClick={() => setSesong('alle')}>{t('rhAllSeasons')}</button>
-          {sesonger.map(s => <button key={s} className={`chip ${sesong === s ? 'on' : ''}`} aria-pressed={sesong === s} onClick={() => setSesong(s)}>{sesongNavn(s)}</button>)}
+          <button className={`chip ${!sesong.length ? 'on' : ''}`} aria-pressed={!sesong.length} onClick={() => setSesong([])}>{t('rhAllSeasons')}</button>
+          {sesonger.map(s => <button key={s} className={`chip ${sesong.includes(s) ? 'on' : ''}`} aria-pressed={sesong.includes(s)} onClick={() => vippSesong(s)}>{sesongNavn(s)}</button>)}
         </div>
         <div className="row" style={{ gap: 4 }}>
           <button className={`chip ${!gren.length ? 'on' : ''}`} aria-pressed={!gren.length} onClick={() => setGren([])}>{t('rhAllDisc')}</button>

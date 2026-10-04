@@ -30,11 +30,13 @@ function MndTick({ x, y, payload, rader }) {
 // utvikling i grafer, oppsummering per sesong og gren, og hele lista - alt
 // styrt av de samme filtrene. Henter sine egne rader for én løper om gangen,
 // så et stort lag ikke støter mot radgrensen i API-et.
-export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = null }) {
+export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = null, sesongUtenfra = null }) {
   const t = useT()
   const p1 = v => fisPoints(v, t.lang)
   const [raa, setRaa] = useState(null)
-  const [sesong, setSesong] = useState('alle')
+  const [sesong, setSesong] = useState([])        // valgte sesonger; tom = alle
+  useEffect(() => { if (sesongUtenfra) setSesong(sesongUtenfra) }, [sesongUtenfra])
+  const vippSesong = x => setSesong(v => v.includes(x) ? v.filter(y => y !== x) : [...v, x])
   const [gren, setGren] = useState([])            // valgte grener; tom = alle
   const [kategori, setKategori] = useState('alle')
   // Grenvelgeren øverst på siden styrer også her. Brikkene under virker
@@ -73,8 +75,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const liste = useMemo(() => sorter(bareFullfort ? utvalg.filter(r => r.plass != null) : utvalg, kol, retning), [utvalg, bareFullfort, kol, retning])
   const tid = useMemo(() => poengOverTid(utvalg), [utvalg])
   const felt = useMemo(() => sesongFelt(tid), [tid])
-  // Sesonggrafen sammenligner sesonger, så den ser bort fra sesongfilteret.
-  const perSesong = useMemo(() => sesongGraf(filtrer(alle, { gren, kategori })), [alle, gren, kategori])
+  // Sesonggrafen følger de samme valgene: med to sesonger valgt sammenlignes de to.
+  const perSesong = useMemo(() => sesongGraf(utvalg), [utvalg])
   const kort = useMemo(() => sesongKort(perSesong, grener.filter(medGren), mal), [perSesong, grener, gren, mal])
   const oppsummert = useMemo(() => sorterOppsummering(perSesongOgGren(utvalg), oppKol, oppRetning), [utvalg, oppKol, oppRetning])
   const maneder = useMemo(() => perManed(utvalg), [utvalg])
@@ -109,8 +111,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
 
       <div className="rh-filter">
         <div className="row" style={{ gap: 4 }}>
-          <Brikke pa={sesong === 'alle'} onClick={() => setSesong('alle')}>{t('rhAllSeasons')}</Brikke>
-          {sesonger.map(s => <Brikke key={s} pa={sesong === s} onClick={() => setSesong(s)}>{sesongNavn(s)}</Brikke>)}
+          <Brikke pa={!sesong.length} onClick={() => setSesong([])}>{t('rhAllSeasons')}</Brikke>
+          {sesonger.map(s => <Brikke key={s} pa={sesong.includes(s)} onClick={() => vippSesong(s)}>{sesongNavn(s)}</Brikke>)}
         </div>
         <div className="row" style={{ gap: 4 }}>
           <Brikke pa={!gren.length} onClick={() => setGren([])}>{t('rhAllDisc')}</Brikke>

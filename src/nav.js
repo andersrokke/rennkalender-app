@@ -16,7 +16,7 @@ export function tabForNav(key, { isParent = false } = {}) {
 export function navForState(activeTab, pane, { isParent = false } = {}) {
   if (pane === 'map') return 'map'
   if (activeTab === 'mine' || activeTab === 'next' || activeTab === 'training'
-    || (isParent && activeTab === 'children')) return 'plan'
+    || (isParent && (activeTab === 'children' || activeTab === 'kidnext'))) return 'plan'
   return 'list'
 }
 
@@ -30,13 +30,15 @@ export function rolleFlagg(profile) {
 // Fanene for en profil, som nøkler. En forelder ser barna sine, rennkalenderen
 // og profilen - aldri trenerens eller løperens skjermer, uansett hva kontoen
 // ellers eier. Administratorfanen kommer i tillegg, først når man ikke har lag.
+// Den første fanen er den man lander på: neste renn for løper og forelder,
+// lagets renn for treneren. Treningsloggen kommer lenger ned.
 export function fanerFor(profile, harLag) {
   const { isCoach, isParent } = rolleFlagg(profile)
   const base = isParent
-    ? ['children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
+    ? ['kidnext', 'children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
     : isCoach
-      ? ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'favoritter', 'settings', 'feedback']
-      : ['training', 'next', 'mine', 'races', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
+      ? ['season', 'matrix', 'athletes', 'races', 'training', 'dev', 'favoritter', 'settings', 'feedback']
+      : ['next', 'mine', 'races', 'training', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
   if (!profile.is_admin) return base
   return harLag ? [...base, 'admin'] : ['admin', ...base]
 }

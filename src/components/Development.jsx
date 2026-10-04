@@ -25,12 +25,13 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   const t = useT()
   const n1 = v => fisPoints(v, t.lang)
   const [people, setPeople] = useState([])
-  const [disc, setDisc] = useState('GS')
   const [only, setOnly] = useState('all')   // coach: show every athlete, or one
-  // Løper og forelder: én eller flere grener for hele siden, eller alle. Treneren har sin
-  // egen grenvelger for lagsgrafen, der «alle» ville gitt en linje per løper
-  // per gren.
-  const [gren, setGren] = useState([])      // valgte grener; tom = alle
+  // Sesong og gren velges for hele siden, én eller flere av hver; tomt valg
+  // betyr alle. Treneren starter på storslalåm: med alle grener for et helt
+  // lag blir det en linje per løper per gren.
+  const [gren, setGren] = useState(isCoach ? ['GS'] : [])
+  const [sesonger, setSesonger] = useState([])   // startår, f.eks. 2025 for 2025/26
+  const vippSesong = y => setSesonger(v => v.includes(y) ? v.filter(x => x !== y) : [...v, y])
   const vippGren = d => setGren(v => v.includes(d) ? v.filter(x => x !== d) : [...v, d])
 
   useEffect(() => {
@@ -60,7 +61,17 @@ export default function Development({ profile, team, isCoach, readOnly = false }
     if (!res.error) { reload(); setHentet(x => x + 1) }
   }
   const lastFetched = updatedAt[profile.fis_code]
-  const rows = useMemo(() => toChartRows(points), [points])
+  const alleRader = useMemo(() => toChartRows(points), [points])
+  // Sesongen står sist i listenavnet («11 · 23/24»).
+  const sesongAvLabel = l => { const m = /(\d{2})\/\d{2}$/.exec(l || ''); return m ? 2000 + Number(m[1]) : null }
+  const tilgjengeligeSesonger = useMemo(() => {
+    const fra = y => (y.getMonth() >= 6 ? y.getFullYear() : y.getFullYear() - 1)
+    const ut = new Set(alleRader.map(r => sesongAvLabel(r.label)).filter(Boolean))
+    results.forEach(r => { if (r.race_date) ut.add(fra(new Date(r.race_date))) })
+    return [...ut].filter(y => y >= 2023).sort((a, b) => b - a)
+  }, [alleRader, results])
+  const rows = useMemo(() => !sesonger.length ? alleRader : alleRader.filter(r => sesonger.includes(sesongAvLabel(r.label))),
+    [alleRader, sesonger])
 
   // «Hvor er vi nå» i en graf over seksti lister. Sesongen skyggelegges, og
   // den gjeldende lista får en egen linje - men bare hvis noen faktisk har
@@ -88,14 +99,17 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   // One line per athlete for the chosen discipline (coach), or one line per
   // discipline for a single athlete.
   const shown = isCoach && only !== 'all' ? people.filter(p => p.fis_code === only) : people
-  const series = isCoach
-    ? people.map((p, i) => ({ key: `${p.fis_code}|${disc}`, name: p.full_name, color: LINE_COLORS[i % LINE_COLORS.length] }))
-        .filter(s => only === 'all' || s.key.startsWith(only + '|'))
-    : DISC.map(d => ({ key: `${profile.fis_code}|${d}`, name: d, color: DISC_COLOR[d] }))
-        .filter(s => rows.some(r => r[s.key] != null))
-        .filter(s => !gren.length || gren.includes(s.name))
-  const iGren = d => isCoach || !gren.length || gren.includes(d)
-  const resultaterIGren = isCoach || !gren.length ? results : results.filter(r => gren.includes(discCode(r.discipline)))
+  const valgteGrener = gren.length ? DISC.filter(d => gren.includes(d)) : DISC
+  // Treneren med hele laget: én linje per løper per valgte gren. Med én gren
+  // skilles løperne på farge; med flere står grenen i navnet.
+  const series = (isCoach && shown.length > 1
+    ? shown.flatMap((p, i) => valgteGrener.map((d, j) => ({ key: `${p.fis_code}|${d}`,
+        name: valgteGrener.length > 1 ? `${p.full_name} · ${d}` : p.full_name,
+        color: LINE_COLORS[(i * valgteGrener.length + j) % LINE_COLORS.length] })))
+    : valgteGrener.map(d => ({ key: `${(shown[0] || profile).fis_code}|${d}`, name: d, color: DISC_COLOR[d] }))
+  ).filter(s => rows.some(r => r[s.key] != null))
+  const iGren = d => !gren.length || gren.includes(d)
+  const resultaterIGren = !gren.length ? results : results.filter(r => gren.includes(discCode(r.discipline)))
 
   if (!codes.length) {
     return <div className="page"><div className="card">
@@ -123,17 +137,21 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           <div className="fis-head"><span>{t('fisLastUpdated')} {dateTime(lastFetched, t.lang)}</span></div>
         )}
         {fisMsg && !fisBusy && <div className="notice">{fisMsg}</div>}
-        {!isCoach && (
-          <div className="row" style={{ margin: '10px 0', gap: 4, flexWrap: 'wrap' }}>
+        <div className="rh-filter">
+          {tilgjengeligeSesonger.length > 0 && (
+            <div className="row" style={{ gap: 4 }}>
+              <button className={`chip ${!sesonger.length ? 'on' : ''}`} aria-pressed={!sesonger.length} onClick={() => setSesonger([])}>{t('rhAllSeasons')}</button>
+              {tilgjengeligeSesonger.map(y => <button key={y} className={`chip ${sesonger.includes(y) ? 'on' : ''}`} aria-pressed={sesonger.includes(y)}
+                onClick={() => vippSesong(y)}>{y}/{String(y + 1).slice(2)}</button>)}
+            </div>
+          )}
+          <div className="row" style={{ gap: 4 }}>
             <button className={`chip ${!gren.length ? 'on' : ''}`} aria-pressed={!gren.length} onClick={() => setGren([])}>{t('rhAllDisc')}</button>
             {DISC.map(d => <button key={d} className={`chip ${gren.includes(d) ? 'on' : ''}`} aria-pressed={gren.includes(d)} onClick={() => vippGren(d)}>{d}</button>)}
           </div>
-        )}
+        </div>
         {isCoach && (
           <div className="row" style={{ margin: '10px 0', gap: 14 }}>
-            <div className="row" style={{ gap: 4 }}>
-              {DISC.map(d => <button key={d} className={`chip ${disc === d ? 'on' : ''}`} onClick={() => setDisc(d)}>{d}</button>)}
-            </div>
             {people.length > 1 && (
               <select style={{ width: 'auto' }} value={only} onChange={e => setOnly(e.target.value)}>
                 <option value="all">{t('allAthletes')}</option>
@@ -258,7 +276,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
                 })}
               </div>
             )}
-            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}{!isCoach && gren.length ? ` · ${DISC.filter(d => gren.includes(d)).join(', ')}` : ''}</h3>
+            <h3>{t('seasonSummary')} {season}/{String(season + 1).slice(2)}{gren.length ? ` · ${DISC.filter(d => gren.includes(d)).join(', ')}` : ''}</h3>
             {/* counts only, so every number on this row means the same kind of thing */}
             <div className="kpis">
               <div className="kpi"><b>{sum.starts}</b><span>{t('startsL')}</span></div>
@@ -285,7 +303,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           laget valgt får beskjed om å velge én, i stedet for ti kort på rad. */}
       {shown.length === 1
         ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet}
-            grenUtenfra={isCoach ? null : gren} />
+            grenUtenfra={gren} sesongUtenfra={sesonger} />
         : shown.length > 1 && <div className="card"><h2>{t('rhTitle')}</h2><p className="muted">{t('rhPickOne')}</p></div>}
       {isCoach && shown.length === 1 && (
         <div className="gv-inni"><GoodVenues fisCode={shown[0].fis_code} gender={shown[0].gender?.trim() || null} name={shown[0].full_name} /></div>
