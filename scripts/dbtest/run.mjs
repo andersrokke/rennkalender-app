@@ -649,6 +649,18 @@ if (s2kode) {
 } else ok('S2 har ingen FIS-kode i testen - deltakerlista hoppes over')
 ;(await as(H, 'select * from public.barnas_pamelding()')).rows.length === 0
   ? ok('den som ikke er foresatt får en tom oversikt') : fail('barnas_pamelding lakk til en som ikke er foresatt')
+const utRenn = (await q(`insert into races(start_date,end_date,place,host_nation,category,events,gender)
+  values (current_date + 45, current_date + 46, 'Åre', 'SWE', 'FIS', 'GS', 'M') returning id`))[0].id
+const norskRenn = (await q(`insert into races(start_date,end_date,place,host_nation,category,events,gender)
+  values (current_date + 45, current_date + 46, 'Geilo', 'NOR', 'FIS', 'GS', 'M') returning id`))[0].id
+await as(S2, `insert into athlete_races(athlete_id, race_id, team_id, status) values ($1,$2,null,'planned'), ($1,$3,null,'planned')`, [S2, utRenn, norskRenn])
+const frister = (await as(FOR, 'select race_id, frist_kilde, (frist at time zone \'Europe/Oslo\')::date - current_date as dager from public.barnas_pamelding()')).rows
+const ut = frister.find(r => r.race_id === utRenn), nor = frister.find(r => r.race_id === norskRenn)
+ut?.frist_kilde === 'forbund' && Number(ut.dager) === 26
+  ? ok('renn utenfor Norge får forbundets frist: 20 dager før start, til dagens slutt') : fail(`frist i utlandet: ${JSON.stringify(ut)}`)
+nor && nor.frist_kilde === null ? ok('norsk renn uten frist fra iSonen eller trener står fortsatt som ukjent') : fail(`norsk frist: ${JSON.stringify(nor)}`)
+await q('delete from athlete_races where race_id in ($1,$2)', [utRenn, norskRenn])
+await q('delete from races where id in ($1,$2)', [utRenn, norskRenn])
 await q('delete from race_entries where race_id=$1', [pmRenn])
 await q('delete from entry_reminders where race_id=$1', [pmRenn])
 await q('delete from athlete_races where race_id=$1', [pmRenn])

@@ -62,9 +62,10 @@ export default function Pamelding() {
                   {r.frist ? (
                     <div className="pm-frist">
                       <b>{igjen(r)}</b>
-                      <span className="muted">{t('deadline')} {klokke(r.frist)}{r.frist_kilde === 'trener' ? ` · ${t('pmFromCoach')}` : ''}</span>
+                      <span className="muted">{t('deadline')} {klokke(r.frist)}{r.frist_kilde === 'trener' ? ` · ${t('pmFromCoach')}` : r.frist_kilde === 'forbund' ? ` · ${t('pmFromFed')}` : ''}</span>
                     </div>
                   ) : <div className="pm-frist"><span className="muted">{t('pmNoDeadline')}</span></div>}
+                  {r.host_nation !== 'NOR' && r.pameldt !== 'bekreftet' && <div className="muted" style={{ fontSize: 13 }}>{t('pmAbroad')}</div>}
                   <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
                     {r.host_nation === 'NOR' && r.pameldt !== 'bekreftet' && <a href="https://isonen.no" target="_blank" rel="noreferrer">{t('pmOpenIsonen')} ↗</a>}
                     {fisUrl(r) && <a href={fisUrl(r)} target="_blank" rel="noreferrer">FIS-side ↗</a>}
