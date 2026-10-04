@@ -15,8 +15,8 @@ sjekk('løperens eget valg går foran', raceMode({ travel_mode: 'car' }, GEILO, 
 sjekk('uten lagoversikt er alt egen bil, som før', raceMode(undefined, GEILO) === 'car')
 
 const [lagtur, egentur] = buildTrips([GEILO, AARE], 'kolbotn', SATS, 'Hjem', {}, lag)
-sjekk('lagets tur: ingen reise- eller overnattingskost', lagtur.mode === 'bus' && lagtur.cost.drive === 0 && lagtur.cost.stay === 0)
-sjekk('lagets tur: startavgift og heiskort betales fortsatt', lagtur.cost.fees > 0 && lagtur.cost.lift > 0 && lagtur.cost.total === lagtur.cost.fees + lagtur.cost.lift)
+sjekk('lagets tur: reisen er dekket, overnattingen betales', lagtur.mode === 'bus' && lagtur.cost.drive === 0 && lagtur.cost.flight === 0 && lagtur.cost.stay === lagtur.nights * 1000 && lagtur.nights > 0)
+sjekk('lagets tur: startkontingent og heiskort betales per start', lagtur.cost.fees === lagtur.starts * 300 && lagtur.cost.lift === lagtur.starts * 200 && lagtur.cost.total === lagtur.cost.stay + lagtur.cost.fees + lagtur.cost.lift)
 sjekk('egen tur: kjøring og overnatting betales', egentur.mode === 'car' && egentur.cost.drive > 0 && egentur.cost.stay === egentur.nights * 1000)
 const selv = buildTrips([GEILO], 'kolbotn', SATS, 'Hjem', { 1: { travel_mode: 'car' } }, lag)[0]
 sjekk('velger løperen egen bil til et lagrenn, betaler hun selv', selv.mode === 'car' && selv.cost.drive > 0 && selv.cost.stay > 0)

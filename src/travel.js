@@ -61,7 +61,8 @@ export const DEFAULT_MODE = 'car'
 export const raceNights = (r, d) => d?.nights_override ?? dayDiff(r.start_date, r.end_date)
 export const raceStarts = (r, d) => d?.starts_override ?? starts(r)
 // Reisemåten for et renn. Har løperen valgt selv, gjelder det. Ellers: renn
-// i lagets plan reiser man til med laget, og skigymnaset dekker reisen; renn
+// i lagets plan reiser man til med laget, og skigymnaset dekker reisen (ikke
+// overnattingen); renn
 // løperen legger inn på egen hånd kjører man til selv og betaler selv.
 export const raceMode = (d, r, lagRenn) => d?.travel_mode || (r && lagRenn?.has(r.id) ? 'bus' : DEFAULT_MODE)
 export const TRIP_COLORS = ['#FFB547', '#FF7A59', '#F55FA1', '#B08CFF', '#4D8DFF', '#2ECC8F', '#E6D64A']
@@ -157,8 +158,9 @@ export function buildTrips(races, home, settings, homeText = 'Hjem', details = {
     t.cost = {
       drive: t.mode === 'car' ? Math.round(t.km * s.kmRate) : 0,
       flight: Math.round(flight),
-      // Reiser laget samlet, dekker skigymnaset både reise og overnatting.
-      stay: t.mode === 'bus' ? 0 : t.nights * s.hotel,
+      // Skigymnaset dekker bare selve reisen når laget drar samlet.
+      // Overnatting, startkontingent og heiskort betaler løperen uansett.
+      stay: t.nights * s.hotel,
       fees: t.starts * s.entry,
       lift: t.starts * s.lift
     }
