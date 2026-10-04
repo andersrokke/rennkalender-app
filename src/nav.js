@@ -35,8 +35,8 @@ export function fanerFor(profile, harLag) {
   const base = isParent
     ? ['children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
     : isCoach
-      ? ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'settings', 'feedback']
-      : ['training', 'next', 'mine', 'races', 'dev', 'steder', 'settings', 'feedback']
+      ? ['training', 'season', 'matrix', 'athletes', 'races', 'dev', 'favoritter', 'settings', 'feedback']
+      : ['training', 'next', 'mine', 'races', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
   if (!profile.is_admin) return base
   return harLag ? [...base, 'admin'] : ['admin', ...base]
 }

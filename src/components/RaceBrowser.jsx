@@ -10,7 +10,6 @@ import { useStartNumbers } from './useStartNumbers'
 import StartNumbers from './StartNumbers.jsx'
 import { useFriends } from './useFriends'
 import { useCupStandings } from './useCupStandings'
-import Favourites from './Favourites.jsx'
 import { fmt } from '../util'
 import { useT } from '../i18n'
 import { setSheet } from '../theme'
@@ -100,7 +99,6 @@ export default function RaceBrowser({ profile, team, isCoach, readOnly = false }
           <button className={`chip ${heat && has ? 'on' : ''}`} disabled={!has} onClick={() => setHeat(h => !h)}>{t('heat')}</button>
           <span className="muted src">{has ? `${t('srcLive')} ${countedAt ? fmt({ start_date: countedAt.slice(0, 10), end_date: countedAt.slice(0, 10) }) : '–'}` : t('srcNone')}</span>
         </div>
-        <Favourites follows={follows} names={friendNames} lookup={lookup} follow={follow} unfollow={unfollow} cups={cupsByCode} />
         </>
       } />
       <div className="split">

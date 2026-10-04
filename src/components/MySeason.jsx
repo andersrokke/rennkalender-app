@@ -55,6 +55,8 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
   // render, så hver rute-oppdatering utløste en ny beregning som utløste en
   // ny oppdatering. React stopper det etter femti runder - som en advarsel i
   // utvikling, som et kast i produksjon.
+  // Rennene i lagets plan: dit reiser laget samlet, og skigymnaset dekker det.
+  const lagRenn = useMemo(() => new Set(merged.filter(x => x.fromTeam).map(x => x.race.id)), [merged])
   const planned = useMemo(
     () => merged.filter(x => x.mine?.status !== 'unavailable').map(x => x.race), [merged])
 
@@ -130,7 +132,7 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
               )
             }} />
           )}
-          <TripPlan profile={profile} races={planned} readOnly={readOnly} forelder={forelder}
+          <TripPlan profile={profile} races={planned} readOnly={readOnly} forelder={forelder} lagRenn={lagRenn}
             onRoutes={setRoutes} onHome={setHomePt} />
         </div>
       </div>

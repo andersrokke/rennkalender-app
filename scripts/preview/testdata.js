@@ -136,6 +136,12 @@ export function svarPa(url, o) {
         r(4, { place: 'Levi', host_nation: 'FIN' }), r(5, { place: 'Kvitfjell', frist: om(3), frist_kilde: 'isonen', pa_lista: true, lista_kjent: true }),
         r(6, { place: 'Duved', host_nation: 'SWE', status: 'entered' })]
     }
+    if (fn === 'favoritt_tabell') return [
+      { fis_code: '6535001', navn: 'Ida Moen', club: 'NTG', nation: 'NOR', birth_year: 2009, gender: 'W', sl: 62.1, gs: 55.4, sg: null, dh: null, egen: true, favoritt: false },
+      { fis_code: '6535004', navn: 'Lukas Røkke', club: 'NTG', nation: 'NOR', birth_year: 2009, gender: 'M', sl: 47.49, gs: 46.27, sg: 88.2, dh: 120.5, egen: true, favoritt: false },
+      { fis_code: '422999', navn: 'Henrik Kristoffersen', club: 'Rælingen', nation: 'NOR', birth_year: 1994, gender: 'M', sl: 0.0, gs: 1.2, sg: null, dh: null, egen: false, favoritt: true },
+      { fis_code: '507001', navn: 'Elsa Lindqvist', club: 'Åre SLK', nation: 'SWE', birth_year: 2008, gender: 'W', sl: 41.3, gs: 60.0, sg: 71.9, dh: null, egen: false, favoritt: true }]
+    if (fn === 'fis_sok') return [{ fis_code: '990001', first_name: 'Åse Marie', last_name: 'Bråthen', club: 'Geilo IL', nation: 'NOR', birth_year: 2008, gender: 'W', sl: 41.2, gs: 55 }]
     if (fn === 'my_children') return [{ athlete_id: 'lukas', full_name: 'Lukas Røkke', team_name: 'NTG Lillehammer', club: 'NTG', fis_code: '6535004', races: 7, race_days: 12 }]
     if (/^admin_(overview|ops|activity)$/.test(fn)) return { brukere: 5, jobber: [], varsler: [], uker: [] }
     if (fn === 'admin_users') return [

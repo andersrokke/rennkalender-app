@@ -21,6 +21,7 @@ import ChildRaces from '../../src/components/ChildRaces.jsx'
 import ChildDev from '../../src/components/ChildDev.jsx'
 import GoodVenues from '../../src/components/GoodVenues.jsx'
 import Pamelding from '../../src/components/Pamelding.jsx'
+import FavTab from '../../src/components/FavTab.jsx'
 import Admin from '../../src/components/Admin.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
 import { LangContext } from '../../src/i18n'
@@ -107,6 +108,7 @@ const skjermer = [
   ['Forelder: Children', <Children profile={forelder} />],
   ['Forelder: ChildRaces', <ChildRaces />],
   ['Forelder: ChildDev', <ChildDev />],
+  ['Trener: FavTab', <FavTab profile={TRENER} isCoach />],
   ['Forelder: Pamelding', <Pamelding />],
   ['Løper: GoodVenues', <GoodVenues fisCode="6535004" gender="M" />],
   ['Forelder: barnets sesong (med kostnader)', <MySeason profile={lukas} team={TEAM} readOnly forelder={forelder} />],

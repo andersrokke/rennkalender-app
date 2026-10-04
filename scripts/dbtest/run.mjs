@@ -666,6 +666,25 @@ await q('delete from entry_reminders where race_id=$1', [pmRenn])
 await q('delete from athlete_races where race_id=$1', [pmRenn])
 await q('delete from races where id=$1', [pmRenn])
 
+// --- favoritter ---
+await q(`insert into fis_lists(list_id, list_no, season_code, name) values (1, 1, 2027, '1st FIS points list 2026/2027') on conflict do nothing`)
+await q(`insert into fis_list_athletes(fis_code, list_id, last_name, first_name, nation, gender, birth_year, club, sl, gs, name_key)
+  values ('990001', 1, 'Bråthen', 'Åse Marie', 'NOR', 'W', 2008, 'Geilo IL', 41.2, 55.0, 'brathen|ase marie'),
+         ('990002', 1, 'Berg', 'Jonas', 'NOR', 'M', 2007, 'Bærum SK', 60.1, 48.3, 'berg|jonas')`)
+const sok = async (hvem, tekst) => (await as(hvem, 'select * from public.fis_sok($1)', [tekst])).rows
+;(await sok(S2, 'åse bråthen')).map(r => r.fis_code).join() === '990001' ? ok('søk på navn finner løperen, med nordiske tegn og i vilkårlig rekkefølge') : fail('fis_sok på navn')
+;(await sok(S2, '990002'))[0]?.last_name === 'Berg' ? ok('søk på FIS-kode finner løperen') : fail('fis_sok på kode')
+;(await sok(S2, 'be')).length === 0 ? ok('for korte søk svarer tomt') : fail('fis_sok svarte på to tegn')
+await as(S2, `insert into follows(user_id, fis_code) values ($1, '990001')`, [S2])
+const ft = (await as(S2, 'select * from public.favoritt_tabell()')).rows
+ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) === 41.2)
+  ? ok('favoritt-tabellen viser den man følger med poeng') : fail(`favoritt_tabell: ${JSON.stringify(ft)}`)
+!ft.some(r => r.fis_code === '990002') ? ok('løpere man ikke følger er ikke med') : fail('favoritt_tabell tok med en man ikke følger')
+;(await as(FOR, 'select * from public.favoritt_tabell()')).rows.every(r => r.fis_code !== '990001')
+  ? ok('andres favoritter er ikke synlige') : fail('favoritter lakk mellom brukere')
+await q(`delete from follows where fis_code in ('990001','990002')`)
+await q(`delete from fis_list_athletes where fis_code in ('990001','990002')`)
+
 // --- modusen bestemmer, også i databasen ---
 await ser(H, G1) ? ok('utgangspunkt: hovedtreneren er trener for gruppa') : fail('H er ikke trener i utgangspunktet')
 await as(H, `update profiles set role = 'parent' where id = $1`, [H])

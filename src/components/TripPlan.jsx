@@ -13,7 +13,7 @@ import {
 // Kostnader vises bare når en foresatt ser på (forelder er satt). Løperen
 // planlegger reisen - hvor, hvordan, hvor mange netter - og de foresatte ser
 // hva den koster, med sine egne satser.
-export default function TripPlan({ profile, races, readOnly = false, forelder = null, onRoutes, onHome }) {
+export default function TripPlan({ profile, races, readOnly = false, forelder = null, lagRenn = null, onRoutes, onHome }) {
   const t = useT()
   const visKost = !!forelder
   const [satser, setSatser] = useState(() => {
@@ -67,8 +67,8 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
       { onConflict: 'athlete_id,race_id' })
   }
 
-  const trips = useMemo(() => buildTrips(races, home, visKost ? { ...plan, ...satser } : plan, 'Hjem', details),
-    [races, home, plan, details, satser, visKost])
+  const trips = useMemo(() => buildTrips(races, home, visKost ? { ...plan, ...satser } : plan, 'Hjem', details, lagRenn),
+    [races, home, plan, details, satser, visKost, lagRenn])
   const tot = tripTotals(trips)
   const noVenue = races.length - trips.reduce((a, trip) => a + trip.races.length, 0)
 
@@ -129,7 +129,7 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
               </div>
               {trip.races.map((r, k) => {
                 const d = details[r.id]
-                const mode = raceMode(d)
+                const mode = raceMode(d, r, lagRenn)
                 return (
                   <div className="plan-race" key={r.id}>
                     <div className="plan-race-main">

@@ -26,6 +26,7 @@ import ChildRaces from '../../src/components/ChildRaces.jsx'
 import ChildDev from '../../src/components/ChildDev.jsx'
 import GoodVenues from '../../src/components/GoodVenues.jsx'
 import Pamelding from '../../src/components/Pamelding.jsx'
+import FavTab from '../../src/components/FavTab.jsx'
 import NoTeam from '../../src/components/NoTeam.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
 import Auth from '../../src/components/Auth.jsx'
@@ -133,6 +134,7 @@ const skjermer = [
   ['Forelder: Children', <Children profile={forelder} />],
   ['Forelder: ChildRaces', <ChildRaces />],
   ['Forelder: ChildDev', <ChildDev />],
+  ['Trener: FavTab', <FavTab profile={trener} isCoach />],
   ['Forelder: Pamelding', <Pamelding />],
   ['Løper: GoodVenues', <GoodVenues fisCode="6535004" gender="M" />],
   ['Forelder: RaceBrowser', <RaceBrowser profile={forelder} team={null} isCoach={false} readOnly />],

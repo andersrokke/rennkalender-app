@@ -1,4 +1,4 @@
-import { days } from './util'
+import { days } from './util.js'
 
 // Home bases from the prototype, including the ski high schools (NTG,
 // skigymnas, skidgymnasium, urheilulukio): key -> [lat, lng, label]
@@ -60,7 +60,10 @@ export const DEFAULT_MODE = 'car'
 // running 2-4 Feb is two nights. Overridable per race.
 export const raceNights = (r, d) => d?.nights_override ?? dayDiff(r.start_date, r.end_date)
 export const raceStarts = (r, d) => d?.starts_override ?? starts(r)
-export const raceMode = d => d?.travel_mode || DEFAULT_MODE
+// Reisemåten for et renn. Har løperen valgt selv, gjelder det. Ellers: renn
+// i lagets plan reiser man til med laget, og skigymnaset dekker reisen; renn
+// løperen legger inn på egen hånd kjører man til selv og betaler selv.
+export const raceMode = (d, r, lagRenn) => d?.travel_mode || (r && lagRenn?.has(r.id) ? 'bus' : DEFAULT_MODE)
 export const TRIP_COLORS = ['#FFB547', '#FF7A59', '#F55FA1', '#B08CFF', '#4D8DFF', '#2ECC8F', '#E6D64A']
 
 export const homeLL = key => {
@@ -101,11 +104,12 @@ export function kmFromHome(race, home) {
 // Chain races into round trips from home. Races within maxGap days continue
 // the current trip; `joins` forces a race onto the previous trip and `splits`
 // forces a new trip, so the athlete can override the automatic chaining.
-export function buildTrips(races, home, settings, homeText = 'Hjem', details = {}) {
+export function buildTrips(races, home, settings, homeText = 'Hjem', details = {}, lagRenn = null) {
   const s = { ...DEFAULT_PLAN, ...(settings || {}) }
   const joins = new Set(s.joins || []), splits = new Set(s.splits || [])
   const det = r => details[r.id]
-  const isBus = r => raceMode(det(r)) === 'bus'
+  const mode = r => raceMode(det(r), r, lagRenn)
+  const isBus = r => mode(r) === 'bus'
   const sel = races.filter(raceLL).sort((a, b) => a.start_date.localeCompare(b.start_date))
   const out = []
   let cur = null
@@ -131,7 +135,7 @@ export function buildTrips(races, home, settings, homeText = 'Hjem', details = {
     t.legs.push({ from: last.place, to: homeText, km: roadKm(raceLL(last), homeLL(home)) })
     // Trip mode: all bus, otherwise a flight anywhere in it replaces driving.
     t.mode = t.races.every(r => isBus(r)) ? 'bus'
-      : t.races.some(r => raceMode(det(r)) === 'flight') ? 'flight' : 'car'
+      : t.races.some(r => mode(r) === 'flight') ? 'flight' : 'car'
     t.legKm = t.legs.reduce((a, l) => a + l.km, 0)
     // The school bus is paid through the school fees, so it has no distance of
     // its own. A flight still shows the distance, but it costs nothing.
@@ -147,13 +151,14 @@ export function buildTrips(races, home, settings, homeText = 'Hjem', details = {
     t.daysAway = t.nights + 1
     const flight = t.races.reduce((a, r) => {
       const d = det(r)
-      return a + (raceMode(d) === 'flight' ? Number(d?.flight_cost || 0) : 0)
+      return a + (mode(r) === 'flight' ? Number(d?.flight_cost || 0) : 0)
     }, 0)
     // Entry fee and lift pass are charged per start, not per race day.
     t.cost = {
       drive: t.mode === 'car' ? Math.round(t.km * s.kmRate) : 0,
       flight: Math.round(flight),
-      stay: t.nights * s.hotel,
+      // Reiser laget samlet, dekker skigymnaset både reise og overnatting.
+      stay: t.mode === 'bus' ? 0 : t.nights * s.hotel,
       fees: t.starts * s.entry,
       lift: t.starts * s.lift
     }

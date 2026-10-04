@@ -1048,3 +1048,8 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .pm-frist b{font-size:16px}
 .pm-gruppe.haster .pm-frist b,.pm-gruppe.utgatt .pm-frist b{color:#D03B40}
 @media (max-width:620px){ .pm-rad{grid-template-columns:1fr} }
+
+/* Favoritter */
+.fv-treff{display:flex;flex-direction:column;margin-top:10px}
+.fv-treffrad{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.fv-treffrad>div{min-width:0}
