@@ -9,7 +9,7 @@ export const AKSE = {
   axisLine: false, tickLine: false, tickMargin: 8
 }
 // Loddrett akse med fast bredde, så tallene ikke klippes på smale skjermer.
-export const Y_AKSE = { ...AKSE, width: 48 }
+export const Y_AKSE = { ...AKSE, width: 58 }
 export const RUTENETT = { stroke: 'var(--line)', strokeDasharray: '0', vertical: false }
 export const SESONG_ETIKETT = { fill: 'var(--mute)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--mono, inherit)' }
 export const FULLFORT = '#2F9C74'

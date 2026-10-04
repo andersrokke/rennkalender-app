@@ -26,6 +26,8 @@ import Admin from '../../src/components/Admin.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
 import { LangContext } from '../../src/i18n'
 import { svarPa, LOPERE, TRENER, TEAM } from './testdata.js'
+import App from '../../src/App.jsx'
+import { supabase } from '../../src/supabase'
 import '../../src/styles.css'
 
 const real = window.fetch
@@ -117,6 +119,16 @@ const skjermer = [
   ['Onboarding', <Onboarding profile={{ id: 'ny', full_name: '', lang: 'no' }} onDone={ingen} />]
 ]
 
+// ?app=lukas eller ?app=oscar viser hele appen, med toppmeny og faner, som
+// den brukeren - uten innlogging. Brukes til å se helheten, ikke bare én
+// skjerm om gangen.
+const somHvem = new URLSearchParams(location.search).get('app')
+if (somHvem) {
+  const okt = { user: { id: somHvem, email: `${somHvem}@example.com` } }
+  supabase.auth.getSession = async () => ({ data: { session: okt } })
+  supabase.auth.onAuthStateChange = () => ({ data: { subscription: { unsubscribe() {} } } })
+  createRoot(document.getElementById('root')).render(<App />)
+} else
 createRoot(document.getElementById('root')).render(
   <LangContext.Provider value="no">
     {skjermer.map(([navn, el]) => (

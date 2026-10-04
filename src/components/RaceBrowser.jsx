@@ -85,7 +85,7 @@ export default function RaceBrowser({ profile, team, isCoach, readOnly = false }
         <span>{sg.participants} {t('signed')}{r.max_attendees ? ` ${t('ofCap')} ${r.max_attendees}` : ''}</span>
         {sg.delta_7d != null && <span className={sg.delta_7d < 0 ? 'neg' : ''}>{sg.delta_7d >= 0 ? '+' : ''}{sg.delta_7d} {t('week')}</span>}
         {r.signup_deadline && <span className={soon ? 'soon' : ''}>
-          {t('deadline')} {fmt({ start_date: r.signup_deadline, end_date: r.signup_deadline })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} ${t('dShort')})` : ''}
+          {t('deadline')} {fmt({ start_date: r.signup_deadline.slice(0, 10), end_date: r.signup_deadline.slice(0, 10) })}{dd != null && dd >= 0 && dd <= 14 ? ` (${dd} ${t('dShort')})` : ''}
         </span>}
       </div>
     )

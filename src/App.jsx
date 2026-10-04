@@ -28,11 +28,36 @@ import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
+// Ikonene i sidemenyen. Enkle strekikoner, tegnet i samme rutenett.
+const IKON = {
+  training: 'M4 19V5m0 14h16M8 15l3-4 3 2 4-6',
+  next: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  mine: 'M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm4 9 2 2 4-4',
+  season: 'M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z',
+  matrix: 'M4 5h16v14H4zM4 10h16M4 15h16M10 5v14M15 5v14',
+  athletes: 'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm11.5 9v-1a4 4 0 0 0-3-3.9M15.5 3.2a3.5 3.5 0 0 1 0 6.6',
+  races: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3ZM9 4v13M15 7v13',
+  dev: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  steder: 'M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  favoritter: 'M12 4l2.5 5 5.5.8-4 3.9.9 5.5L12 16.6 7.1 19.2l.9-5.5-4-3.9 5.5-.8Z',
+  children: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1m2-5h1a3 3 0 0 1 3 3v2',
+  pamelding: 'M9 5h6m-6 0a2 2 0 0 0-2 2H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1a2 2 0 0 0-2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4',
+  kidraces: 'M5 21V4m0 1h11l-2 3.5 2 3.5H5',
+  kiddev: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  settings: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1',
+  feedback: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z',
+  admin: 'M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6Zm-3 9 2 2 4-4'
+}
+const Ikon = ({ k }) => (
+  <svg className="nav-ikon" viewBox="0 0 24 24" aria-hidden="true"><path d={IKON[k] || IKON.races} /></svg>
+)
+
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [profile, setProfile] = useState(null)
   const [team, setTeam] = useState(null)
-  const [tab, setTab] = useState(null)
+  // Fanen kan stå i adressen (#races), så en lenke kan peke rett på en skjerm.
+  const [tab, setTab] = useState(() => (typeof location !== 'undefined' && location.hash.slice(1)) || null)
   const [pane, setPane] = useState('list')
   const [planCount, setPlanCount] = useState(0)
   const [recovery, setRecovery] = useState(false)
@@ -151,8 +176,9 @@ export default function App() {
 
   return (
     <LangContext.Provider value={lang}>
+      <div className="app-shell">
       <header className="topbar">
-        <h1>{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
+        <h1><span className="merke" aria-hidden="true" />{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
         {team && isCoach && grupper.length > 1 && (
           <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
             onChange={async e => {
@@ -162,10 +188,16 @@ export default function App() {
             {grupper.map(g => <option key={g.id} value={g.id}>{g.er_hus ? `${g.name} · ${d.groupHouse}` : g.name}</option>)}
           </select>
         )}
-        <nav>{tabs.map(([k, l]) => <button key={k} className={active === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</nav>
+        <nav>{tabs.map(([k, l]) => (
+          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => setTab(k)}>
+            <Ikon k={k} /><span>{l}</span>
+          </button>
+        ))}</nav>
         <div className="spacer" />
-        <Seg opts={[['no', 'NO'], ['en', 'EN']]} value={lang} onPick={v => setPref({ lang: v })} />
-        <Seg opts={[['light', '☀'], ['dark', '☾']]} value={theme} onPick={v => setPref({ theme: v })} />
+        <div className="side-valg">
+          <Seg opts={[['no', 'NO'], ['en', 'EN']]} value={lang} onPick={v => setPref({ lang: v })} />
+          <Seg opts={[['light', '☀'], ['dark', '☾']]} value={theme} onPick={v => setPref({ theme: v })} />
+        </div>
         {/* Administrator kan se appen som trener, løper eller forelder. Rollen
             byttes på ordentlig, ikke som en maske over: flere funksjoner i basen
             spør om rollen, og en visning som sa noe annet enn basen ville gitt
@@ -183,6 +215,12 @@ export default function App() {
         <span className="who">{profile.full_name} · {isCoach ? d.coach : profile.role === 'parent' ? d.parent : d.athlete}</span>
         <button className="btn small" onClick={() => supabase.auth.signOut()}>{d.signOut}</button>
       </header>
+      <main className="app-main">
+      {/* Sidens navn står øverst på skjermene som ikke åpner med et eget
+          kort med overskrift - kalenderen, sesongen og matrisa. */}
+      {['races', 'season', 'mine', 'matrix', 'next', 'children'].includes(active) && (
+        <div className="side-hode"><h2>{ETIKETT[active]}</h2>{team && !isParent && <span>{team.name}</span>}</div>
+      )}
       <InstallPrompt />
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'matrix' && (team ? <SeasonMatrix team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
@@ -203,6 +241,8 @@ export default function App() {
       {active === 'feedback' && <Feedback profile={profile} />}
       {active === 'admin' && <Admin profile={profile} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
+      </main>
+      </div>
       <div className="scrim" onClick={() => setSheet(false)} />
       <MobileNav active={navActive} onPick={pickPane} planCount={planCount} />
     </LangContext.Provider>

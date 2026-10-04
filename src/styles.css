@@ -1101,7 +1101,9 @@ html[data-look="ny"] .btn.small{padding:5px 11px}
 html[data-look="ny"] .btn.link{padding:0}
 html[data-look="ny"] .btn.primary:hover{filter:brightness(1.08);border-color:var(--accent)}
 html[data-look="ny"] .chip{border-radius:6px;padding:6px 12px;font-weight:500}
-html[data-look="ny"] .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+/* Valgt brikke er dempet: lys blå flate og blå tekst. Helblått er
+   forbeholdt hovedknappen, ellers blir et filter med mange valg en blå vegg. */
+html[data-look="ny"] .chip.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent);font-weight:600}
 html[data-look="ny"] .seg{border-radius:8px;background:var(--panel-2)}
 html[data-look="ny"] .seg button{border-radius:6px;font-weight:500}
 html[data-look="ny"] .seg button.on{background:var(--accent);color:var(--accent-fg)}
@@ -1208,3 +1210,73 @@ html[data-look="ny"] .ob-hero-text p{color:var(--mute);text-shadow:none}
 .rh-skort-endring.bedre{color:var(--good)}
 .rh-skort-endring.darligere{color:var(--danger)}
 .rh-skort-kurve{margin:6px -6px 0}
+
+/* ==========================================================================
+   Skallet. På bred skjerm er menyen en fast spalte til venstre, med merket
+   øverst, fanene under hverandre med ikon, og språk, tema, modus og utlogging
+   nederst. Innholdet får resten, med sidens navn som overskrift. På smale
+   skjermer er alt som før: en stripe øverst og fanene i bunnen.
+   ========================================================================== */
+.nav-ikon{display:none}
+.side-hode{display:none}
+.topbar h1 .merke{display:none}
+html[data-look="ny"] .nav-ikon{display:inline-block;width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html[data-look="ny"] .topbar nav button{display:inline-flex;align-items:center;gap:8px}
+html[data-look="ny"] .topbar h1 .merke{display:inline-block;width:22px;height:22px;border-radius:6px;margin-right:10px;vertical-align:-4px;
+  background:linear-gradient(135deg,var(--accent) 0 50%,var(--slate) 50% 100%)}
+
+@media (min-width:1024px){
+  html[data-look="ny"] .app-shell{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh;align-items:start}
+  html[data-look="ny"] .topbar{position:sticky;top:0;height:100vh;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:6px;
+    padding:22px 16px 18px;border-bottom:0;border-right:1px solid var(--line);background:var(--snow);overflow-y:auto}
+  html[data-look="ny"] .topbar h1{font-size:17px;font-weight:600;padding:0 8px 14px;display:flex;flex-wrap:wrap;align-items:center;line-height:1.3}
+  html[data-look="ny"] .topbar h1 small{flex-basis:100%;margin:6px 0 0 32px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+  html[data-look="ny"] .topbar .gruppevelger{width:100%;margin-bottom:8px}
+  html[data-look="ny"] .topbar nav{flex-direction:column;gap:2px}
+  html[data-look="ny"] .topbar nav button{width:100%;justify-content:flex-start;gap:12px;padding:10px 12px;border-radius:8px;
+    font-size:14.5px;font-weight:500;color:var(--mute);box-shadow:none;text-align:left}
+  html[data-look="ny"] .topbar nav button:hover{background:var(--panel-2);color:var(--slate)}
+  html[data-look="ny"] .topbar nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:none}
+  html[data-look="ny"] .topbar .spacer{flex:1;min-height:16px}
+  html[data-look="ny"] .topbar .seg{align-self:flex-start}
+  html[data-look="ny"] .topbar .modus{display:block;padding-top:6px}
+  html[data-look="ny"] .topbar .who{display:block;padding:12px 8px 4px;margin-top:6px;border-top:1px solid var(--line);font-size:13.5px;color:var(--slate);font-weight:500}
+  html[data-look="ny"] .topbar > .btn{align-self:flex-start;margin-left:8px}
+  html[data-look="ny"] .app-main{min-width:0}
+  html[data-look="ny"] .side-hode{display:flex;align-items:baseline;gap:14px;padding:30px 40px 6px;max-width:1180px;margin:0 auto}
+  html[data-look="ny"] .side-hode h2{margin:0;font-size:30px;font-weight:500;letter-spacing:-.03em;line-height:1.15}
+  html[data-look="ny"] .side-hode span{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  html[data-look="ny"] .page{max-width:1180px;padding:20px 40px 56px}
+  html[data-look="ny"] .controls{padding:12px 40px;margin-top:14px;border-top:1px solid var(--line)}
+  html[data-look="ny"] .split{height:calc(100vh - 150px)}
+}
+
+.side-valg{display:flex;gap:8px;align-items:center}
+@media (min-width:1024px){
+  html[data-look="ny"] .topbar h1{flex-wrap:nowrap;display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:2px;align-items:center}
+  html[data-look="ny"] .topbar h1 .merke{margin:0;width:26px;height:26px;border-radius:7px}
+  html[data-look="ny"] .topbar h1 small{grid-column:2;margin:0}
+  html[data-look="ny"] .side-valg{padding:0 4px}
+}
+
+@media (min-width:1024px){
+  html[data-look="ny"] .page{padding-top:32px}
+  html[data-look="ny"] .side-hode + .page,html[data-look="ny"] .side-hode ~ .page{padding-top:16px}
+}
+
+/* Smalere enn sidemenyen: merket øverst, så valg og utlogging på én rad, så
+   fanene som en stripe man kan dra sidelengs. */
+@media (max-width:1023px){
+  html[data-look="ny"] .topbar{padding:12px 16px 0;gap:8px 10px}
+  html[data-look="ny"] .topbar h1{flex:1 0 100%;font-size:17px}
+  html[data-look="ny"] .topbar h1 small{display:none}
+  html[data-look="ny"] .topbar .spacer,html[data-look="ny"] .topbar .who{display:none}
+  html[data-look="ny"] .side-valg{order:1}
+  html[data-look="ny"] .topbar .modus{order:1}
+  html[data-look="ny"] .topbar .gruppevelger{order:1;max-width:100%}
+  html[data-look="ny"] .topbar > .btn{order:2;margin-left:auto}
+  html[data-look="ny"] .topbar nav{order:3;width:100%;display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:2px}
+  html[data-look="ny"] .topbar nav::-webkit-scrollbar{display:none}
+  html[data-look="ny"] .topbar nav button{flex:0 0 auto;white-space:nowrap;font-size:13.5px;padding:10px 10px}
+  html[data-look="ny"] .topbar nav .nav-ikon{width:16px;height:16px}
+}
