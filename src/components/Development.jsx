@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts'
+import { AKSE, Y_AKSE, RUTENETT, SESONG_ETIKETT, Toning, GrafTips, GrafForklaring, aktivtPunkt } from './Graf.jsx'
 import { useT } from '../i18n'
 import { fmt } from '../util'
 import { fisPoints, dateTime } from '../format'
@@ -165,31 +166,35 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           ) : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={rows} margin={{ top: 22, right: 30, left: -18, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <AreaChart data={rows} margin={{ top: 24, right: 18, left: 0, bottom: 4 }}>
+                <defs>{series.map((s, i) => <Toning key={s.key} id={`dev-ton-${i}`} farge={s.color} />)}</defs>
+                <CartesianGrid {...RUTENETT} />
                 {seasonBands.map(b => (
-                  <ReferenceArea key={'b' + b.navn} x1={b.fra} x2={b.til} fill="var(--slate)" fillOpacity={b.skygge ? 0.07 : 0}
-                    stroke="none" label={{ value: `20${b.navn}`, position: 'insideBottom', fill: 'var(--slate)', fontSize: 12, fontWeight: 800 }} />
+                  <ReferenceArea key={'b' + b.navn} x1={b.fra} x2={b.til} fill="var(--slate)" fillOpacity={b.skygge ? 0.045 : 0}
+                    stroke="none" label={{ value: `20${b.navn}`, position: 'insideBottom', ...SESONG_ETIKETT }} />
                 ))}
                 {seasonBands.slice(1).map(b => (
-                  <ReferenceLine key={'l' + b.navn} x={b.fra} stroke="var(--slate)" strokeWidth={1.5} strokeDasharray="5 4" />
+                  <ReferenceLine key={'l' + b.navn} x={b.fra} stroke="var(--faint)" strokeWidth={1} strokeDasharray="4 4" />
                 ))}
                 {nowLabel && (
-                  <ReferenceLine x={nowLabel} stroke="var(--slate)" strokeWidth={2}
-                    label={{ value: t('fisNowMark'), position: 'top', fill: 'var(--slate)',
-                      fontSize: 11, fontWeight: 800 }} />
+                  <ReferenceLine x={nowLabel} stroke="var(--slate)" strokeWidth={1.5}
+                    label={{ value: t('fisNowMark'), position: 'top', fill: 'var(--slate)', fontSize: 11, fontWeight: 700 }} />
                 )}
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--mute)' }} interval="preserveStartEnd" />
+                <XAxis dataKey="label" {...AKSE} interval="preserveStartEnd" minTickGap={24} />
                 {/* lower FIS points are better, so the axis is reversed */}
-                <YAxis reversed tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={v => fisPoints(v, t.lang)} />
-                <Tooltip contentStyle={{ background: 'var(--snow)', border: '1px solid var(--line)', color: 'var(--slate)' }}
-                  formatter={v => fisPoints(v, t.lang)} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                {series.map(s => (
-                  <Line key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color}
-                    dot={false} strokeWidth={2} connectNulls />
+                <YAxis reversed {...Y_AKSE} domain={['auto', 'auto']} tickFormatter={v => fisPoints(v, t.lang)} />
+                <Tooltip cursor={{ stroke: 'var(--faint)', strokeDasharray: '3 3' }}
+                  content={<GrafTips verdi={p => fisPoints(p.value, t.lang)} />} />
+                <Legend content={<GrafForklaring />} />
+                {/* Toningen under linja tegnes bare når det er få serier;
+                    med et helt lag blir det grøt. Bunnen er dårligste verdi,
+                    siden aksen er snudd. */}
+                {series.map((s, i) => (
+                  <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2.5}
+                    fill={series.length <= 4 ? `url(#dev-ton-${i})` : 'none'} baseValue="dataMax"
+                    dot={false} activeDot={aktivtPunkt(s.color)} connectNulls isAnimationActive={false} />
                 ))}
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -290,4 +295,4 @@ export default function Development({ profile, team, isCoach, readOnly = false }
   )
 }
 
-const LINE_COLORS = ['#4D8DFF', '#2ECC8F', '#FFB547', '#F55FA1', '#B08CFF', '#FF7A59', '#E6D64A', '#1A9A6A']
+const LINE_COLORS = ['#3D7BEB', '#1F9D76', '#E0A12B', '#DB4C7B', '#8B6FE8', '#F0774A', '#3AAFC4', '#7A8B2E']

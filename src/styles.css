@@ -1138,3 +1138,25 @@ html[data-look="ny"] .auth h2{font-weight:500;font-size:30px;letter-spacing:-.03
 html[data-look="ny"] .auth .btn.primary{border-radius:6px;font-weight:500;background:var(--accent)}
 html[data-look="ny"] .ob-card{border-radius:12px}
 html[data-look="ny"] .ob-card b{font-weight:600}
+
+
+/* Grafer: felles verktøytips og forklaring. */
+.chart{margin-top:14px;padding:14px 10px 6px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--snow)}
+.chart.rh-mnd{padding-top:12px;border-top:1px solid var(--line)}
+.graf-tips{background:var(--snow);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:var(--lift);min-width:150px}
+.graf-tips-tittel{font-family:var(--mono,inherit);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.graf-tips-rad{display:flex;align-items:center;gap:8px;font-size:13px;line-height:1.6;color:var(--slate)}
+.graf-tips-rad i{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.graf-tips-rad span{color:var(--mute)}
+.graf-tips-rad b{margin-left:auto;padding-left:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.graf-forklaring{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;padding-top:10px;font-size:12.5px;color:var(--mute)}
+.graf-forklaring span{display:inline-flex;align-items:center;gap:6px}
+.graf-forklaring i{width:10px;height:10px;border-radius:3px}
+
+/* Grunnen: et svakt grønt skjær øverst som tones ut, som i malen. */
+html[data-look="ny"] body{background:linear-gradient(180deg,#E8F2EE 0,var(--ice) 340px) no-repeat var(--ice)}
+html[data-look="ny"][data-theme=dark] body{background:linear-gradient(180deg,#0C1F1C 0,var(--ice) 340px) no-repeat var(--ice)}
+html[data-look="ny"] .topbar{background:var(--snow)}
+html[data-look="ny"] .controls{background:var(--snow)}
+html[data-look="ny"] .tabbar button{font-weight:500}
+html[data-look="ny"] .tabbar button.on{font-weight:600}

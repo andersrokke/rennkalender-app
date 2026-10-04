@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine } from 'recharts'
 import { useT } from '../i18n'
+import { AKSE, Y_AKSE, RUTENETT, SESONG_ETIKETT, GrafTips, GrafForklaring, punkt, aktivtPunkt, StabelStolpe, FULLFORT, UTE } from './Graf.jsx'
 import { fisPoints } from '../format'
 import { DISC_COLOR } from './useDevelopment'
 import {
@@ -13,18 +14,17 @@ const farge = g => DISC_COLOR[g] || '#B08CFF'
 const KOLONNER = [['dato', 'rhDate'], ['sted', 'rhPlace'], ['kategori', 'rhCat'], ['gren', 'rhDisc'], ['plass', 'rhPos'], ['poeng', 'rhPts']]
 // Aksemerke med to linjer: måneden, og andelen fullført rett under - i farge,
 // så man ser med ett blikk hvilke måneder det ryker.
-const PST_FARGE = p => p >= 75 ? '#1E7A52' : p >= 50 ? '#B7791F' : '#D03B40'
+const PST_FARGE = p => p >= 75 ? 'var(--good)' : p >= 50 ? '#B7791F' : 'var(--danger)'
 function MndTick({ x, y, payload, rader }) {
   const r = rader.find(m => m.nokkel === payload.value)
   if (!r) return null
   return (
     <g transform={`translate(${x},${y})`}>
-      <text textAnchor="middle" fontSize={11} fill="var(--mute)" dy={12}>{r.navn.split(' ')[0]}</text>
-      <text textAnchor="middle" fontSize={11} fontWeight={800} fill={PST_FARGE(r.prosent)} dy={28}>{r.prosent}%</text>
+      <text textAnchor="middle" fontSize={11} fill="var(--mute)" fontFamily="var(--mono, inherit)" dy={14}>{r.navn.split(' ')[0]}</text>
+      <text textAnchor="middle" fontSize={11} fontWeight={800} fill={PST_FARGE(r.prosent)} dy={30}>{r.prosent}%</text>
     </g>
   )
 }
-const TIPS = { background: 'var(--snow)', border: '1px solid var(--line)', color: 'var(--slate)' }
 
 // Alle FIS-renn løperen har stått på startlista i siden 2023/24: nøkkeltall,
 // utvikling i grafer, oppsummering per sesong og gren, og hele lista - alt
@@ -151,32 +151,32 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
         {tid.length < 2 ? <p className="muted">{t('rhTooFew')}</p> : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={tid} margin={{ top: 22, right: 16, left: -18, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
+              <LineChart data={tid} margin={{ top: 24, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid {...RUTENETT} />
                 {/* Ett felt per sesong med navnet øverst, annenhver skygget, og
                     en tydelig strek der en ny sesong starter. */}
                 {felt.map(f => (
-                  <ReferenceArea key={'f' + f.sesong} x1={f.fra} x2={f.til} fill="var(--slate)" fillOpacity={f.skygge ? 0.07 : 0}
+                  <ReferenceArea key={'f' + f.sesong} x1={f.fra} x2={f.til} fill="var(--slate)" fillOpacity={f.skygge ? 0.045 : 0}
                     stroke="none" ifOverflow="hidden"
-                    label={{ value: f.navn, position: 'insideTop', fill: 'var(--slate)', fontSize: 12, fontWeight: 800 }} />
+                    label={{ value: f.navn, position: 'insideTop', ...SESONG_ETIKETT }} />
                 ))}
                 {felt.filter(f => f.skille).map(f => (
-                  <ReferenceLine key={'s' + f.sesong} x={f.skille} stroke="var(--slate)" strokeWidth={1.5} strokeDasharray="5 4" />
+                  <ReferenceLine key={'s' + f.sesong} x={f.skille} stroke="var(--faint)" strokeWidth={1} strokeDasharray="4 4" />
                 ))}
-                <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']}
-                  tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={kortDato} />
+                <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']} {...AKSE} tickFormatter={kortDato} minTickGap={36} />
                 {/* lavere er bedre for både poeng og plass, så aksen er snudd */}
-                <YAxis reversed allowDecimals={yAkse === 'poeng'} domain={yAkse === 'poeng' ? ['auto', 'auto'] : [1, 'auto']} tick={{ fontSize: 11, fill: 'var(--mute)' }}
+                <YAxis reversed allowDecimals={yAkse === 'poeng'} domain={yAkse === 'poeng' ? ['auto', 'auto'] : [1, 'auto']} {...Y_AKSE}
                   tickFormatter={v => yAkse === 'poeng' ? p1(v) : v} />
-                <Tooltip contentStyle={TIPS}
-                  labelFormatter={(ms, pl) => { const r = pl?.[0]?.payload; return r ? `${dato(r.dato)} · ${r.sted || ''}` : '' }}
-                  formatter={(v, navn, x) => yAkse === 'poeng'
-                    ? [`${p1(v)} p · ${t('pos')} ${x.payload.plass}`, navn]
-                    : [`${t('pos')} ${v}${x.payload[x.payload.gren] != null ? ` · ${p1(x.payload[x.payload.gren])} p` : ''}`, navn]} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip cursor={{ stroke: 'var(--faint)', strokeDasharray: '3 3' }}
+                  content={<GrafTips
+                    tittel={(ms, pl) => { const r = pl?.[0]?.payload; return r ? `${dato(r.dato)} · ${r.sted || ''}` : '' }}
+                    verdi={p => yAkse === 'poeng'
+                      ? `${p1(p.value)} p · ${t('pos')} ${p.payload.plass}`
+                      : `${t('pos')} ${p.value}${p.payload[p.payload.gren] != null ? ` · ${p1(p.payload[p.payload.gren])} p` : ''}`} />} />
+                <Legend content={<GrafForklaring />} />
                 {grenerIUtvalg.map(g => (
                   <Line key={g} type="linear" dataKey={yAkse === 'poeng' ? g : 'plass_' + g} name={g} stroke={farge(g)}
-                    strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} connectNulls isAnimationActive={false} />
+                    strokeWidth={2.5} dot={punkt(farge(g))} activeDot={aktivtPunkt(farge(g))} connectNulls isAnimationActive={false} />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -193,14 +193,14 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
         {perSesong.length === 0 ? <p className="muted">{t('rhTooFew')}</p> : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={perSesong} margin={{ top: 10, right: 16, left: -18, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
-                <XAxis dataKey="navn" tick={{ fontSize: 11, fill: 'var(--mute)' }} />
-                <YAxis tick={{ fontSize: 11, fill: 'var(--mute)' }} tickFormatter={p1} />
-                <Tooltip contentStyle={TIPS} cursor={{ fill: 'var(--ice)' }} formatter={v => `${p1(v)} p`} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+              <BarChart data={perSesong} margin={{ top: 10, right: 16, left: 0, bottom: 4 }} barGap={4} barCategoryGap="22%">
+                <CartesianGrid {...RUTENETT} />
+                <XAxis dataKey="navn" {...AKSE} />
+                <YAxis {...Y_AKSE} tickFormatter={p1} />
+                <Tooltip cursor={{ fill: 'var(--panel-2)' }} content={<GrafTips verdi={p => `${p1(p.value)} p`} />} />
+                <Legend content={<GrafForklaring />} />
                 {grener.filter(medGren).map(g => (
-                  <Bar key={g} dataKey={`${mal}_${g}`} name={g} fill={farge(g)} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                  <Bar key={g} dataKey={`${mal}_${g}`} name={g} fill={farge(g)} radius={[6, 6, 0, 0]} maxBarSize={38} isAnimationActive={false} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -222,20 +222,22 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                 <span className={`rh-pst ${pstKlasse(tot.prosent)}`}><i style={{ width: `${tot.prosent}%` }} /><b>{tot.prosent} % {t('finished')}</b></span>
               </div>
               <ResponsiveContainer width="100%" height={210}>
-                <BarChart data={mnd} margin={{ top: 8, right: 16, left: -24, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
-                  <XAxis dataKey="nokkel" interval={0} height={40} tickLine={false} tick={<MndTick rader={mnd} />} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--mute)' }} />
-                  <Tooltip contentStyle={TIPS} cursor={{ fill: 'var(--ice)' }}
-                    labelFormatter={(k, pl) => { const r = pl?.[0]?.payload; return r ? `${r.navn} · ${r.prosent} % ${t('finished')}` : k }} />
-                  <Bar dataKey="fullfort" name={t('finished')} stackId="a" fill="#2E9E6B" maxBarSize={46} isAnimationActive={false} />
-                  <Bar dataKey="ute" name={t('rhOut')} stackId="a" fill="#E5484D" maxBarSize={46} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <BarChart data={mnd} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid {...RUTENETT} />
+                  <XAxis dataKey="nokkel" interval={0} height={44} axisLine={false} tickLine={false} tick={<MndTick rader={mnd} />} />
+                  <YAxis allowDecimals={false} {...Y_AKSE} width={30} />
+                  <Tooltip cursor={{ fill: 'var(--panel-2)' }}
+                    content={<GrafTips tittel={(k, pl) => { const r = pl?.[0]?.payload; return r ? `${r.navn} · ${r.prosent} % ${t('finished')}` : k }} />} />
+                  <Bar dataKey="fullfort" name={t('finished')} stackId="a" fill={FULLFORT} maxBarSize={42} isAnimationActive={false}
+                    shape={<StabelStolpe overst={r => !r.ute} />} />
+                  <Bar dataKey="ute" name={t('rhOut')} stackId="a" fill={UTE} maxBarSize={42} isAnimationActive={false}
+                    shape={<StabelStolpe />} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )
         })}
-        <div className="rh-forklaring"><span><i style={{ background: '#2E9E6B' }} />{t('finished')}</span><span><i style={{ background: '#E5484D' }} />{t('rhOut')}</span></div>
+        <div className="rh-forklaring"><span><i style={{ background: FULLFORT }} />{t('finished')}</span><span><i style={{ background: UTE }} />{t('rhOut')}</span></div>
 
         <h3>{t('rhBySeason')}</h3>
         <div className="ad-scroll">

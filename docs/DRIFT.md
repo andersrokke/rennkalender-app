@@ -941,3 +941,11 @@ trigger.
 deltakerlista hentes, og ingenting sletter de gamle. Spørringene tar bare
 siste batch, så det virker som det skal, men tabellen blir stadig større.
 Rydding er ikke satt opp.
+
+## Utseendet
+
+Det nye utseendet (oktober 2026) er standard og ligger som en overstyring av
+tokenene i `src/styles.css`, under `html[data-look="ny"]`. Attributtet settes
+i `index.html`. `?look=gammel` henter tilbake det forrige utseendet i den
+nettleseren, `?look=ny` slår det nye på igjen. Alle grafer deler stil gjennom
+`src/components/Graf.jsx` (akser, rutenett, verktøytips, forklaring).

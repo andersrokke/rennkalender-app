@@ -7,7 +7,9 @@ export const COUNT_DISC = ['SL', 'GS', 'SG', 'DH', 'AC']
 // FIS Points Rules 2025/26 art. 4.2.1.1 / 4.2.1.2: tech needs three results,
 // speed and combined two.
 export const NEEDED = { SL: 3, GS: 3, SG: 2, DH: 2, AC: 2 }
-export const DISC_COLOR = { SL: '#4D8DFF', GS: '#2ECC8F', SG: '#FFB547', DH: '#F55FA1' }
+// Én farge per gren, valgt så de skilles fra hverandre på både lys og mørk
+// flate og av fargesvake: blå, grønn, gyllen, rosa.
+export const DISC_COLOR = { SL: '#3D7BEB', GS: '#1F9D76', SG: '#E0A12B', DH: '#DB4C7B' }
 // fis_results spells disciplines out; fis_points uses the codes.
 const LONG_TO_CODE = {
   'Slalom': 'SL', 'Giant Slalom': 'GS', 'Super G': 'SG', 'Super-G': 'SG',
