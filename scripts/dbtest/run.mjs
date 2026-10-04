@@ -614,6 +614,46 @@ await as(L1, `delete from athlete_races where athlete_id=$1 and race_id=$2`, [L1
 await q(`update profiles set team_id=$2, role=$3 where id=$1`, [L1, forL1.t, forL1.r])
 await q(`update profiles set role=$2 where id=$1`, [C1, forC1])
 
+// --- påmelding for foreldre ---
+// FOR er foresatt for S2. Et renn i planen med frist om tre dager skal gi
+// d7-varsel; når fristen er under et døgn unna, d1-varsel. Hvert sendes én gang.
+const pmRenn = (await q(`insert into races(start_date,end_date,place,host_nation,category,events,gender,signup_deadline)
+  values (current_date + 12, current_date + 13, 'Hafjell', 'NOR', 'FIS', 'GS', 'M', now() + interval '3 days') returning id`))[0].id
+await as(S2, `insert into athlete_races(athlete_id, race_id, team_id, status) values ($1,$2,null,'planned')`, [S2, pmRenn])
+const hull = async () => (await q('select * from public.entry_gaps()')).filter(g => g.race_id === pmRenn)
+let h = await hull()
+h.length === 1 && h[0].kind === 'd7' && h[0].guardian_emails.length === 1
+  ? ok('frist om tre dager gir sju-dagers varsel til løper og foresatt') : fail(`entry_gaps d7: ${JSON.stringify(h)}`)
+await q(`insert into entry_reminders(athlete_id, race_id, certainty, kind) values ($1,$2,'unknown','d7')`, [S2, pmRenn])
+;(await hull()).length === 0 ? ok('sju-dagers varselet sendes bare én gang') : fail('d7 kom to ganger')
+await q(`update races set signup_deadline = now() + interval '10 hours' where id=$1`, [pmRenn])
+h = await hull()
+h.length === 1 && h[0].kind === 'd1' ? ok('under et døgn før fristen kommer et nytt varsel, selv om sju-dagers er sendt') : fail(`entry_gaps d1: ${JSON.stringify(h)}`)
+await as(FOR, `update profiles set entry_alerts = false where id=$1`, [FOR])
+;(await hull())[0].guardian_emails.length === 0 ? ok('en forelder som har slått av varsler får ikke e-post; løperen får fortsatt')
+  : fail('forelder med varsler av står fortsatt som mottaker')
+await as(FOR, `update profiles set entry_alerts = true where id=$1`, [FOR])
+try { await as(FOR, 'select * from public.entry_gaps()'); fail('en innlogget bruker kunne lese hvem som mangler påmelding') }
+catch { ok('entry_gaps kan ikke kalles av innloggede brukere') }
+
+const pm = (await as(FOR, 'select * from public.barnas_pamelding()')).rows
+const pmRad = pm.find(r => r.race_id === pmRenn)
+pmRad && pmRad.athlete_id === S2 && pmRad.status === 'planned' && pmRad.frist_kilde === 'isonen' && !pmRad.pa_lista && !pmRad.lista_kjent
+  ? ok('forelderen ser barnets renn med frist, kilde og at påmeldingen ikke er bekreftet') : fail(`barnas_pamelding: ${JSON.stringify(pmRad)}`)
+await q(`insert into race_entries(race_id, discipline, fis_code, batch) values ($1,'GS',(select fis_code from profiles where id=$2), now())`, [pmRenn, S2])
+const s2kode = (await q('select fis_code f from profiles where id=$1', [S2]))[0].f
+if (s2kode) {
+  const etter = (await as(FOR, 'select * from public.barnas_pamelding()')).rows.find(r => r.race_id === pmRenn)
+  etter.pa_lista && etter.lista_kjent ? ok('står barnet på deltakerlista, viser oversikten det') : fail(`pa_lista: ${JSON.stringify(etter)}`)
+  ;(await hull()).length === 0 ? ok('den som står på deltakerlista får ikke varsel') : fail('varsel til en som er påmeldt')
+} else ok('S2 har ingen FIS-kode i testen - deltakerlista hoppes over')
+;(await as(H, 'select * from public.barnas_pamelding()')).rows.length === 0
+  ? ok('den som ikke er foresatt får en tom oversikt') : fail('barnas_pamelding lakk til en som ikke er foresatt')
+await q('delete from race_entries where race_id=$1', [pmRenn])
+await q('delete from entry_reminders where race_id=$1', [pmRenn])
+await q('delete from athlete_races where race_id=$1', [pmRenn])
+await q('delete from races where id=$1', [pmRenn])
+
 // --- modusen bestemmer, også i databasen ---
 await ser(H, G1) ? ok('utgangspunkt: hovedtreneren er trener for gruppa') : fail('H er ikke trener i utgangspunktet')
 await as(H, `update profiles set role = 'parent' where id = $1`, [H])

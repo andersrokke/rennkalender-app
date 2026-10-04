@@ -126,6 +126,16 @@ export function svarPa(url, o) {
   }
   if (rpc) {
     const fn = rpc[1]
+    if (fn === 'barnas_pamelding') {
+      const om = d => new Date(Date.now() + d * 864e5).toISOString()
+      const r = (i, o) => ({ athlete_id: 'lukas', athlete_name: 'Lukas Røkke', race_id: 900 + i, host_nation: 'NOR', category: 'FIS', events: '4xSL',
+        start_date: iso(dager(10 + i * 9)), end_date: iso(dager(11 + i * 9)), status: 'planned', i_lagets_plan: i % 2 === 0, frist: null, frist_kilde: null,
+        pa_lista: false, lista_kjent: false, isonen_id: null, fis_event_id: 60000 + i, ...o })
+      return [r(0, { place: 'Oslo Indoor Skiing Arena', frist: om(0.6), frist_kilde: 'isonen' }), r(1, { place: 'Geilo', frist: om(4), frist_kilde: 'trener', status: 'wish' }),
+        r(2, { place: 'Bjorli', frist: om(-2), frist_kilde: 'isonen', status: null }), r(3, { place: 'Trysil', frist: om(19), frist_kilde: 'isonen' }),
+        r(4, { place: 'Levi', host_nation: 'FIN' }), r(5, { place: 'Kvitfjell', frist: om(3), frist_kilde: 'isonen', pa_lista: true, lista_kjent: true }),
+        r(6, { place: 'Duved', host_nation: 'SWE', status: 'entered' })]
+    }
     if (fn === 'my_children') return [{ athlete_id: 'lukas', full_name: 'Lukas Røkke', team_name: 'NTG Lillehammer', club: 'NTG', fis_code: '6535004', races: 7, race_days: 12 }]
     if (/^admin_(overview|ops|activity)$/.test(fn)) return { brukere: 5, jobber: [], varsler: [], uker: [] }
     if (fn === 'admin_users') return [

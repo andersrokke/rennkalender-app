@@ -22,6 +22,7 @@ import Children from './components/Children.jsx'
 import ChildRaces from './components/ChildRaces.jsx'
 import ChildDev from './components/ChildDev.jsx'
 import GoodVenues from './components/GoodVenues.jsx'
+import Pamelding from './components/Pamelding.jsx'
 import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
@@ -117,7 +118,7 @@ export default function App() {
   const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
   const ETIKETT = {
-    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
     next: d.nextTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
@@ -194,6 +195,7 @@ export default function App() {
       {active === 'children' && <Children profile={profile} />}
       {active === 'kidraces' && <ChildRaces />}
       {active === 'kiddev' && <ChildDev />}
+      {active === 'pamelding' && <Pamelding profile={profile} onChange={reload} />}
       {active === 'steder' && <GoodVenues fisCode={profile.fis_code} gender={profile.gender} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'feedback' && <Feedback profile={profile} />}

@@ -1033,3 +1033,21 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .ts-navn{font-weight:700;padding:0;text-align:left}
 .ts-valgt td{background:var(--sel)}
 .ts-tilbake{display:flex;align-items:center;gap:12px;margin:4px 2px 14px;font-size:17px}
+
+/* Påmelding for foreldre */
+.pm-bryter{display:flex;align-items:flex-start;gap:10px;margin:14px 0 4px;padding:12px 14px;border-radius:12px;background:var(--ice);font-weight:400;cursor:pointer}
+.pm-bryter input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}
+.pm-bryter span{font-size:14px;line-height:1.4}
+.pm-tall.haster b{color:#D03B40} .pm-tall.ok b{color:#1E7A52}
+.pm-gruppe{border-left:6px solid var(--line)}
+.pm-gruppe.haster,.pm-gruppe.utgatt{border-left-color:#E5484D}
+.pm-gruppe.kommer{border-left-color:#E0A030}
+.pm-gruppe.pameldt{border-left-color:#2E9E6B}
+.pm-liste{display:flex;flex-direction:column;margin-top:8px}
+.pm-rad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 18px;padding:14px 0;border-top:1px solid var(--line)}
+.pm-hoved,.pm-status{min-width:0;display:flex;flex-direction:column;gap:4px}
+.pm-status{align-items:flex-start}
+.pm-frist{display:flex;flex-direction:column;font-size:14px;line-height:1.35}
+.pm-frist b{font-size:16px}
+.pm-gruppe.haster .pm-frist b,.pm-gruppe.utgatt .pm-frist b{color:#D03B40}
+@media (max-width:620px){ .pm-rad{grid-template-columns:1fr} }
