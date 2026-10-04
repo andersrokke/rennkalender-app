@@ -1004,7 +1004,7 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .rh-nysesong td{border-top:2px solid var(--slate)}
 
 .rh-andel{display:flex;align-items:center;gap:14px;margin:14px 0 4px;padding:14px 16px;border-radius:14px;background:var(--ice);border-left:6px solid var(--mute)}
-.rh-andel b{font-family:var(--num);font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.rh-andel b{white-space:nowrap;font-family:var(--num);font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .rh-andel span{font-size:14px;font-weight:650;line-height:1.35}
 .rh-andel em{font-style:normal;font-weight:500;color:var(--mute);font-size:13px}
 .rh-andel.bra{border-left-color:#2E9E6B} .rh-andel.middels{border-left-color:#E0A030} .rh-andel.svak{border-left-color:#E5484D}
@@ -1053,3 +1053,88 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .fv-treff{display:flex;flex-direction:column;margin-top:10px}
 .fv-treffrad{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
 .fv-treffrad>div{min-width:0}
+
+
+/* ==========================================================================
+   Forsøk: nytt utseende (html[data-look="ny"]). Slås på med ?look=ny.
+   Lyst og luftig: hvit grunn, marineblå tekst, skoggrønn som eneste
+   handlingsfarge, tynne streker i stedet for skygger, lett vekt i
+   overskriftene og små etiketter i fastbreddeskrift. Alt går gjennom de
+   samme tokenene som resten av appen, så det vanlige utseendet er urørt.
+   ========================================================================== */
+html[data-look="ny"]{
+  --ice:#F6F8F7; --snow:#FFFFFF; --panel-2:#F3F6F5; --sunken:#EEF2F0;
+  --slate:#061B31; --mute:#4D5F76; --faint:#66768A; --line:#E2E8EC;
+  --accent:#216351; --accent-soft:#E6F1EC; --accent-fg:#FFFFFF;
+  --sel:#EAF4EF; --sel-fg:#174A3C;
+  --good:#216351; --good-soft:#E6F1EC;
+  --r-xs:4px; --r-s:6px; --r-m:12px; --r-l:16px;
+  --lift-sm:none;
+  --lift:0 1px 2px rgba(6,27,49,.04), 0 10px 28px -20px rgba(6,27,49,.22);
+  --lift-lg:0 1px 2px rgba(6,27,49,.05), 0 22px 48px -28px rgba(6,27,49,.30);
+  --ui:"Google Sans Flex","Schibsted Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --num:"Google Sans Flex","Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"Google Sans Code",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+html[data-look="ny"][data-theme=dark]{
+  --ice:#07111A; --snow:#0E1B28; --panel-2:#142435; --sunken:#0A1622;
+  --slate:#E8F0F6; --mute:#9BAEC2; --faint:#8296AB; --line:#203244;
+  --accent:#63C7A6; --accent-soft:#12302A; --accent-fg:#04140F;
+  --sel:#12302A; --sel-fg:#8FE0C4;
+  --good:#63C7A6; --good-soft:#12302A;
+  --lift:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -22px rgba(0,0,0,.8);
+  --lift-lg:0 1px 2px rgba(0,0,0,.45), 0 26px 56px -30px rgba(0,0,0,.9);
+}
+html[data-look="ny"] body{font-size:15.5px;line-height:1.55}
+
+/* Toppen: ren hvit stripe, aktiv fane med grønn strek under. */
+html[data-look="ny"] .topbar{padding:16px 28px;gap:20px}
+html[data-look="ny"] .topbar h1{font-weight:600;font-size:19px;letter-spacing:-.02em}
+html[data-look="ny"] .topbar nav{gap:2px}
+html[data-look="ny"] .topbar nav button{border-radius:0;padding:8px 12px;font-weight:500;color:var(--mute);box-shadow:inset 0 -2px 0 transparent}
+html[data-look="ny"] .topbar nav button:hover{color:var(--slate)}
+html[data-look="ny"] .topbar nav button.on{background:transparent;color:var(--accent);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+
+/* Knapper og brikker: 6 px hjørner, middels vekt, grønn når valgt. */
+html[data-look="ny"] .btn{border-radius:6px;padding:9px 16px;font-weight:500}
+html[data-look="ny"] .btn.small{padding:5px 11px}
+html[data-look="ny"] .btn.link{padding:0}
+html[data-look="ny"] .btn.primary:hover{filter:brightness(1.08);border-color:var(--accent)}
+html[data-look="ny"] .chip{border-radius:6px;padding:6px 12px;font-weight:500}
+html[data-look="ny"] .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+html[data-look="ny"] .seg{border-radius:8px;background:var(--panel-2)}
+html[data-look="ny"] .seg button{border-radius:6px;font-weight:500}
+html[data-look="ny"] .seg button.on{background:var(--accent);color:var(--accent-fg)}
+html[data-look="ny"] input,html[data-look="ny"] select,html[data-look="ny"] textarea{border-radius:6px;padding:10px 12px}
+html[data-look="ny"] input:focus,html[data-look="ny"] select:focus,html[data-look="ny"] textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+
+/* Kort: strek, ikke skygge. Overskrifter med lett vekt og mer luft. */
+html[data-look="ny"] .page{padding:32px 24px}
+html[data-look="ny"] .card{border-radius:var(--r-m);padding:24px;margin-bottom:18px;box-shadow:none}
+html[data-look="ny"] .card h2{font-size:23px;font-weight:500;letter-spacing:-.025em;line-height:1.2;margin-bottom:8px}
+html[data-look="ny"] .card h3{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-top:22px}
+html[data-look="ny"] .month{font-weight:600}
+html[data-look="ny"] .race .place,html[data-look="ny"] .place{font-weight:600}
+
+/* Tall: store og lette, etiketter i fastbreddeskrift. */
+html[data-look="ny"] .kpi b{font-size:24px;font-weight:500;letter-spacing:-.03em}
+html[data-look="ny"] .kpi span,
+html[data-look="ny"] .gv-dato,
+html[data-look="ny"] .ad-table th,
+html[data-look="ny"] th,
+html[data-look="ny"] .tag{font-family:var(--mono);letter-spacing:.04em}
+html[data-look="ny"] .kpi span{font-size:11px;text-transform:uppercase}
+html[data-look="ny"] .ad-table th,html[data-look="ny"] th{font-weight:500;font-size:11px;text-transform:uppercase}
+html[data-look="ny"] .tag{border-radius:4px;font-size:10.5px;text-transform:uppercase;padding:2px 6px}
+html[data-look="ny"] .rh-andel{border-radius:var(--r-m);background:var(--panel-2)}
+html[data-look="ny"] .rh-andel b{font-weight:500}
+html[data-look="ny"] .gv-dom{border-radius:6px;font-family:var(--mono);font-weight:500;text-transform:uppercase;font-size:10.5px;letter-spacing:.05em}
+html[data-look="ny"] .rh-pst{border-radius:4px}
+html[data-look="ny"] .rh-sesongrad td{font-weight:600}
+
+/* Innlogging og oppstart følger med. */
+html[data-look="ny"] .auth{border-radius:16px;box-shadow:var(--lift)}
+html[data-look="ny"] .auth h2{font-weight:500;font-size:30px;letter-spacing:-.03em}
+html[data-look="ny"] .auth .btn.primary{border-radius:6px;font-weight:500;background:var(--accent)}
+html[data-look="ny"] .ob-card{border-radius:12px}
+html[data-look="ny"] .ob-card b{font-weight:600}
