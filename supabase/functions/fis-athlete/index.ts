@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { forOfte, bruker } from "../_shared/vakt.ts";
 
 // Fetches FIS points lists + race results from an athlete's public FIS biography page.
 // Callable from the app: supabase.functions.invoke('fis-athlete', { body: { fiscode: '423032' } })
@@ -111,6 +112,21 @@ Deno.serve(async (req) => {
   const fiscode = body.fiscode || u.searchParams.get("fiscode");
   const competitorid = body.competitorid || u.searchParams.get("competitorid");
 
+  // Én løper om gangen krever en innlogget bruker, og hver bruker får hente
+  // høyst hvert tiende sekund. Hentingen av alle løpere er nattjobben, og den
+  // kjører høyst hver halvtime. Uten dette kunne hvem som helst bruke
+  // funksjonen til å hente fra FIS i vårt navn, og fylle basen.
+  const enkelt = fiscode || competitorid;
+  if (enkelt) {
+    if (!/^\d{4,8}$/.test(String(enkelt).trim())) return json({ error: "Ugyldig kode" }, 400);
+    const hvem = await bruker(supabase, req);
+    if (!hvem) return json({ error: "Logg inn for å hente fra FIS" }, 401);
+    const stopp = await forOfte(supabase, `fis-athlete:${hvem.id}`, 10, CORS);
+    if (stopp) return stopp;
+  } else {
+    const stopp = await forOfte(supabase, "fis-athlete-alle", 1800, CORS);
+    if (stopp) return stopp;
+  }
   let targets: { fiscode?: string; competitorid?: string }[] = [];
   if (fiscode) targets = [{ fiscode: String(fiscode).trim() }];
   else if (competitorid) targets = [{ competitorid: String(competitorid).trim() }];

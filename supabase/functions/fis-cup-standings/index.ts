@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { forOfte } from "../_shared/vakt.ts";
 
 // Imports FIS cup standings for a season. One page gives Overall + every discipline column.
 // POST { cup:'EC', season:'2027', gender:'M' }  |  ?cup=EC&season=2027&gender=M[&preview=1]
@@ -39,7 +40,10 @@ Deno.serve(async (req) => {
   const u = new URL(req.url);
   let b: any = {}; if (req.method === "POST") { try { b = await req.json(); } catch { /* */ } }
   const preview = (b.preview || u.searchParams.get("preview")) === "1";
-  const season = String(b.season || u.searchParams.get("season") || "2027");
+  const stopp = await forOfte(supabase, preview ? "fis-cup-standings-preview" : "fis-cup-standings", preview ? 60 : 1800, CORS);
+  if (stopp) return stopp;
+  const sesongRaa = String(b.season || u.searchParams.get("season") || "2027");
+  const season = /^\d{4}$/.test(sesongRaa) ? sesongRaa : "2027";
   const one = b.cup || u.searchParams.get("cup");
   const jobs = one
     ? [{ cup: String(one).toUpperCase(), gender: String(b.gender || u.searchParams.get("gender") || "M").toUpperCase() }]

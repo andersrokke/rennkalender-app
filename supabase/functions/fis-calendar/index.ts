@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { lesKalender } from "./parse.js";
+import { forOfte } from "../_shared/vakt.ts";
 
 // Henter FIS-kalenderen for utvalgte cuper og holder rennene i appen i takt:
 // nye arrangementer legges inn, flyttede får ny dato, avlyste merkes. Kjøres
@@ -53,6 +54,8 @@ Deno.serve(async (req) => {
   let body: any = {};
   if (req.method === "POST") { try { body = await req.json(); } catch { /* tom kropp */ } }
   const dry = u.searchParams.get("dry") === "1" || body.dry === true;
+  const stopp = await forOfte(supabase, dry ? "fis-calendar-dry" : "fis-calendar", dry ? 60 : 600);
+  if (stopp) return stopp;
   const season = /^\d{4}$/.test(String(body.season ?? "")) ? String(body.season) : "2027";
   const start = Date.now();
   const cuper = (Array.isArray(body.categories) ? body.categories : CUPER).filter((c: string) => CUPER.includes(c));

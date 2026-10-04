@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { forOfte } from "../_shared/vakt.ts";
 import { unzipSync } from "npm:fflate@0.8.2";
 
 // Imports the latest FIS alpine points list (full list zip: hdr/com/pts files) into fis_list_athletes.
@@ -34,7 +35,11 @@ const num = (v?: string) => (v && v.trim() !== "" && !isNaN(Number(v)) ? Number(
 Deno.serve(async (req) => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const u = new URL(req.url);
+  const stopp = await forOfte(supabase, "fis-list-import", 1800);
+  if (stopp) return stopp;
   let file = u.searchParams.get("file");
+  // Filnavnet settes inn i en adresse hos FIS. Bare formen på en punktliste godtas.
+  if (file && !/^ALFP\d{1,4}F\.zip$/.test(file)) return new Response("Ugyldig filnavn", { status: 400 });
   if (!file) {
     const page = await (await fetch("https://www.fis-ski.com/DB/alpine-skiing/fis-points-lists.html", { headers: UA })).text();
     const files = [...page.matchAll(/fis-list\/(ALFP(\d+)(\d{2})F\.zip)/g)].map((m) => ({ f: m[1], n: +m[2], y: +m[3] }));

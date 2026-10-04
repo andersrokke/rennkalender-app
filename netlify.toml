@@ -11,3 +11,16 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Sikkerhetshoder. CSP-en lister det siden faktisk laster: egne filer,
+# skrifter fra Google, kartfliser fra Esri og basen hos Supabase. Kommer det
+# en ny kilde (et annet kart, en ny skrift), må den føres opp her - ellers
+# blir den stille blokkert av nettleseren.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://server.arcgisonline.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org; connect-src 'self' https://hggzbixirdaamvkjvgul.supabase.co wss://hggzbixirdaamvkjvgul.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"

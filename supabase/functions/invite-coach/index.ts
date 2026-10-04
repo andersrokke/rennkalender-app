@@ -106,5 +106,6 @@ Deno.serve(async (req) => {
   });
   if (!r.ok) return giUpp(`${r.via}: ${r.error}`);
 
-  return reply({ sent: true, to: inv.email, id: inv.id });
+  // Adressen står ikke i svaret: det går til den som kalte.
+  return reply({ sent: true, id: inv.id });
 });

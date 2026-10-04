@@ -949,3 +949,21 @@ tokenene i `src/styles.css`, under `html[data-look="ny"]`. Attributtet settes
 i `index.html`. `?look=gammel` henter tilbake det forrige utseendet i den
 nettleseren, `?look=ny` slår det nye på igjen. Alle grafer deler stil gjennom
 `src/components/Graf.jsx` (akser, rutenett, verktøytips, forklaring).
+
+## Sikkerhet (gjennomgang oktober 2026)
+
+- **Lag opprettes og endres bare gjennom funksjoner.** `teams` har ingen
+  innsettingsregel, og `teams_vern` stopper direkte endring av eier, hus,
+  skigymnas-status, «alle ser alt» og lagkode. Legger du til et nytt felt som
+  gir rettigheter, må det inn i `teams_vern`.
+- **Profilen:** `profiles_vern` stopper direkte endring av `is_admin`,
+  `team_id`, `link_code`, `is_test` og rollen trener. Klienten har
+  lesetilgang per kolonne; `link_code` er ikke med. En ny kolonne må gis
+  `grant select (...)` i en migrasjon og føres opp i `src/profil.js`, ellers
+  feiler profilen å laste. Testen «appens profilkolonner» fanger avvik.
+- **Jobbvakt:** edge-funksjonene kan kalles med den offentlige nøkkelen.
+  `ta_jobb()` gir hver jobb en minste avstand mellom kjøringene, og
+  `fis-athlete` for én løper krever innlogget bruker.
+- **Hoder:** CSP og resten ligger i `netlify.toml`. En ny ekstern kilde (kart,
+  skrift, API) må føres opp i CSP-en.
+- Klientrollene har ikke TRUNCATE, og uinnloggede har ingen skriverett.

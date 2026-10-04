@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { forOfte } from "../_shared/vakt.ts";
 
 // Collects aggregated signup counts from iSonen's public GraphQL API for Norwegian and Swedish alpine races,
 // and (for start-order prediction) matches each entry to the FIS points list by name + club.
@@ -30,6 +31,8 @@ Deno.serve(async (req) => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const url = new URL(req.url);
   const force = url.searchParams.get("relink") === "1";
+  const stopp = await forOfte(supabase, "isonen-signups", 600);
+  if (stopp) return stopp;
   const { data: races, error } = await supabase.from("races").select("id, place, start_date, end_date, isonen_id").in("host_nation", ["NOR", "SWE"]).order("start_date");
   if (error) return new Response(error.message, { status: 500 });
   const log: string[] = []; let linked = 0, counted = 0, entries = 0, matched = 0;

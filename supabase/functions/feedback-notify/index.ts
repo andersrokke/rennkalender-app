@@ -82,5 +82,7 @@ Deno.serve(async (req) => {
   });
   // Gikk det ikke, frigis saken så et nytt forsøk kan varsle.
   if (!r.ok) await frigi();
-  return reply({ sent: r.ok, via: r.via, reason: r.error, to, id: f.id });
+  // Svaret går til den som kalte, og det kan være hvem som helst. Adressene
+  // til administratorene hører ikke hjemme i det.
+  return reply({ sent: r.ok, via: r.via, reason: r.error, mottakere: to.length, id: f.id });
 });
