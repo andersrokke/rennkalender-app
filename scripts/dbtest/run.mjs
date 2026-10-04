@@ -827,6 +827,41 @@ JSON.stringify(lesbare) === JSON.stringify(iAppen) ? ok('appens profilkolonner e
 !lesbare.includes('link_code') ? ok('foreldrekoden er ikke blant kolonnene klienten får lese') : (fail('link_code er lesbar'), revFeil++)
 if (!revFeil) ok('rettighetsrevisjon: ingen avvik')
 
+// --- slett kontoen min ---
+// Til slutt, fordi brukerne forsvinner. En løper med plan, logg, foresatt og
+// favoritt sletter seg selv, og alt som hang på henne er borte.
+const SLETT = '9a9a9a9a-0000-0000-0000-000000000001', SLETTFOR = '9a9a9a9a-0000-0000-0000-000000000002'
+await c.query(`insert into auth.users(id, email, raw_user_meta_data) values
+  ($1, 'slettes@test.no', jsonb_build_object('full_name', 'Skal Slettes')), ($2, 'slettfor@test.no', jsonb_build_object('full_name', 'Blir Igjen', 'role', 'parent'))`, [SLETT, SLETTFOR])
+const slRenn = (await q(`insert into races(start_date,end_date,place,host_nation,category,events,gender)
+  values (current_date + 30, current_date + 31, 'Voss', 'NOR', 'FIS', 'SL', 'M') returning id`))[0].id
+await q(`insert into athlete_races(athlete_id, race_id, status) values ($1, $2, 'planned')`, [SLETT, slRenn])
+await q(`insert into training_sessions(athlete_id, date, discipline) values ($1, current_date, 'SL')`, [SLETT])
+await q(`insert into guardians(parent_id, athlete_id) values ($1, $2)`, [SLETTFOR, SLETT])
+await q(`insert into follows(user_id, fis_code) values ($1, '423032')`, [SLETT])
+await q(`insert into kodeforsok(user_id, slag) values ($1, 'lag')`, [SLETT])
+await as(SLETT, 'select public.slett_min_konto()')
+const rester = (await q(`select (select count(*) from auth.users where id = $1)::int as bruker, (select count(*) from profiles where id = $1)::int as profil,
+  (select count(*) from athlete_races where athlete_id = $1)::int as plan, (select count(*) from training_sessions where athlete_id = $1)::int as logg,
+  (select count(*) from guardians where athlete_id = $1)::int as foresatte, (select count(*) from follows where user_id = $1)::int as favoritter,
+  (select count(*) from kodeforsok where user_id = $1)::int as forsok`, [SLETT]))[0]
+Object.values(rester).every(n => n === 0) ? ok('slett kontoen min: bruker, profil, plan, logg, foresatte, favoritter og forsøk er borte')
+  : fail(`rester etter sletting: ${JSON.stringify(rester)}`)
+;(await q('select count(*)::int n from profiles where id = $1', [SLETTFOR]))[0].n === 1 && (await q('select count(*)::int n from races where id = $1', [slRenn]))[0].n === 1
+  ? ok('forelderen og rennet står igjen - bare den som slettet seg er borte') : fail('slettingen tok med seg mer enn brukeren')
+const husFor = (await q('select count(*)::int n from teams where id = $1', [P]))[0].n
+await q(`update profiles set is_admin = true where id = $1`, [H])
+await q(`update profiles set is_admin = false where id <> $1`, [H])
+try { await as(H, 'select public.slett_min_konto()'); fail('eneste administrator slettet seg selv') }
+catch (e) { e.message.includes('eneste administrator') ? ok('eneste administrator kan ikke slette seg selv') : fail(e.message) }
+await q(`update profiles set is_admin = true where id = $1`, [ADM])
+await q(`update profiles set is_admin = false where id = $1`, [H])
+await as(H, 'select public.slett_min_konto()')
+;(await q('select count(*)::int n from teams where id = $1', [P]))[0].n === husFor && (await q('select owner_id o from teams where id = $1', [P]))[0].o === null
+  ? ok('et lag med grupper blir stående uten eier når hovedtreneren sletter seg') : fail('huset forsvant eller har fortsatt eier')
+try { await c.query(`set role anon`); await c.query('select public.slett_min_konto()'); fail('uinnlogget kunne kalle slett_min_konto') }
+catch { ok('uinnloggede kan ikke kalle slett_min_konto') } finally { await c.query('reset role') }
+
 // Lukk klienten først; ellers svarer serveren med «terminating connection»
 // mens den stenges, og en ren kjøring ser ut som en krasj.
 await c.end()

@@ -242,6 +242,7 @@ export default function Auth() {
               <div className="fine">{L.firstTime}</div>
             </form>
           )}
+          <div className="fine" style={{ marginTop: 18 }}><a href="/personvern">{L.privacyFoot}</a></div>
         </div>
       </section>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import PassordKort from './Passord.jsx'
+import SlettKonto from './SlettKonto.jsx'
 import Lagkode from './Lagkode.jsx'
 import { fetchFromFis, fetchFromFisInBackground, fisSummary } from '../fis'
 
@@ -213,6 +214,7 @@ export default function Settings({ profile, team, isCoach, onChange }) {
           første og største på en side om lag og profil - og for en som ikke har
           lag var det alt siden inneholdt. */}
       <PassordKort />
+      <SlettKonto profile={profile} />
     </div>
   )
 }

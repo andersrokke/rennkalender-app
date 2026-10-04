@@ -26,6 +26,7 @@ import GoodVenues from './components/GoodVenues.jsx'
 import Pamelding from './components/Pamelding.jsx'
 import FavTab from './components/FavTab.jsx'
 import ChildNext from './components/ChildNext.jsx'
+import Personvern from './components/Personvern.jsx'
 import SeasonMatrix from './components/SeasonMatrix.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
@@ -122,6 +123,8 @@ export default function App() {
     await supabase.from('profiles').update(patch).eq('id', profile.id)
   }
 
+  // Personvernerklæringen er åpen for alle, også uten innlogging.
+  if (typeof location !== 'undefined' && location.pathname.replace(/\/$/, '') === '/personvern') return <Personvern />
   if (session === undefined) return <div className="page muted">{I18N.no.loading}</div>
   if (!session) return <Auth />
   if (recovery) return (
