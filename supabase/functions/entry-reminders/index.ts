@@ -54,7 +54,13 @@ function body(g: any, tilForesatt: boolean) {
   </div></body></html>`;
 }
 
+// Påminnelsene er slått av (oktober 2026). Funksjonen står igjen fordi den er
+// rullet ut, men sender ikke lenger noe: uten denne sperren kunne et kall
+// utenfra fortsatt utløst e-post. Sett PAMINNELSER_PA til true for å slå på.
+const PAMINNELSER_PA = false;
+
 Deno.serve(async (req) => {
+  if (!PAMINNELSER_PA) return new Response(JSON.stringify({ sendt: 0, merknad: "Påminnelser på e-post er slått av" }), { headers: { "content-type": "application/json" } });
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const dry = new URL(req.url).searchParams.get("dry") === "1";
   const { data: gaps, error } = await supabase.rpc("entry_gaps");

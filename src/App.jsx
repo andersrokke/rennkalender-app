@@ -195,7 +195,7 @@ export default function App() {
       {active === 'children' && <Children profile={profile} />}
       {active === 'kidraces' && <ChildRaces />}
       {active === 'kiddev' && <ChildDev />}
-      {active === 'pamelding' && <Pamelding profile={profile} onChange={reload} />}
+      {active === 'pamelding' && <Pamelding />}
       {active === 'steder' && <GoodVenues fisCode={profile.fis_code} gender={profile.gender} />}
       {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
       {active === 'feedback' && <Feedback profile={profile} />}

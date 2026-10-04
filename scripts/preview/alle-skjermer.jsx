@@ -133,7 +133,7 @@ const skjermer = [
   ['Forelder: Children', <Children profile={forelder} />],
   ['Forelder: ChildRaces', <ChildRaces />],
   ['Forelder: ChildDev', <ChildDev />],
-  ['Forelder: Pamelding', <Pamelding profile={forelder} />],
+  ['Forelder: Pamelding', <Pamelding />],
   ['Løper: GoodVenues', <GoodVenues fisCode="6535004" gender="M" />],
   ['Forelder: RaceBrowser', <RaceBrowser profile={forelder} team={null} isCoach={false} readOnly />],
   ['Forelder: Settings', <Settings profile={forelder} team={null} isCoach={false} onChange={ingen} />],

@@ -7,11 +7,9 @@ import { ordne, GRUPPER } from '../pamelding'
 // Påmelding for foreldre: alle barnas kommende renn på én side, ordnet etter
 // hva som haster. Fristen kommer fra iSonen, eller fra treneren når iSonen
 // ikke har den. «På deltakerlista» er det eneste som er bekreftet utenfra.
-export default function Pamelding({ profile, onChange }) {
+export default function Pamelding() {
   const t = useT()
   const [rader, setRader] = useState(null)
-  const [varsler, setVarsler] = useState(profile.entry_alerts !== false)
-  const [lagrer, setLagrer] = useState(false)
 
   useEffect(() => {
     supabase.rpc('barnas_pamelding').then(({ data }) => setRader(data || []))
@@ -19,13 +17,6 @@ export default function Pamelding({ profile, onChange }) {
 
   const grupper = useMemo(() => ordne(rader || []), [rader])
   const flereBarn = new Set((rader || []).map(r => r.athlete_id)).size > 1
-
-  async function settVarsler(pa) {
-    setVarsler(pa); setLagrer(true)
-    const { error } = await supabase.from('profiles').update({ entry_alerts: pa }).eq('id', profile.id)
-    setLagrer(false)
-    if (error) { setVarsler(!pa); alert(error.message) } else onChange?.()
-  }
 
   const klokke = d => new Date(d).toLocaleString(t.lang === 'en' ? 'en-GB' : 'nb-NO',
     { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -40,10 +31,6 @@ export default function Pamelding({ profile, onChange }) {
       <div className="card">
         <h2>{t('pmTitle')}</h2>
         <p className="muted">{t('pmSub')}</p>
-        <label className="pm-bryter">
-          <input type="checkbox" id="pm-varsler" checked={varsler} disabled={lagrer} onChange={e => settVarsler(e.target.checked)} />
-          <span><b>{t('pmAlerts')}</b><br /><span className="muted">{t('pmAlertsSub')}</span></span>
-        </label>
         {rader.length > 0 && (
           <div className="kpis">
             <div className="kpi pm-tall haster"><b>{grupper.haster.length + grupper.utgatt.length}</b><span>{t('pmK_haster')}</span></div>

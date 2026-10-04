@@ -1035,9 +1035,6 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 .ts-tilbake{display:flex;align-items:center;gap:12px;margin:4px 2px 14px;font-size:17px}
 
 /* Påmelding for foreldre */
-.pm-bryter{display:flex;align-items:flex-start;gap:10px;margin:14px 0 4px;padding:12px 14px;border-radius:12px;background:var(--ice);font-weight:400;cursor:pointer}
-.pm-bryter input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}
-.pm-bryter span{font-size:14px;line-height:1.4}
 .pm-tall.haster b{color:#D03B40} .pm-tall.ok b{color:#1E7A52}
 .pm-gruppe{border-left:6px solid var(--line)}
 .pm-gruppe.haster,.pm-gruppe.utgatt{border-left-color:#E5484D}

@@ -107,7 +107,7 @@ const skjermer = [
   ['Forelder: Children', <Children profile={forelder} />],
   ['Forelder: ChildRaces', <ChildRaces />],
   ['Forelder: ChildDev', <ChildDev />],
-  ['Forelder: Pamelding', <Pamelding profile={forelder} />],
+  ['Forelder: Pamelding', <Pamelding />],
   ['Løper: GoodVenues', <GoodVenues fisCode="6535004" gender="M" />],
   ['Forelder: barnets sesong (med kostnader)', <MySeason profile={lukas} team={TEAM} readOnly forelder={forelder} />],
   ['Admin (klikk gjennom fanene)', <Admin profile={{ id: 'anders', is_admin: true }} />],
