@@ -58,11 +58,18 @@ export const DEFAULT_MODE = 'car'
 
 // Nights for one race: arrive on the first day, leave on the last, so a race
 // running 2-4 Feb is two nights. Overridable per race.
-export const raceNights = (r, d) => d?.nights_override ?? dayDiff(r.start_date, r.end_date)
+// Dager løperen er på stedet før rennet for å trene der. De gir heiskort og
+// overnatting, men ingen starter.
+export const raceTrainingDays = d => Math.max(0, Number(d?.training_days) || 0)
+export const raceNights = (r, d) => (d?.nights_override ?? dayDiff(r.start_date, r.end_date)) + raceTrainingDays(d)
+// Startkontingenten i Norge er lik for alle FIS-renn. For renn i utlandet
+// gjelder satsen forelderen har satt.
+export const NORSK_STARTKONTINGENT = 350
+export const startkontingent = (r, sats) => r.host_nation === 'NOR' ? NORSK_STARTKONTINGENT : sats
 export const raceStarts = (r, d) => d?.starts_override ?? starts(r)
 // Reisemåten for et renn. Har løperen valgt selv, gjelder det. Ellers: renn
 // i lagets plan reiser man til med laget, og skigymnaset dekker reisen (ikke
-// overnattingen); renn
+// overnattingen, og ikke fly); renn
 // løperen legger inn på egen hånd kjører man til selv og betaler selv.
 export const raceMode = (d, r, lagRenn) => d?.travel_mode || (r && lagRenn?.has(r.id) ? 'bus' : DEFAULT_MODE)
 export const TRIP_COLORS = ['#FFB547', '#FF7A59', '#F55FA1', '#B08CFF', '#4D8DFF', '#2ECC8F', '#E6D64A']
@@ -154,15 +161,18 @@ export function buildTrips(races, home, settings, homeText = 'Hjem', details = {
       const d = det(r)
       return a + (mode(r) === 'flight' ? Number(d?.flight_cost || 0) : 0)
     }, 0)
-    // Entry fee and lift pass are charged per start, not per race day.
+    // Startkontingent per start: 350 kr i Norge, forelderens sats i utlandet.
+    // Heiskort per dag i bakken: renndagene pluss treningsdagene i forkant.
+    t.liftDays = t.races.reduce((a, r) => a + days(r) + raceTrainingDays(det(r)), 0)
+    t.trainingDays = t.races.reduce((a, r) => a + raceTrainingDays(det(r)), 0)
     t.cost = {
       drive: t.mode === 'car' ? Math.round(t.km * s.kmRate) : 0,
       flight: Math.round(flight),
       // Skigymnaset dekker bare selve reisen når laget drar samlet.
       // Overnatting, startkontingent og heiskort betaler løperen uansett.
       stay: t.nights * s.hotel,
-      fees: t.starts * s.entry,
-      lift: t.starts * s.lift
+      fees: t.races.reduce((a, r) => a + raceStarts(r, det(r)) * startkontingent(r, s.entry), 0),
+      lift: t.liftDays * s.lift
     }
     t.cost.total = t.cost.drive + t.cost.flight + t.cost.stay + t.cost.fees + t.cost.lift
     t.points = [homeLL(home), ...t.races.map(raceLL), homeLL(home)]
@@ -174,5 +184,6 @@ export const tripTotals = ts => ts.reduce((a, t) => ({
   km: a.km + t.km, hours: a.hours + t.hours, nights: a.nights + t.nights, days: a.days + t.daysAway,
   starts: a.starts + t.starts, drive: a.drive + t.cost.drive, flight: a.flight + t.cost.flight,
   stay: a.stay + t.cost.stay, fees: a.fees + t.cost.fees, lift: a.lift + t.cost.lift,
-  cost: a.cost + t.cost.total, busTrips: a.busTrips + (t.mode === 'bus' ? 1 : 0)
-}), { km: 0, hours: 0, nights: 0, days: 0, starts: 0, drive: 0, flight: 0, stay: 0, fees: 0, lift: 0, cost: 0, busTrips: 0 })
+  cost: a.cost + t.cost.total, busTrips: a.busTrips + (t.mode === 'bus' ? 1 : 0),
+  liftDays: a.liftDays + t.liftDays, trainingDays: a.trainingDays + t.trainingDays
+}), { liftDays: 0, trainingDays: 0, km: 0, hours: 0, nights: 0, days: 0, starts: 0, drive: 0, flight: 0, stay: 0, fees: 0, lift: 0, cost: 0, busTrips: 0 })

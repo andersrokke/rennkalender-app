@@ -4,7 +4,7 @@ import { useT } from '../i18n'
 import { fmt } from '../util'
 import {
   HOMES, DEFAULT_HOME, DEFAULT_PLAN, TRIP_COLORS, TRAVEL_MODES,
-  homeLL, buildTrips, tripTotals, nok, raceNights, raceStarts, raceMode
+  homeLL, buildTrips, tripTotals, nok, raceNights, raceStarts, raceMode, raceTrainingDays
 } from '../travel'
 
 // Trips and cost for the races handed to it. Lives at the bottom of «Min sesong»;
@@ -60,7 +60,7 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
     joins: (plan.joins || []).filter(x => x !== id)
   })
   async function saveDetail(raceId, patch) {
-    const next = { ...(details[raceId] || { race_id: raceId, travel_mode: 'car' }), ...patch }
+    const next = { ...(details[raceId] || { race_id: raceId }), ...patch }
     setDetails(d => ({ ...d, [raceId]: next }))
     await supabase.from('race_plan_details').upsert(
       { athlete_id: profile.id, race_id: raceId, ...patch, updated_at: new Date().toISOString() },
@@ -104,7 +104,7 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
               {visKost && <Kpi v={nok(tot.cost)} label={t('cost')} />}
             </div>
             {visKost && <div className="legs-sum">
-              {t('drive')} {nok(tot.drive)} · {t('flightW')} {nok(tot.flight)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)}
+              {t('drive')} {nok(tot.drive)} · {t('flightW')} {nok(tot.flight)} · {t('stay')} {nok(tot.stay)} · {t('fees')} {nok(tot.fees)} ({tot.starts} {t('startsL')}) · {t('liftL')} {nok(tot.lift)} ({tot.liftDays} {t('daysWord')})
             </div>}
             {tot.busTrips > 0 && <div className="covered">{t('coveredBySchool')}: {tot.busTrips} {t(tot.busTrips === 1 ? 'busTripWordOne' : 'busTripsWord')}</div>}
           </div>
@@ -148,6 +148,7 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
                         <span className="muted">{t(mode === 'bus' ? 'modeBus' : mode === 'flight' ? 'modeFlight' : 'modeCar')}
                           {' · '}{raceNights(r, d)} {t('nightsLabel').toLowerCase()}
                           {' · '}{raceStarts(r, d)} {t('startsL')}
+                          {raceTrainingDays(d) > 0 && <>{' · '}{raceTrainingDays(d)} {t('trainDaysShort')}</>}
                         </span>
                       ) : (
                         <>
@@ -160,8 +161,12 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
                             ))}
                           </div>
                           <label className="mini">{t('nightsLabel')}
-                            <input type="number" min="0" max="60" value={raceNights(r, d)}
+                            <input type="number" min="0" max="60" value={raceNights(r, d) - raceTrainingDays(d)}
                               onChange={e => saveDetail(r.id, { nights_override: e.target.value === '' ? null : +e.target.value })} />
+                          </label>
+                          <label className="mini">{t('trainDaysLabel')}
+                            <input type="number" min="0" max="30" value={raceTrainingDays(d)}
+                              onChange={e => saveDetail(r.id, { training_days: Math.max(0, Math.min(30, +e.target.value || 0)) })} />
                           </label>
                           <label className="mini">{t('startsLabel')}
                             <input type="number" min="0" max="40" value={raceStarts(r, d)}
@@ -183,6 +188,7 @@ export default function TripPlan({ profile, races, readOnly = false, forelder = 
       )}
 
       {noVenue > 0 && <div className="muted" style={{ padding: '0 20px 12px' }}>{noVenue} {t('noVenue')}</div>}
+      {visKost && <p className="muted" style={{ padding: '0 20px', fontSize: 13 }}>{t('costRules')}</p>}
       {visKost && (
         <div className="settings">
           <div><label>{t('kmRate')}</label><input type="number" step="0.5" value={satser.kmRate} onChange={e => lagreSats('kmRate', e.target.value)} /></div>
