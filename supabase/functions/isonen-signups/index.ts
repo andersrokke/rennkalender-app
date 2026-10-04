@@ -43,7 +43,11 @@ Deno.serve(async (req) => {
         const d = await gql("findEvents", SEARCH, { where: { sfName: "Norges Skiforbund", sport: "Alpint", startDate: String(from), endDate: String(to) }, pagination: { take: 30, skip: 0 } });
         // Norske løpere melder seg også på svenske renn i iSonen. Samlinger
         // på samme sted er ikke renn og skal ikke kobles.
-        const hit = (d.publicEventSearch.publicEvents as any[]).find((e) => matches(r.place, e) && !/samling/i.test(e.title || ""));
+        // Arrangementet må også starte i rennets egne dager. Søket hos iSonen
+        // er romsligere enn datoene vi ber om, og et barnerenn to uker senere
+        // på samme sted ble en gang koblet til et FIS-renn.
+        const iVinduet = (e: any) => { const s = Number(e.scheduleStartDateTime) || Date.parse(e.scheduleStartDateTime); return s >= from && s <= to; };
+        const hit = (d.publicEventSearch.publicEvents as any[]).find((e) => matches(r.place, e) && iVinduet(e) && !/samling/i.test(e.title || ""));
         if (!hit) { log.push(`no match ${r.place} ${r.start_date}`); continue; }
         await supabase.from("races").update({ isonen_id: hit.id, isonen_title: hit.title, signup_deadline: hit.scheduleSignUpEndDateTime }).eq("id", r.id);
         r.isonen_id = hit.id; linked++; log.push(`linked ${r.place} ${r.start_date} -> ${hit.title}`);

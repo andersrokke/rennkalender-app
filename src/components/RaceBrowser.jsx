@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useRaces } from './useRaces'
-import Filters, { initialFilter, applyFilter } from './Filters.jsx'
+import Filters, { startFilter, applyFilter } from './Filters.jsx'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import { kmFromHome, DEFAULT_HOME, nok } from '../travel'
@@ -19,7 +19,7 @@ import { setSheet } from '../theme'
 export default function RaceBrowser({ profile, team, isCoach, readOnly = false }) {
   const t = useT()
   const races = useRaces()
-  const [f, setF] = useState(initialFilter)
+  const [f, setF] = useState(startFilter)
   const [view, setView] = useState('norden')
   const [focus, setFocus] = useState(null)
   const [teamRaces, setTeamRaces] = useState(new Map())

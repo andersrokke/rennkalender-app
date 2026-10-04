@@ -1,7 +1,18 @@
 import { gruppe, ALPELAND } from '../util'
 import { useT } from '../i18n'
 
-export const initialFilter = { country: new Set(['NOR', 'SWE', 'FIN', 'EUR', ...ALPELAND, 'ALP', 'ASIA']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() }
+// Standardvalget er Norden og Europacupen: det de fleste planlegger rundt.
+// Alpelandene og Asia er mange hundre renn og slås på ved behov. En funksjon,
+// så hvert kall gir nye Set - ellers ville «Nullstill» delt dem med forrige valg.
+export const ALLE_LAND = ['NOR', 'SWE', 'FIN', 'EUR', ...ALPELAND, 'ALP', 'ASIA']
+export const startFilter = () => ({ country: new Set(['NOR', 'SWE', 'FIN', 'EUR']), gender: new Set(['W', 'M']), month: 'all', disc: new Set(), cat: new Set() })
+export const initialFilter = startFilter()
+// Er noe endret fra standarden? Da vises «Nullstill».
+export function erEndret(f) {
+  const s = startFilter()
+  const lik = (a, b) => a.size === b.size && [...a].every(x => b.has(x))
+  return !(lik(f.country, s.country) && lik(f.gender, s.gender) && f.month === s.month && f.disc.size === 0 && f.cat.size === 0)
+}
 
 export function applyFilter(races, f) {
   return races.filter(r => {
@@ -29,6 +40,9 @@ export default function Filters({ f, setF, view, setView, extra, onDone }) {
         {ALPELAND.map(n => <Chip key={n} k="country" v={n} cls="alp" label={t('land_' + n)} />)}
         <Chip k="country" v="ALP" cls="alp" label={t('alpLands')} />
         <Chip k="country" v="ASIA" cls="asia" label={t('asia')} />
+        <button type="button" className="btn small link" onClick={() => setF(p => ({ ...p, country: new Set(p.country.size === ALLE_LAND.length ? [] : ALLE_LAND) }))}>
+          {f.country.size === ALLE_LAND.length ? t('fNoLands') : t('fAllLands')}
+        </button>
       </div>
       {setView && <div className="group"><span>{t('mapF')}</span>
         {[['norden', t('nordics')], ['alpene', t('alps')], ['europa', t('europe')], ['asia', t('asia')]].map(([k, l]) => <button key={k} className={`chip ${view === k ? 'on' : ''}`} onClick={() => setView(k)}>{l}</button>)}
@@ -40,6 +54,11 @@ export default function Filters({ f, setF, view, setView, extra, onDone }) {
       <div className="group"><span>{t('disc')}</span>{['SL', 'GS', 'SG', 'DH'].map(d => <Chip key={d} k="disc" v={d} label={d} />)}</div>
       <div className="group"><span>{t('cat')}</span>{['FIS', 'ENL', 'NJR', 'NJC', 'NC', 'CIT', 'EC', 'FEC'].map(c => <Chip key={c} k="cat" v={c} label={c} />)}</div>
       {extra}
+      {erEndret(f) && (
+        <div className="group">
+          <button type="button" className="btn small" onClick={() => setF(startFilter())}>↺ {t('fReset')}</button>
+        </div>
+      )}
     </div>
   )
 }
