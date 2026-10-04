@@ -656,8 +656,8 @@ const norskRenn = (await q(`insert into races(start_date,end_date,place,host_nat
 await as(S2, `insert into athlete_races(athlete_id, race_id, team_id, status) values ($1,$2,null,'planned'), ($1,$3,null,'planned')`, [S2, utRenn, norskRenn])
 const frister = (await as(FOR, 'select race_id, frist_kilde, (frist at time zone \'Europe/Oslo\')::date - current_date as dager from public.barnas_pamelding()')).rows
 const ut = frister.find(r => r.race_id === utRenn), nor = frister.find(r => r.race_id === norskRenn)
-ut?.frist_kilde === 'forbund' && Number(ut.dager) === 26
-  ? ok('renn utenfor Norge får forbundets frist: 20 dager før start, til dagens slutt') : fail(`frist i utlandet: ${JSON.stringify(ut)}`)
+ut?.frist_kilde === 'forbund' && Number(ut.dager) === 25
+  ? ok('renn utenfor Norge får forbundets frist: 20 dager før start, til 23:59 den dagen') : fail(`frist i utlandet: ${JSON.stringify(ut)}`)
 nor && nor.frist_kilde === null ? ok('norsk renn uten frist fra iSonen eller trener står fortsatt som ukjent') : fail(`norsk frist: ${JSON.stringify(nor)}`)
 await q('delete from athlete_races where race_id in ($1,$2)', [utRenn, norskRenn])
 await q('delete from races where id in ($1,$2)', [utRenn, norskRenn])
