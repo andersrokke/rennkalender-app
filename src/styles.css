@@ -1057,17 +1057,17 @@ table.tm td:first-child em{font-style:normal;color:var(--faint);font-weight:500;
 
 /* ==========================================================================
    Forsøk: nytt utseende (html[data-look="ny"]). Slås på med ?look=ny.
-   Lyst og luftig: hvit grunn, marineblå tekst, skoggrønn som eneste
+   Lyst og luftig: hvit grunn, marineblå tekst, isblå som eneste
    handlingsfarge, tynne streker i stedet for skygger, lett vekt i
    overskriftene og små etiketter i fastbreddeskrift. Alt går gjennom de
    samme tokenene som resten av appen, så det vanlige utseendet er urørt.
    ========================================================================== */
 html[data-look="ny"]{
-  --ice:#F6F8F7; --snow:#FFFFFF; --panel-2:#F3F6F5; --sunken:#EEF2F0;
-  --slate:#061B31; --mute:#4D5F76; --faint:#66768A; --line:#E2E8EC;
-  --accent:#216351; --accent-soft:#E6F1EC; --accent-fg:#FFFFFF;
-  --sel:#EAF4EF; --sel-fg:#174A3C;
-  --good:#216351; --good-soft:#E6F1EC;
+  --ice:#F5F8FC; --snow:#FFFFFF; --panel-2:#F0F5FB; --sunken:#EAF0F8;
+  --slate:#061B31; --mute:#4D5F76; --faint:#66768A; --line:#DFE7F1;
+  --accent:#1B5FD9; --accent-soft:#E7F0FE; --accent-fg:#FFFFFF;
+  --sel:#EAF2FE; --sel-fg:#16408F;
+  --good:#1B7F56; --good-soft:#E4F3EC;
   --r-xs:4px; --r-s:6px; --r-m:12px; --r-l:16px;
   --lift-sm:none;
   --lift:0 1px 2px rgba(6,27,49,.04), 0 10px 28px -20px rgba(6,27,49,.22);
@@ -1079,15 +1079,15 @@ html[data-look="ny"]{
 html[data-look="ny"][data-theme=dark]{
   --ice:#07111A; --snow:#0E1B28; --panel-2:#142435; --sunken:#0A1622;
   --slate:#E8F0F6; --mute:#9BAEC2; --faint:#8296AB; --line:#203244;
-  --accent:#63C7A6; --accent-soft:#12302A; --accent-fg:#04140F;
-  --sel:#12302A; --sel-fg:#8FE0C4;
-  --good:#63C7A6; --good-soft:#12302A;
+  --accent:#74A9FF; --accent-soft:#122744; --accent-fg:#04101F;
+  --sel:#122744; --sel-fg:#A9CBFF;
+  --good:#5FCB9E; --good-soft:#102C22;
   --lift:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -22px rgba(0,0,0,.8);
   --lift-lg:0 1px 2px rgba(0,0,0,.45), 0 26px 56px -30px rgba(0,0,0,.9);
 }
 html[data-look="ny"] body{font-size:15.5px;line-height:1.55}
 
-/* Toppen: ren hvit stripe, aktiv fane med grønn strek under. */
+/* Toppen: ren hvit stripe, aktiv fane med blå strek under. */
 html[data-look="ny"] .topbar{padding:16px 28px;gap:20px}
 html[data-look="ny"] .topbar h1{font-weight:600;font-size:19px;letter-spacing:-.02em}
 html[data-look="ny"] .topbar nav{gap:2px}
@@ -1095,7 +1095,7 @@ html[data-look="ny"] .topbar nav button{border-radius:0;padding:8px 12px;font-we
 html[data-look="ny"] .topbar nav button:hover{color:var(--slate)}
 html[data-look="ny"] .topbar nav button.on{background:transparent;color:var(--accent);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
 
-/* Knapper og brikker: 6 px hjørner, middels vekt, grønn når valgt. */
+/* Knapper og brikker: 6 px hjørner, middels vekt, blå når valgt. */
 html[data-look="ny"] .btn{border-radius:6px;padding:9px 16px;font-weight:500}
 html[data-look="ny"] .btn.small{padding:5px 11px}
 html[data-look="ny"] .btn.link{padding:0}
@@ -1153,26 +1153,26 @@ html[data-look="ny"] .ob-card b{font-weight:600}
 .graf-forklaring span{display:inline-flex;align-items:center;gap:6px}
 .graf-forklaring i{width:10px;height:10px;border-radius:3px}
 
-/* Grunnen: et svakt grønt skjær øverst som tones ut, som i malen. */
-html[data-look="ny"] body{background:linear-gradient(180deg,#E8F2EE 0,var(--ice) 340px) no-repeat var(--ice)}
-html[data-look="ny"][data-theme=dark] body{background:linear-gradient(180deg,#0C1F1C 0,var(--ice) 340px) no-repeat var(--ice)}
+/* Grunnen: et svakt blått skjær øverst som tones ut, som i malen. */
+html[data-look="ny"] body{background:linear-gradient(180deg,#E4EEFB 0,var(--ice) 340px) no-repeat var(--ice)}
+html[data-look="ny"][data-theme=dark] body{background:linear-gradient(180deg,#0B1A30 0,var(--ice) 340px) no-repeat var(--ice)}
 html[data-look="ny"] .topbar{background:var(--snow)}
 html[data-look="ny"] .controls{background:var(--snow)}
 html[data-look="ny"] .tabbar button{font-weight:500}
 html[data-look="ny"] .tabbar button.on{font-weight:600}
 
 /* Forsiden: lys hero i stedet for nattbildet. Samme grep som resten - hvit
-   grunn, grønt skjær, marineblå tekst - så innloggingen ikke ser ut som en
+   grunn, blått skjær, marineblå tekst - så innloggingen ikke ser ut som en
    annen tjeneste enn appen bak. */
 html[data-look="ny"] .auth-wrap{background:var(--snow)}
 html[data-look="ny"] .auth-hero{background:
-    radial-gradient(900px 520px at 85% 110%, rgba(33,99,81,.20), transparent 62%),
-    radial-gradient(700px 420px at 0% 0%, rgba(33,99,81,.10), transparent 60%),
-    linear-gradient(180deg,#F4F8F6 0,#E3EFEA 100%);
+    radial-gradient(900px 520px at 85% 110%, rgba(27,95,217,.20), transparent 62%),
+    radial-gradient(700px 420px at 0% 0%, rgba(27,95,217,.10), transparent 60%),
+    linear-gradient(180deg,#F5F9FE 0,#DCE9FA 100%);
   color:var(--slate)}
 html[data-look="ny"][data-theme=dark] .auth-hero{background:
-    radial-gradient(900px 520px at 85% 110%, rgba(99,199,166,.16), transparent 62%),
-    linear-gradient(180deg,#0A1A1C 0,#07111A 100%)}
+    radial-gradient(900px 520px at 85% 110%, rgba(116,169,255,.16), transparent 62%),
+    linear-gradient(180deg,#0A1628 0,#07111A 100%)}
 html[data-look="ny"] .hero-art,html[data-look="ny"] .ob-hero svg{display:none}
 html[data-look="ny"] .brand{background:var(--snow);border:1px solid var(--line);color:var(--slate);backdrop-filter:none;
   font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.1em;border-radius:6px;padding:8px 12px}
@@ -1190,8 +1190,21 @@ html[data-look="ny"] .langsw.dark{background:var(--snow);border-color:var(--line
 html[data-look="ny"] .langsw.dark button{color:var(--mute);border-radius:6px}
 html[data-look="ny"] .langsw.dark button.on{background:var(--accent);color:var(--accent-fg)}
 /* Oppstarten etter innlogging har samme bakgrunn. */
-html[data-look="ny"] .ob-hero{background:linear-gradient(180deg,#E3EFEA 0,var(--ice) 100%)}
-html[data-look="ny"][data-theme=dark] .ob-hero{background:linear-gradient(180deg,#0C1F1C 0,var(--ice) 100%)}
+html[data-look="ny"] .ob-hero{background:linear-gradient(180deg,#DCE9FA 0,var(--ice) 100%)}
+html[data-look="ny"][data-theme=dark] .ob-hero{background:linear-gradient(180deg,#0B1A30 0,var(--ice) 100%)}
 html[data-look="ny"] .ob-hero-text{color:var(--slate)}
 html[data-look="ny"] .ob-hero-text h1{font-weight:500;text-shadow:none}
 html[data-look="ny"] .ob-hero-text p{color:var(--mute);text-shadow:none}
+
+/* Sesong mot sesong: ett kort per gren over grafen. */
+.rh-sesongkort{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:14px}
+.rh-skort{display:flex;flex-direction:column;gap:2px;padding:14px 14px 8px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--snow);min-width:0}
+.rh-skort-topp{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--mono,inherit);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+.rh-skort-gren{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.rh-skort-gren i{width:9px;height:9px;border-radius:3px}
+.rh-skort>b{font-family:var(--num);font-size:26px;font-weight:500;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:4px}
+.rh-skort-endring{font-size:12.5px;font-weight:600;color:var(--mute)}
+.rh-skort-endring em{font-style:normal;font-weight:400;color:var(--mute)}
+.rh-skort-endring.bedre{color:var(--good)}
+.rh-skort-endring.darligere{color:var(--danger)}
+.rh-skort-kurve{margin:6px -6px 0}

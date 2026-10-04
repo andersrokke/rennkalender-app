@@ -49,10 +49,14 @@ export function GrafForklaring({ payload }) {
   if (!payload?.length) return null
   return (
     <div className="graf-forklaring">
-      {payload.map(p => <span key={p.value}><i style={{ background: p.color }} />{p.value}</span>)}
+      {/* Flater som bare er toning under en linje skal ikke stå i forklaringen. */}
+      {payload.filter(p => p.type !== 'none').map(p => <span key={p.value}><i style={{ background: p.color }} />{p.value}</span>)}
     </div>
   )
 }
+
+// Tallet over et punkt i en graf med få punkter.
+export const PUNKT_ETIKETT = { fontSize: 11, fontWeight: 600, fill: 'var(--slate)', fontFamily: 'var(--mono, inherit)' }
 
 // Punkt på en linje: hvit kjerne med farget ring, så punktene synes også der
 // linjene krysser.

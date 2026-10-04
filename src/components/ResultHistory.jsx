@@ -1,12 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine } from 'recharts'
+import { ComposedChart, AreaChart, Area, Line, BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, ReferenceLine } from 'recharts'
 import { useT } from '../i18n'
-import { AKSE, Y_AKSE, RUTENETT, SESONG_ETIKETT, GrafTips, GrafForklaring, punkt, aktivtPunkt, StabelStolpe, FULLFORT, UTE } from './Graf.jsx'
+import { AKSE, Y_AKSE, RUTENETT, SESONG_ETIKETT, PUNKT_ETIKETT, Toning, GrafTips, GrafForklaring, punkt, aktivtPunkt, StabelStolpe, FULLFORT, UTE } from './Graf.jsx'
 import { fisPoints } from '../format'
 import { DISC_COLOR } from './useDevelopment'
 import {
-  berik, filtrer, sorter, sorterOppsummering, perManed, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
+  berik, filtrer, sorter, sorterOppsummering, perManed, nokkeltall, perSesongOgGren, sesongKort, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
 } from '../resultater'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'AC']
@@ -75,6 +75,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const felt = useMemo(() => sesongFelt(tid), [tid])
   // Sesonggrafen sammenligner sesonger, så den ser bort fra sesongfilteret.
   const perSesong = useMemo(() => sesongGraf(filtrer(alle, { gren, kategori })), [alle, gren, kategori])
+  const kort = useMemo(() => sesongKort(perSesong, grener.filter(medGren), mal), [perSesong, grener, gren, mal])
   const oppsummert = useMemo(() => sorterOppsummering(perSesongOgGren(utvalg), oppKol, oppRetning), [utvalg, oppKol, oppRetning])
   const maneder = useMemo(() => perManed(utvalg), [utvalg])
   const sorterOpp = k => {
@@ -151,7 +152,8 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
         {tid.length < 2 ? <p className="muted">{t('rhTooFew')}</p> : (
           <div className="chart">
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={tid} margin={{ top: 24, right: 16, left: 0, bottom: 4 }}>
+              <ComposedChart data={tid} margin={{ top: 24, right: 16, left: 0, bottom: 4 }}>
+                <defs>{grenerIUtvalg.map(g => <Toning key={g} id={`rh-ton-${g}`} farge={farge(g)} styrke={0.26} />)}</defs>
                 <CartesianGrid {...RUTENETT} />
                 {/* Ett felt per sesong med navnet øverst, annenhver skygget, og
                     en tydelig strek der en ny sesong starter. */}
@@ -174,11 +176,17 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                       ? `${p1(p.value)} p · ${t('pos')} ${p.payload.plass}`
                       : `${t('pos')} ${p.value}${p.payload[p.payload.gren] != null ? ` · ${p1(p.payload[p.payload.gren])} p` : ''}`} />} />
                 <Legend content={<GrafForklaring />} />
+                {/* Med én gren i bildet får linja toning under seg; med flere
+                    ville flatene dekket hverandre. */}
+                {grenerIUtvalg.length === 1 && grenerIUtvalg.map(g => (
+                  <Area key={'a' + g} type="linear" dataKey={yAkse === 'poeng' ? g : 'plass_' + g} stroke="none" fill={`url(#rh-ton-${g})`}
+                    baseValue="dataMax" connectNulls legendType="none" tooltipType="none" isAnimationActive={false} activeDot={false} />
+                ))}
                 {grenerIUtvalg.map(g => (
                   <Line key={g} type="linear" dataKey={yAkse === 'poeng' ? g : 'plass_' + g} name={g} stroke={farge(g)}
                     strokeWidth={2.5} dot={punkt(farge(g))} activeDot={aktivtPunkt(farge(g))} connectNulls isAnimationActive={false} />
                 ))}
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -190,23 +198,65 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
             <Brikke pa={mal === 'snitt'} onClick={() => setMal('snitt')}>{t('rhAvg')}</Brikke>
           </div>
         </div>
-        {perSesong.length === 0 ? <p className="muted">{t('rhTooFew')}</p> : (
-          <div className="chart">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={perSesong} margin={{ top: 10, right: 16, left: 0, bottom: 4 }} barGap={4} barCategoryGap="22%">
-                <CartesianGrid {...RUTENETT} />
-                <XAxis dataKey="navn" {...AKSE} />
-                <YAxis {...Y_AKSE} tickFormatter={p1} />
-                <Tooltip cursor={{ fill: 'var(--panel-2)' }} content={<GrafTips verdi={p => `${p1(p.value)} p`} />} />
-                <Legend content={<GrafForklaring />} />
-                {grener.filter(medGren).map(g => (
-                  <Bar key={g} dataKey={`${mal}_${g}`} name={g} fill={farge(g)} radius={[6, 6, 0, 0]} maxBarSize={38} isAnimationActive={false} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="muted rh-note">{t('rhLowerBetter')}</p>
+        {perSesong.length === 0 ? <p className="muted">{t('rhTooFew')}</p> : (<>
+          {/* Ett kort per gren: siste sesong, endringen fra sesongen før og en
+              liten kurve over alle sesongene. */}
+          <div className="rh-sesongkort">
+            {kort.map(k => {
+              const bedre = k.endring != null && k.endring < 0, darligere = k.endring != null && k.endring > 0
+              return (
+                <div className="rh-skort" key={k.gren}>
+                  <div className="rh-skort-topp">
+                    <span className="rh-skort-gren" style={{ color: farge(k.gren) }}><i style={{ background: farge(k.gren) }} />{k.gren}</span>
+                    <span className="rh-skort-ses">{k.sesong}</span>
+                  </div>
+                  <b>{p1(k.verdi)}</b>
+                  {k.endring == null ? <span className="rh-skort-endring">{t('rhFirstSeason')}</span> : (
+                    <span className={`rh-skort-endring ${bedre ? 'bedre' : darligere ? 'darligere' : ''}`}>
+                      {bedre ? '↓' : darligere ? '↑' : '→'} {p1(Math.abs(k.endring))} p <em>{t('rhFrom')} {k.forrigeSesong}</em>
+                    </span>
+                  )}
+                  {k.serie.length > 1 && (
+                    <div className="rh-skort-kurve">
+                      <ResponsiveContainer width="100%" height={46}>
+                        <AreaChart data={k.serie} margin={{ top: 6, right: 4, left: 4, bottom: 2 }}>
+                          <defs><Toning id={`rh-sk-${k.gren}`} farge={farge(k.gren)} styrke={0.3} /></defs>
+                          <YAxis hide reversed domain={['dataMin', 'dataMax']} />
+                          <Area type="monotone" dataKey="v" stroke={farge(k.gren)} strokeWidth={2} fill={`url(#rh-sk-${k.gren})`}
+                            baseValue="dataMax" dot={{ r: 2.5, fill: farge(k.gren), stroke: 'none' }} isAnimationActive={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
-        )}
+
+          {perSesong.length > 1 && (
+            <div className="chart">
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={perSesong} margin={{ top: 26, right: 26, left: 0, bottom: 4 }}>
+                  <defs>{grener.filter(medGren).map(g => <Toning key={g} id={`rh-ses-${g}`} farge={farge(g)} styrke={0.2} />)}</defs>
+                  <CartesianGrid {...RUTENETT} />
+                  <XAxis dataKey="navn" {...AKSE} padding={{ left: 28, right: 28 }} />
+                  {/* lavere poeng er bedre, så aksen er snudd: opp er framgang */}
+                  <YAxis reversed {...Y_AKSE} domain={['auto', 'auto']} tickFormatter={p1} />
+                  <Tooltip cursor={{ stroke: 'var(--faint)', strokeDasharray: '3 3' }} content={<GrafTips verdi={p => `${p1(p.value)} p`} />} />
+                  <Legend content={<GrafForklaring />} />
+                  {grener.filter(medGren).map((g, i, alle) => (
+                    <Area key={g} type="monotone" dataKey={`${mal}_${g}`} name={g} stroke={farge(g)} strokeWidth={3}
+                      fill={alle.length <= 2 ? `url(#rh-ses-${g})` : 'none'} baseValue="dataMax" connectNulls
+                      dot={{ r: 5, fill: 'var(--snow)', stroke: farge(g), strokeWidth: 2.5 }} activeDot={aktivtPunkt(farge(g))} isAnimationActive={false}>
+                      {alle.length <= 2 && <LabelList dataKey={`${mal}_${g}`} position="top" offset={10} formatter={p1} style={PUNKT_ETIKETT} />}
+                    </Area>
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+              <p className="muted rh-note">{t('rhUpIsBetter')}</p>
+            </div>
+          )}
+        </>)}
 
         <h3>{t('rhChartMonths')}</h3>
         <p className="muted rh-note">{t('rhChartMonthsSub')}</p>
@@ -229,6 +279,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                   <Tooltip cursor={{ fill: 'var(--panel-2)' }}
                     content={<GrafTips tittel={(k, pl) => { const r = pl?.[0]?.payload; return r ? `${r.navn} · ${r.prosent} % ${t('finished')}` : k }} />} />
                   <Bar dataKey="fullfort" name={t('finished')} stackId="a" fill={FULLFORT} maxBarSize={42} isAnimationActive={false}
+                    background={{ fill: 'var(--panel-2)', radius: 6 }}
                     shape={<StabelStolpe overst={r => !r.ute} />} />
                   <Bar dataKey="ute" name={t('rhOut')} stackId="a" fill={UTE} maxBarSize={42} isAnimationActive={false}
                     shape={<StabelStolpe />} />

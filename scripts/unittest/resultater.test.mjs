@@ -1,5 +1,5 @@
 // Resultathistorikken, testet uten å tegne noe. Kjøres med: npm run test:unit
-import { lagTabell, sorterLag } from '../../src/resultater.js'
+import { lagTabell, sorterLag, sesongKort } from '../../src/resultater.js'
 import { sesongFelt, sorterOppsummering, perManed } from '../../src/resultater.js'
 import { sesongAv, sesongNavn, berik, filtrer, sorter, nokkeltall, perSesongOgGren, poengOverTid, sesongGraf } from '../../src/resultater.js'
 
@@ -88,6 +88,12 @@ sjekk('lagtabell sortert på navn', sorterLag(lt).map(x => x.navn).join() === 'I
 sjekk('lagtabell sortert på beste poeng: lavest først, uten poeng sist', sorterLag(lt, 'bestePoeng', 'opp').map(x => x.navn).join() === 'Jonas,Ida,Åse')
 sjekk('lagtabell synkende prosent: uten starter fortsatt sist', sorterLag(lt, 'prosent', 'ned').at(-1).navn === 'Åse' && sorterLag(lt, 'prosent', 'ned')[0].navn === 'Ida')
 sjekk('lagtabell med grenfilter', lagTabell(LAG, PK, { gren: ['GS'] })[1].starter === 0)
+
+const sk = sesongKort(sg, ['SL', 'GS', 'DH'], 'beste')
+sjekk('sesongkort: ett per gren med data, DH uten data er ute', sk.map(k => k.gren).join() === 'SL,GS')
+sjekk('sesongkort: siste sesong og endring fra forrige', sk[1].verdi === 40 && sk[1].sesong === '2024/25' && sk[1].forrige === 55.5 && sk[1].endring === -15.5)
+sjekk('sesongkort: hele rekka følger med til kurven', sk[1].serie.length === 2 && sk[1].serie[0].navn === '2023/24')
+sjekk('sesongkort: én sesong gir ingen endring', sesongKort([sg[0]], ['SL'])[0].endring === null)
 
 const felt = sesongFelt(pt)
 sjekk('sesongfelt: ett per sesong, annenhver skygget', felt.length === 2 && !felt[0].skygge && felt[1].skygge)

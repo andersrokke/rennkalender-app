@@ -185,3 +185,20 @@ export function sorterLag(rader, kol = 'navn', retning = 'opp') {
     return c || a.navn.localeCompare(b.navn, 'nb')
   })
 }
+
+// Kortene over sesonggrafen: én per gren, med siste sesongs verdi, endringen
+// fra sesongen før og hele rekka til en liten kurve. Lavere poeng er bedre,
+// så en negativ endring er framgang.
+export function sesongKort(sesongrader, grener, mal = 'beste') {
+  return grener.map(g => {
+    const serie = sesongrader.map(r => ({ navn: r.navn, v: r[`${mal}_${g}`] ?? null })).filter(x => x.v != null)
+    if (!serie.length) return null
+    const siste = serie[serie.length - 1], forrige = serie.length > 1 ? serie[serie.length - 2] : null
+    return {
+      gren: g, verdi: siste.v, sesong: siste.navn,
+      forrige: forrige?.v ?? null, forrigeSesong: forrige?.navn ?? null,
+      endring: forrige ? Math.round((siste.v - forrige.v) * 100) / 100 : null,
+      serie
+    }
+  }).filter(Boolean)
+}
