@@ -102,3 +102,39 @@ export function foreslaLoper(kildenavn, lopere) {
   // Flere mulige er ikke et forslag.
   return treff.length === 1 ? treff[0].id : null
 }
+
+// Forslag til hvem hvert navn i fila er, så treneren bare må se over.
+// Rekkefølgen er fra sikrest til svakest:
+//   husket - treneren har koblet akkurat dette navnet før
+//   navn   - navnet stemmer entydig med én løper på laget
+//   bib    - løperen hadde dette startnummeret sist det ble lastet opp
+// Et startnummer kan ha byttet eier, så det brukes bare når navnet ikke gir
+// noe, og aldri for en løper som alt er funnet på en sikrere måte.
+//
+//   navn:     [{ navn, bibs: ['7'], ukjent }]
+//   lopere:   [{ id, full_name }]
+//   kjente:   { 'ETTERNAVN Fornavn': athlete_id }      fra timing_aliases
+//   sisteBib: { '7': athlete_id }                      fra forrige opplastinger
+export function foreslaKoblinger(navn, { lopere = [], kjente = {}, sisteBib = {} } = {}) {
+  const paLaget = new Set(lopere.map(l => l.id))
+  const ut = {}, brukt = new Set()
+  const sett = (n, id, grunn) => { ut[n.navn] = { id, grunn }; brukt.add(id) }
+  for (const n of navn) {
+    const id = kjente[n.navn]
+    if (id && paLaget.has(id)) sett(n, id, 'husket')
+  }
+  for (const n of navn) {
+    if (ut[n.navn] || n.ukjent) continue
+    const id = foreslaLoper(n.navn, lopere)
+    if (id && !brukt.has(id)) sett(n, id, 'navn')
+  }
+  for (const n of navn) {
+    if (ut[n.navn] || n.ukjent) continue
+    // Bare når alle løpene til navnet har samme startnummer.
+    const bibs = [...new Set(n.bibs || [])]
+    const id = bibs.length === 1 ? sisteBib[bibs[0]] : null
+    if (id && paLaget.has(id) && !brukt.has(id)) sett(n, id, 'bib')
+  }
+  for (const n of navn) if (!ut[n.navn]) ut[n.navn] = { id: null, grunn: n.ukjent ? 'utenBib' : 'ukjent' }
+  return ut
+}

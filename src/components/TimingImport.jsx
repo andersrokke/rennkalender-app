@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
-import { lesHcTiming, foreslaLoper } from '../hctiming'
+import { lesHcTiming, foreslaKoblinger } from '../hctiming'
 import { s2 } from './Timing.jsx'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'FREE']
@@ -18,6 +18,9 @@ export default function TimingImport({ team, profile, onLagret }) {
   const [lopere, setLopere] = useState([])
   const [kjente, setKjente] = useState({})       // source_name -> athlete_id fra tidligere opplastinger
   const [valg, setValg] = useState({})           // source_name -> athlete_id | BEHOLD | UTE
+  const [grunn, setGrunn] = useState({})         // source_name -> hvorfor forslaget ble gitt
+  const [grunn0, setGrunn0] = useState({})
+  const [sisteBib, setSisteBib] = useState({})   // startnummer -> løperen som hadde det sist
   const [dato, setDato] = useState(() => new Date().toISOString().slice(0, 10))
   const [gren, setGren] = useState('GS')
   const [sted, setSted] = useState('')
@@ -28,19 +31,31 @@ export default function TimingImport({ team, profile, onLagret }) {
       .then(({ data }) => setLopere(data || []))
     supabase.from('timing_aliases').select('source_name, athlete_id').eq('team_id', team.id)
       .then(({ data }) => setKjente(Object.fromEntries((data || []).map(a => [a.source_name, a.athlete_id]))))
+    // Hvem hadde hvilket startnummer sist? Nyeste først, så første treff per nummer gjelder.
+    supabase.from('timing_runs').select('bib, athlete_id, created_at').eq('team_id', team.id)
+      .not('athlete_id', 'is', null).not('bib', 'is', null).order('created_at', { ascending: false }).limit(600)
+      .then(({ data }) => {
+        const m = {}
+        ;(data || []).forEach(r => { if (!(r.bib in m)) m[r.bib] = r.athlete_id })
+        setSisteBib(m)
+      })
   }, [team.id])
 
   const navn = useMemo(() => {
     if (!lest) return []
     const m = new Map()
     lest.rader.forEach(r => {
-      const x = m.get(r.source_name) || { navn: r.source_name, lop: 0, beste: null, ukjent: r.ukjent }
+      const x = m.get(r.source_name) || { navn: r.source_name, lop: 0, beste: null, ukjent: r.ukjent, bibs: [] }
       x.lop++
+      if (r.bib) x.bibs.push(r.bib)
       if (r.run_time_ms != null && (x.beste == null || r.run_time_ms < x.beste)) x.beste = r.run_time_ms
       m.set(r.source_name, x)
     })
-    return [...m.values()].sort((a, b) => Number(a.ukjent) - Number(b.ukjent) || a.navn.localeCompare(b.navn, 'nb'))
-  }, [lest])
+    // De som trenger et blikk står øverst: ukoblede først, så de usikre.
+    // Rekkefølgen følger det første forslaget, så raden ikke hopper når treneren velger.
+    const vekt = n => ({ ukjent: 0, utenBib: 1, bib: 2, navn: 3, husket: 4 }[grunn0[n.navn]] ?? 0)
+    return [...m.values()].sort((a, b) => vekt(a) - vekt(b) || a.navn.localeCompare(b.navn, 'nb'))
+  }, [lest, grunn0])
 
   async function velgFil(e) {
     const f = e.target.files?.[0]
@@ -49,15 +64,18 @@ export default function TimingImport({ team, profile, onLagret }) {
     const res = lesHcTiming(await f.text())
     if (res.feil || !res.rader.length) { setLest(null); setFeil(t('tiUnknown')); return }
     setLest({ filnavn: f.name, ...res })
-    // Forslag: det treneren valgte sist for navnet, ellers et sikkert navnetreff.
-    const forslag = {}
-    for (const r of res.rader) {
-      if (forslag[r.source_name]) continue
-      const kjent = kjente[r.source_name]
-      forslag[r.source_name] = (kjent && lopere.some(l => l.id === kjent)) ? kjent
-        : r.ukjent ? BEHOLD : (foreslaLoper(r.source_name, lopere) || BEHOLD)
-    }
-    setValg(forslag)
+    // Forslag: det treneren valgte sist for navnet, et entydig navnetreff, eller
+    // den som hadde startnummeret sist.
+    const perNavn = new Map()
+    res.rader.forEach(r => {
+      const x = perNavn.get(r.source_name) || { navn: r.source_name, bibs: [], ukjent: r.ukjent }
+      if (r.bib) x.bibs.push(r.bib)
+      perNavn.set(r.source_name, x)
+    })
+    const fs = foreslaKoblinger([...perNavn.values()], { lopere, kjente, sisteBib })
+    const g = Object.fromEntries(Object.entries(fs).map(([n, x]) => [n, x.grunn]))
+    setValg(Object.fromEntries(Object.entries(fs).map(([n, x]) => [n, x.id || BEHOLD])))
+    setGrunn(g); setGrunn0(g)
   }
 
   function avbryt() { setLest(null); setFeil(null); if (fil.current) fil.current.value = '' }
@@ -113,21 +131,27 @@ export default function TimingImport({ team, profile, onLagret }) {
           </div>
           <h3>{t('tiWho')}</h3>
           <p className="muted">{t('tiWhoSub')}</p>
+          <p className="ti-auto">
+            <b>{navn.filter(n => valg[n.navn] !== BEHOLD && valg[n.navn] !== UTE).length} {t('ofN')} {navn.length}</b> {t('tiAutoLinked')}
+            {navn.some(n => valg[n.navn] === BEHOLD) && <> · {t('tiCheckTop')}</>}
+          </p>
           <div className="ad-scroll">
             <table className="ad-table rh-tabell">
               <thead><tr><th>{t('tiInFile')}</th><th className="tall">{t('tiRunsCol')}</th><th className="tall">{t('tmBest')}</th><th>{t('tiAthlete')}</th></tr></thead>
               <tbody>{navn.map(n => (
                 <tr key={n.navn} className={valg[n.navn] === UTE ? 'ti-ute' : ''}>
-                  <td>{n.ukjent ? <span className="muted">{t('tiNoBib')}</span> : n.navn}</td>
+                  <td>{n.ukjent ? <span className="muted">{t('tiNoBib')}</span> : n.navn}
+                    {n.bibs.length > 0 && !n.ukjent && <span className="muted ti-bib"> · {t('bibNo')} {[...new Set(n.bibs)].join(', ')}</span>}</td>
                   <td className="tall">{n.lop}</td>
                   <td className="tall">{n.beste != null ? s2(n.beste, t.lang) : '–'}</td>
                   <td>
                     <select value={valg[n.navn] || BEHOLD} aria-label={`${t('tiAthlete')}: ${n.navn}`}
-                      onChange={e => setValg(v => ({ ...v, [n.navn]: e.target.value }))}>
+                      onChange={e => { setValg(v => ({ ...v, [n.navn]: e.target.value })); setGrunn(g => ({ ...g, [n.navn]: 'valgt' })) }}>
                       <option value={BEHOLD}>{t('tiKeep')}</option>
                       <option value={UTE}>{t('tiSkip')}</option>
                       {lopere.map(l => <option key={l.id} value={l.id}>{l.full_name}</option>)}
                     </select>
+                    <span className={`ti-grunn ${grunn[n.navn] || ''}`}>{t('tiWhy_' + (grunn[n.navn] || 'ukjent'))}</span>
                   </td>
                 </tr>
               ))}</tbody>

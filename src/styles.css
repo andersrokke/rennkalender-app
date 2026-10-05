@@ -1383,3 +1383,10 @@ html[data-look="ny"] .topbar h1 .merke,.pv-merke .merke{background:url(/logo.svg
 .ti-felt{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0 14px}
 .ti-ute td{opacity:.45}
 .ti-skjema select{min-width:200px}
+
+.ti-auto{margin:6px 0 10px;font-size:14px}
+.ti-bib{font-size:12.5px}
+.ti-grunn{display:inline-block;margin-left:10px;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--panel-2);color:var(--mute);white-space:nowrap}
+.ti-grunn.husket,.ti-grunn.navn,.ti-grunn.valgt{background:var(--good-soft);color:var(--good)}
+.ti-grunn.bib{background:var(--warn-bg);color:var(--warn-fg)}
+.ti-grunn.ukjent,.ti-grunn.utenBib{background:var(--danger-soft);color:var(--danger-ink)}

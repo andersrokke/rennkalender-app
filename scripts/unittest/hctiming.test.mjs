@@ -1,5 +1,5 @@
 // Leseren for HC Timing-eksporten. Navnene her er oppdiktet.
-import { csvLinje, tidTilMs, lesHcTiming, foreslaLoper } from '../../src/hctiming.js'
+import { csvLinje, tidTilMs, lesHcTiming, foreslaLoper, foreslaKoblinger } from '../../src/hctiming.js'
 
 let feil = 0
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
@@ -43,6 +43,20 @@ sjekk('AA for Å og OE for Ø', foreslaLoper('OEVELSE Aase', LOPERE) === 'c')
 sjekk('bare fornavn til felles er ikke nok', foreslaLoper('KARI', LOPERE) === null && foreslaLoper('NILSEN Kari', LOPERE) === null)
 sjekk('ukjent navn gir ingen forslag', foreslaLoper('NO BIB INPUT @START', LOPERE) === null)
 sjekk('to mulige løpere gir ingen forslag', foreslaLoper('TESTESEN Kari', [...LOPERE, { id: 'e', full_name: 'Kari Testesen' }]) === null)
+
+const N = [
+  { navn: 'TESTESEN Kari', bibs: ['11', '11'] }, { navn: 'PROEVE Ola Nordmann', bibs: ['13'] }, { navn: 'KALLENAVN Kalle', bibs: ['7'] },
+  { navn: 'HELT Ny', bibs: ['44'] }, { navn: 'BYTTET Nummer', bibs: ['5', '6'] }, { navn: 'NO BIB INPUT @START', bibs: ['100'], ukjent: true }, { navn: 'TESTESEN Kari Annen', bibs: ['11'] }
+]
+const F = foreslaKoblinger(N, { lopere: LOPERE, kjente: { 'KALLENAVN Kalle': 'c', 'HELT Ny': 'borte' }, sisteBib: { 11: 'd', 44: 'd', 5: 'd', 100: 'd' } })
+sjekk('husket kobling går foran alt', F['KALLENAVN Kalle'].id === 'c' && F['KALLENAVN Kalle'].grunn === 'husket')
+sjekk('navnetreff når navnet ikke er sett før', F['TESTESEN Kari'].id === 'a' && F['TESTESEN Kari'].grunn === 'navn' && F['PROEVE Ola Nordmann'].id === 'b')
+sjekk('husket kobling til en som ikke er på laget lenger brukes ikke', F['HELT Ny'].id === 'd' && F['HELT Ny'].grunn === 'bib')
+sjekk('startnummeret fra sist brukes når navnet ikke gir noe', F['HELT Ny'].grunn === 'bib')
+sjekk('to ulike startnummer på samme navn gir ikke forslag på nummer', F['BYTTET Nummer'].id === null && F['BYTTET Nummer'].grunn === 'ukjent')
+sjekk('løp uten startnummer får aldri forslag', F['NO BIB INPUT @START'].id === null && F['NO BIB INPUT @START'].grunn === 'utenBib')
+sjekk('en løper foreslås ikke to ganger', Object.values(F).filter(x => x.id === 'd').length === 1 && Object.values(F).filter(x => x.id === 'a').length === 1)
+sjekk('uten noe å gå på er alt ukjent', Object.values(foreslaKoblinger(N)).every(x => x.id === null))
 
 console.log(feil ? `\n${feil} feil` : '\nAlt gikk gjennom')
 process.exit(feil ? 1 : 0)

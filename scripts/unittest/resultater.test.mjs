@@ -92,6 +92,7 @@ sjekk('lagtabell sortert på beste poeng: lavest først, uten poeng sist', sorte
 sjekk('lagtabell synkende prosent: uten starter fortsatt sist', sorterLag(lt, 'prosent', 'ned').at(-1).navn === 'Åse' && sorterLag(lt, 'prosent', 'ned')[0].navn === 'Ida')
 sjekk('lagtabell med grenfilter', lagTabell(LAG, PK, { gren: ['GS'] })[1].starter === 0)
 
+const sg = sesongGraf(R)
 const sk = sesongKort(sg, ['SL', 'GS', 'DH'], 'beste')
 sjekk('sesongkort: ett per gren med data, DH uten data er ute', sk.map(k => k.gren).join() === 'SL,GS')
 sjekk('sesongkort: siste sesong og endring fra forrige', sk[1].verdi === 40 && sk[1].sesong === '2024/25' && sk[1].forrige === 55.5 && sk[1].endring === -15.5)
@@ -104,7 +105,6 @@ sjekk('sesongfelt: skille ved 1. juli, ikke for første', felt[0].skille === nul
 sjekk('sesongfelt: klippet til dataene', felt[0].fra === pt[0].t && felt[1].til === pt.at(-1).t)
 sjekk('sesongfelt på tomt utvalg', sesongFelt([]).length === 0)
 
-const sg = sesongGraf(R)
 sjekk('sesonggraf: eldste sesong først', sg.length === 2 && sg[0].navn === '2023/24')
 sjekk('sesonggraf: beste og snitt per gren', sg[1].beste_GS === 40 && sg[1].snitt_SL === 48.2)
 
