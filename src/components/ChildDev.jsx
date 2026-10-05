@@ -3,6 +3,8 @@ import { supabase } from '../supabase'
 import { PROFIL_FELT } from '../profil'
 import { useT } from '../i18n'
 import Development from './Development.jsx'
+import GoodVenues from './GoodVenues.jsx'
+import { Underfaner } from './Utvikling.jsx'
 
 // Barnets utvikling som egen fane for foreldre: FIS-poeng over tid, tellende
 // resultater og hele resultathistorikken. Samme skjerm som løperen selv ser,
@@ -13,6 +15,7 @@ export default function ChildDev() {
   const [valgt, setValgt] = useState(null)      // athlete_id
   const [barn, setBarn] = useState(null)        // barnets profilrad
   const [lag, setLag] = useState(null)
+  const [vis, setVis] = useState('dev')
 
   useEffect(() => {
     supabase.rpc('my_children').then(({ data }) => {
@@ -52,7 +55,9 @@ export default function ChildDev() {
           </div>
         </div>
       )}
+      <Underfaner valg={[['dev', t('kiddev')], ['steder', t('steder')]]} vis={vis} onVelg={setVis} />
       {!barn ? <div className="page muted">{t('loading')}</div>
+        : vis === 'steder' ? <GoodVenues key={barn.id} fisCode={barn.fis_code} gender={barn.gender?.trim() || null} name={barn.full_name} />
         : <Development key={barn.id} profile={barn} team={lag} isCoach={false} readOnly />}
     </>
   )

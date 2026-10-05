@@ -1512,3 +1512,8 @@ html[data-look="ny"] .tag.av{border-radius:999px;font-family:inherit;text-transf
 .hjem-snarveier button:hover{border-color:var(--accent)}
 .hjem-snarveier span{font-size:13px;color:var(--mute)}
 @media (max-width:600px){.hjem-steg li{grid-template-columns:34px 1fr}.hjem-steg li .btn{grid-column:2;grid-row:auto;justify-self:start;margin-top:6px}}
+
+/* --- Underfaner inne på en side --- */
+.page.underfaner,html[data-look="ny"] .page.underfaner{display:flex;flex-wrap:wrap;gap:8px;padding-top:20px;padding-bottom:0}
+.page.underfaner + .page,html[data-look="ny"] .page.underfaner + .page{padding-top:16px}
+.barn-tittel{margin:8px 0 12px;font-size:16px}

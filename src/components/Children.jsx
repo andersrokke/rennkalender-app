@@ -5,6 +5,7 @@ import { useT } from '../i18n'
 import { fmt } from '../util'
 import MySeason from './MySeason.jsx'
 import Development from './Development.jsx'
+import ChildRaces from './ChildRaces.jsx'
 
 // Guardian view. Everything here is read-only: the RLS policies on
 // athlete_races and team_races only allow writes by the athlete or their
@@ -77,9 +78,14 @@ export default function Children({ profile }) {
   }
 
   return (
+    <>
+    {/* Rennene først: det er dem en forelder kommer for. Barna, kart og
+        reise, og kobling av nye barn står under. */}
+    {kids.length > 0 && <ChildRaces />}
     <div className="page">
       {loading ? <p className="muted">{t('loading')}</p>
         : kids.length === 0 ? <div className="card"><p className="muted">{t('childrenNone')}</p></div> : null}
+      {kids.length > 0 && <h3 className="barn-tittel">{t('children')}</h3>}
 
       {kids.map(k => (
         <div className="card child" key={k.athlete_id}>
@@ -118,5 +124,6 @@ export default function Children({ profile }) {
         ) : <button className="btn primary" onClick={() => setAdding(true)}>{t('addChild')}</button>}
       </div>
     </div>
+    </>
   )
 }

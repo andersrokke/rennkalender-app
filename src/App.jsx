@@ -3,6 +3,7 @@ import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
 import { tabForNav, navForState, rolleFlagg, fanerFor, startFane, hjemFane, menyGrupper } from './nav'
 import CoachHome from './components/CoachHome.jsx'
+import Utvikling from './components/Utvikling.jsx'
 import { supabase } from './supabase'
 import { PROFIL_FELT } from './profil'
 import Auth from './components/Auth.jsx'
@@ -22,11 +23,8 @@ import Settings from './components/Settings.jsx'
 import NoTeam from './components/NoTeam.jsx'
 import Development from './components/Development.jsx'
 import Children from './components/Children.jsx'
-import ChildRaces from './components/ChildRaces.jsx'
 import ChildDev from './components/ChildDev.jsx'
-import GoodVenues from './components/GoodVenues.jsx'
 import Pamelding from './components/Pamelding.jsx'
-import FavTab from './components/FavTab.jsx'
 import ChildNext from './components/ChildNext.jsx'
 import Personvern from './components/Personvern.jsx'
 import SeasonMatrix from './components/SeasonMatrix.jsx'
@@ -156,7 +154,7 @@ export default function App() {
   const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
   const ETIKETT = {
-    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.hjemTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    children: d.kidraces, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.hjemTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
     home: d.hjemTab, next: d.hjemTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
@@ -258,13 +256,10 @@ export default function App() {
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
       {active === 'children' && <Children profile={profile} />}
-      {active === 'kidraces' && <ChildRaces />}
       {active === 'kiddev' && <ChildDev />}
       {active === 'kidnext' && <ChildNext onOpenRace={() => setTab('children')} />}
-      {active === 'favoritter' && <FavTab profile={profile} isCoach={isCoach} />}
       {active === 'pamelding' && <Pamelding />}
-      {active === 'steder' && <GoodVenues fisCode={profile.fis_code} gender={profile.gender} />}
-      {active === 'dev' && <Development profile={profile} team={team} isCoach={isCoach} />}
+      {active === 'dev' && <Utvikling profile={profile} team={team} isCoach={isCoach} />}
       {active === 'feedback' && <Feedback profile={profile} />}
       {active === 'admin' && <Admin profile={profile} />}
       {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}

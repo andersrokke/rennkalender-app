@@ -7,9 +7,9 @@ import { fanerFor, startFane, hjemFane, menyGrupper, rolleFlagg, tabForNav, navF
 let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
-const TRENER = ['home', 'races', 'matrix', 'season', 'athletes', 'training', 'dev', 'favoritter', 'settings', 'feedback']
-const LOPER = ['next', 'mine', 'races', 'steder', 'training', 'dev', 'favoritter', 'settings', 'feedback']
-const FORELDER = ['kidnext', 'children', 'pamelding', 'kidraces', 'races', 'kiddev', 'settings', 'feedback']
+const TRENER = ['home', 'races', 'matrix', 'season', 'athletes', 'training', 'dev', 'settings', 'feedback']
+const LOPER = ['next', 'mine', 'races', 'training', 'dev', 'settings', 'feedback']
+const FORELDER = ['kidnext', 'children', 'pamelding', 'races', 'kiddev', 'settings', 'feedback']
 const trenerfaner = ['home', 'season', 'matrix', 'athletes']
 
 // Administratoren som eier et lag, i hver av de tre modusene.

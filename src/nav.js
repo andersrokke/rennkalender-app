@@ -38,18 +38,18 @@ export function menyGrupper(profile) {
   const konto = ['settings', 'feedback', ...(profile.is_admin ? ['admin'] : [])]
   if (isParent) return [
     { k: null, faner: ['kidnext'] },
-    { k: 'renn', faner: ['children', 'pamelding', 'kidraces', 'races'] },
+    { k: 'renn', faner: ['children', 'pamelding', 'races'] },
     { k: 'utvikling', faner: ['kiddev'] },
     { k: 'konto', faner: konto }]
   if (isCoach) return [
     { k: null, faner: ['home'] },
     { k: 'renn', faner: ['races', 'matrix', 'season'] },
-    { k: 'laget', faner: ['athletes', 'training', 'dev', 'favoritter'] },
+    { k: 'laget', faner: ['athletes', 'training', 'dev'] },
     { k: 'konto', faner: konto }]
   return [
     { k: null, faner: ['next'] },
-    { k: 'renn', faner: ['mine', 'races', 'steder'] },
-    { k: 'utvikling', faner: ['training', 'dev', 'favoritter'] },
+    { k: 'renn', faner: ['mine', 'races'] },
+    { k: 'utvikling', faner: ['training', 'dev'] },
     { k: 'konto', faner: konto }]
 }
 

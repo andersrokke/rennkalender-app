@@ -65,7 +65,6 @@ export default function ChildRaces() {
       <div className="row" style={{ marginBottom: 10 }}>
         <button className={`chip ${!tidligere && !gode ? 'on' : ''}`} aria-pressed={!tidligere && !gode} onClick={() => { setTidligere(false); setGode(false) }}>{t('krUpcoming')}</button>
         <button className={`chip ${tidligere ? 'on' : ''}`} aria-pressed={tidligere} onClick={() => { setTidligere(true); setGode(false) }}>{t('krPast')}</button>
-        <button className={`chip ${gode ? 'on' : ''}`} aria-pressed={gode} onClick={() => { setGode(true); setTidligere(false) }}>{t('krGood')}</button>
       </div>
       {gode && <div className="gv-inni">{kids.map(k =>
         <GoodVenues key={k.athlete_id} fisCode={k.fis_code} gender={k.gender?.trim() || null} name={k.full_name} />)}</div>}
