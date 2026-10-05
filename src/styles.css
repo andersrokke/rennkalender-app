@@ -1341,3 +1341,6 @@ html[data-look="ny"] .month em{font-family:var(--mono);font-style:normal;font-si
 .pv-tabell th,.pv-tabell td{text-align:left;padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
 .pv-tabell thead th{border-top:0;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);font-weight:600;background:var(--panel-2)}
 .pv-dato{color:var(--mute);font-size:14px;margin-top:28px}
+
+/* Merket i appen er logoen selv, ikke en farget firkant. */
+html[data-look="ny"] .topbar h1 .merke,.pv-merke .merke{background:url(/logo.svg) center/cover no-repeat}

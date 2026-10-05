@@ -1,4 +1,4 @@
-// Lager PNG-ikonene fra public/logo.svg.
+// Lager PNG-ikonene fra public/logo.svg (Alpinrace-merket).
 //
 //   npx --yes sharp-cli@5 --help   # nei - sharp brukes som bibliotek:
 //   npm i --no-save sharp && node scripts/make-icons.mjs
