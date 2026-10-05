@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
+import TimingImport from './TimingImport.jsx'
 
 // Mellomtidsanalyse: hvor i løypa tid går tapt.
 //
@@ -109,12 +110,14 @@ export function SplitTable({ table, t }) {
   )
 }
 
-export default function Timing({ profile }) {
+export default function Timing({ profile, team = null, isCoach = false }) {
   const t = useT()
   const [imports, setImports] = useState([])
   const [pick, setPick] = useState(null)
   const [runs, setRuns] = useState([])
   const [loading, setLoading] = useState(true)
+  const [nonce, setNonce] = useState(0)
+  const kanLasteOpp = isCoach && !!team
 
   // RLS avgjør hva som er synlig: egne løp, barnas, eller lagets hvis du er
   // trener. Spørringen trenger ingen ekstra filtrering.
@@ -126,11 +129,19 @@ export default function Timing({ profile }) {
       .then(({ data }) => {
         if (!alive) return
         setImports(data || [])
-        setPick(p => p || data?.[0]?.id || null)
+        setPick(p => (p && (data || []).some(i => i.id === p)) ? p : data?.[0]?.id || null)
         setLoading(false)
       })
     return () => { alive = false }
-  }, [profile.id])
+  }, [profile.id, nonce])
+
+  async function slettOkt() {
+    if (!pick || !window.confirm(t('tiDeleteConfirm'))) return
+    const { error } = await supabase.from('timing_imports').delete().eq('id', pick)
+    if (error) return alert(error.message)
+    setPick(null); setNonce(n => n + 1)
+  }
+  const etterOpplasting = id => { setPick(id); setNonce(n => n + 1) }
 
   useEffect(() => {
     if (!pick) return setRuns([])
@@ -152,7 +163,8 @@ export default function Timing({ profile }) {
   if (!imports.length) return (
     <div className="card">
       <h2>{t('tmTitle')}</h2>
-      <p className="muted">{t('tmEmpty')}</p>
+      <p className="muted">{kanLasteOpp ? t('tiEmptyCoach') : t('tmEmpty')}</p>
+      {kanLasteOpp && <TimingImport team={team} profile={profile} onLagret={etterOpplasting} />}
     </div>
   )
 
@@ -160,6 +172,7 @@ export default function Timing({ profile }) {
     <div className="card">
       <h2>{t('tmTitle')}</h2>
       <p className="muted">{t('tmSub')}</p>
+      {kanLasteOpp && <TimingImport team={team} profile={profile} onLagret={etterOpplasting} />}
 
       {imports.length > 1 && (
         <div className="row" style={{ margin: '12px 0' }}>
@@ -195,6 +208,9 @@ export default function Timing({ profile }) {
       )}
 
       {dnf > 0 && <p className="muted">{dnf} {t('tmDnf')}</p>}
+      {kanLasteOpp && pick && (
+        <div style={{ marginTop: 12 }}><button type="button" className="btn small link" onClick={slettOkt}>{t('tiDelete')}</button></div>
+      )}
     </div>
   )
 }

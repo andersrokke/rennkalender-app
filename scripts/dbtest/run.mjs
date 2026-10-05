@@ -688,6 +688,33 @@ ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) ==
 await q(`delete from follows where fis_code in ('990001','990002')`)
 await q(`delete from fis_list_athletes where fis_code in ('990001','990002')`)
 
+// --- opplasting av tidtaking ---
+// Treneren for gruppa lagrer en økt med løp; løperen ser sine egne, en annen
+// løper ser ingenting, og en trener uten rett til gruppa får ikke lagret.
+await q(`update profiles set team_id=$2, role='athlete' where id=$1`, [L1, G1])
+await q(`update profiles set role='coach' where id=$1`, [C1])
+const tiImp = (await as(C1, `insert into timing_imports(team_id, uploaded_by, filename, session_date, discipline, rows_total, rows_mapped)
+  values ($1, $2, 'hc.csv', current_date, 'GS', 2, 1) returning id`, [G1, C1])).rows[0].id
+await as(C1, `insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status, splits_ms)
+  values ($1, $2, $3, 'TESTESEN Kari', '11', 1, 46320, 'OK', '{12390,34930}'), ($1, $2, null, 'UKJENT Person', '12', 1, null, 'DNF', '{13530}')`, [tiImp, G1, L1])
+await as(C1, `insert into timing_aliases(team_id, source_name, athlete_id, created_by) values ($1, 'TESTESEN Kari', $2, $3)`, [G1, L1, C1])
+;(await as(C1, 'select count(*)::int n from timing_runs where import_id=$1', [tiImp])).rows[0].n === 2
+  ? ok('treneren lagrer en økt med tider for gruppa si') : fail('treneren ser ikke egne opplastede løp')
+const l1Ser = (await as(L1, 'select source_name from timing_runs where import_id=$1', [tiImp])).rows
+l1Ser.length === 1 && l1Ser[0].source_name === 'TESTESEN Kari' ? ok('løperen ser sine egne tider, ikke de andres') : fail(`løperen ser: ${JSON.stringify(l1Ser)}`)
+;(await as(S2, 'select count(*)::int n from timing_runs where import_id=$1', [tiImp])).rows[0].n === 0
+  ? ok('en løper utenfor gruppa ser ingen av tidene') : fail('tider lakk til en annen løper')
+await stoppetTi()
+async function stoppetTi() {
+  try { await as(S2, `insert into timing_imports(team_id, uploaded_by, filename, session_date, discipline) values ($1, $2, 'x.csv', current_date, 'GS')`, [G1, S2])
+    fail('en som ikke er trener for gruppa lastet opp tidtaking') }
+  catch { ok('bare treneren for gruppa kan laste opp tidtaking') }
+}
+await as(C1, 'delete from timing_imports where id=$1', [tiImp])
+;(await q('select count(*)::int n from timing_runs where import_id=$1', [tiImp]))[0].n === 0
+  ? ok('sletter treneren økta, forsvinner tidene med den') : fail('løp ble liggende etter at økta ble slettet')
+await q(`delete from timing_aliases where team_id=$1`, [G1])
+
 // --- herding: lag, rolle og foreldrekode ---
 const stoppet = async (hvem, sql, p) => { try { await as(hvem, sql, p); return false } catch { return true } }
 await stoppet(S2, `insert into teams(name, owner_id, parent_team_id) values ('Snik', $1, $2)`, [S2, P])
