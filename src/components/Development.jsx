@@ -308,7 +308,9 @@ export default function Development({ profile, team, isCoach, readOnly = false }
       {isCoach && shown.length === 1 && (
         <div className="gv-inni"><GoodVenues fisCode={shown[0].fis_code} gender={shown[0].gender?.trim() || null} name={shown[0].full_name} /></div>
       )}
-      <Timing profile={profile} team={team} isCoach={isCoach} />
+      {/* Løper og trener finner tidtakingen under Treningslogg. En forelder har
+          ingen treningslogg, så for dem står den her. */}
+      {readOnly && <Timing profile={profile} team={team} isCoach={false} />}
     </div>
   )
 }

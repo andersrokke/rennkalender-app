@@ -12,6 +12,7 @@ import Athletes from './components/Athletes.jsx'
 import MySeason from './components/MySeason.jsx'
 import NextRace from './components/NextRace.jsx'
 import TrainingLog from './components/TrainingLog.jsx'
+import Timing from './components/Timing.jsx'
 import Feedback from './components/Feedback.jsx'
 import Admin from './components/Admin.jsx'
 import { PassordSkjema } from './components/Passord.jsx'
@@ -239,7 +240,8 @@ export default function App() {
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {/* Egen fane, oeverst: loggen foeres ofte, og laa foer tre skjermlengder
           nede i «Min utvikling». En foresatt ser oekter, men foerer ingen. */}
-      {active === 'training' && <div className="page"><TrainingLog profile={profile} team={team} isCoach={isCoach} /></div>}
+      {active === 'training' && <div className="page"><TrainingLog profile={profile} team={team} isCoach={isCoach}
+        tidtaking={<Timing profile={profile} team={team} isCoach={isCoach} />} /></div>}
       {active === 'next' && <NextRace profile={profile} team={team} onOpenRace={() => setTab('mine')} />}
       {active === 'mine' && <MySeason profile={profile} team={team} />}
       {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}

@@ -33,7 +33,7 @@ const blank = () => ({
 })
 const num = v => (v === '' || v == null ? null : Number(v))
 
-export default function TrainingLog({ profile, team, isCoach }) {
+export default function TrainingLog({ profile, team, isCoach, tidtaking = null }) {
   const t = useT()
   const [slopes, setSlopes] = useState([])
   const [mates, setMates] = useState([])
@@ -311,6 +311,9 @@ export default function TrainingLog({ profile, team, isCoach }) {
       </form>
 
       </div>
+
+      {/* Tidtakingen hører til treningen: den står rett under skjemaet, før statistikken. */}
+      {tidtaking}
 
       <TrainingStats athleteId={who} mates={mates} isCoach={isCoach} nonce={nonce} />
     </>
