@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import { MONTHS, days } from '../util'
 import { useTeamAssign, chipState, isGoing } from './useTeamAssign'
+import { avtale } from '../avtale'
 
 const key = (a, r) => `${a}|${r}`
 
@@ -15,7 +16,7 @@ export default function SeasonMatrix({ team }) {
   const [races, setRaces] = useState([])
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ year: 'all', gender: 'all', disc: 'all', month: 'all', cat: 'all' })
+  const [vis, setVis] = useState('alle')         // alle | venterTrener | venterLoper | avtalt
   const drag = useRef(null)
 
   // Rennene i matrisa er de team_race_athletes() gir: lagets plan pluss renn
@@ -39,16 +40,13 @@ export default function SeasonMatrix({ team }) {
   }, [rows])
   const cell = (a, r) => rows.find(x => x.athlete_id === a && x.race_id === r)
 
-  // --- filters -------------------------------------------------------------
-  const years = [...new Set(athletes.map(a => a.birth_year).filter(Boolean))].sort()
-  const cats = [...new Set(races.flatMap(r => (r.category || '').split(' • ')).filter(Boolean))].sort()
-  const shownAthletes = athletes.filter(a =>
-    (f.year === 'all' || String(a.birth_year) === f.year) &&
-    (f.gender === 'all' || a.gender === f.gender))
-  const shownRaces = races.filter(r =>
-    (f.month === 'all' || r.start_date.slice(0, 7) === f.month) &&
-    (f.disc === 'all' || (r.events || '').includes(f.disc)) &&
-    (f.cat === 'all' || (r.category || '').split(' • ').includes(f.cat)))
+  // Hvor står hver rute, slik den er lagret? Brukes til tellingen og til å
+  // vise bare det som venter.
+  const lagret = (a, r) => avtale(cell(a, r))
+  const antall = k => rows.filter(x => avtale(x) === k || (k === 'avtalt' && avtale(x) === 'pameldt')).length
+  const treff = (a, r) => vis === 'alle' || lagret(a, r) === vis || (vis === 'avtalt' && lagret(a, r) === 'pameldt')
+  const shownRaces = races.filter(r => athletes.some(a => treff(a.athlete_id, r.id)))
+  const shownAthletes = athletes.filter(a => races.some(r => treff(a.athlete_id, r.id)))
 
   const months = useMemo(() => {
     const out = []
@@ -117,13 +115,6 @@ export default function SeasonMatrix({ team }) {
   if (!races.length) return <div className="page"><div className="card"><p className="muted">{t('coachEmpty')}</p></div></div>
   if (!athletes.length) return <div className="page"><div className="card"><p className="muted">{t('noAthletesYet')}</p></div></div>
 
-  const Sel = ({ k, navn, opts }) => (
-    <label>{navn}
-      <select value={f[k]} onChange={e => setF(p => ({ ...p, [k]: e.target.value }))}>
-        {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-    </label>
-  )
   const mndLang = m => MONTHS[m] || (x => x.charAt(0).toUpperCase() + x.slice(1))(new Date(m + '-15').toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' }))
   const mnd = m => mndLang(m).slice(0, 3).toLowerCase()
   const datoer = r => {
@@ -136,7 +127,9 @@ export default function SeasonMatrix({ team }) {
   const grener = r => ['SL', 'GS', 'SG', 'DH', 'AC'].filter(g => (r.events || '').includes(g))
   // Første renn i hver måned får en strek foran seg, så månedene skilles nedover også.
   const forst = new Set(shownRaces.filter((r, i) => i === 0 || shownRaces[i - 1].start_date.slice(0, 7) !== r.start_date.slice(0, 7)).map(r => r.id))
-  const KORT = { wish: t('st_wish'), planned: t('st_planned'), entered: t('st_entered') + ' ✓', unavailable: t('st_unavailable') }
+  const KORT = { venterTrener: t('mxWants'), venterLoper: t('mxWaitAthlete'), avtalt: t('mxAgreed'), pameldt: t('st_entered') + ' ✓', kanIkke: t('st_unavailable') }
+  const VALG = [['alle', t('mxAll'), rows.filter(x => avtale(x) !== 'ingen').length], ['venterTrener', t('mxWaitYou'), antall('venterTrener')],
+    ['venterLoper', t('mxWaitAthlete'), antall('venterLoper')], ['avtalt', t('mxAgreed'), antall('avtalt')]]
 
   return (
     <div className="mx-page">
@@ -145,29 +138,24 @@ export default function SeasonMatrix({ team }) {
           <h2>{t('mxTitle')}</h2>
           <p>{t('matrixHint')}</p>
         </div>
-        <div className="mx-tall">
-          <div><b>{shownAthletes.length}</b><span>{t('athletesWord')}</span></div>
-          <div><b>{shownRaces.length}</b><span>{t('racesN')}</span></div>
-          <div><b>{draft ? draft.size : 0}</b><span>{t('mxAssigned')}</span></div>
-        </div>
       </div>
 
-      <div className="mx-filter">
-        <Sel k="year" navn={t('mxYear')} opts={[['all', t('allYears')], ...years.map(y => [String(y), String(y)])]} />
-        <Sel k="gender" navn={t('mxGender')} opts={[['all', t('allGenders')], ['W', t('women')], ['M', t('men')]]} />
-        <span className="skille" />
-        <Sel k="month" navn={t('mxMonth')} opts={[['all', t('allM')], ...[...new Set(races.map(r => r.start_date.slice(0, 7)))].sort().map(m => [m, mndLang(m)])]} />
-        <Sel k="disc" navn={t('disc')} opts={[['all', t('mxAll')], ...['SL', 'GS', 'SG', 'DH'].map(d => [d, d])]} />
-        <Sel k="cat" navn={t('cat')} opts={[['all', t('mxAll')], ...cats.map(c => [c, c])]} />
+      <div className="mx-valg" role="tablist">
+        {VALG.map(([k, navn, n]) => (
+          <button key={k} type="button" role="tab" aria-selected={vis === k}
+            className={`mx-chip ${k}${vis === k ? ' on' : ''}`} onClick={() => setVis(k)}>
+            <b>{n}</b>{navn}
+          </button>
+        ))}
       </div>
 
       <div className="mx-card">
         <div className="mx-legend">
-          <span><i style={{ background: 'color-mix(in srgb, var(--st-wish) 26%, var(--snow))' }} />{t('mxLegWish')}</span>
-          <span><i style={{ background: 'color-mix(in srgb, var(--st-planned) 20%, var(--snow))' }} />{t('st_planned')}</span>
-          <span><i style={{ background: 'var(--st-planned)' }} />{t('st_entered')}</span>
-          <span><i style={{ background: 'color-mix(in srgb, var(--st-unavailable) 30%, var(--snow))' }} />{t('st_unavailable')}</span>
-          <span><i className="tildelt" />{t('mxLegAssigned')}</span>
+          <span><i className="venterTrener" />{t('mxLegWants')}</span>
+          <span><i className="venterLoper" />{t('mxLegWaitAthlete')}</span>
+          <span><i className="avtalt" />{t('mxLegAgreed')}</span>
+          <span><i className="pameldt" />{t('st_entered')}</span>
+          <span><i className="kanIkke" />{t('st_unavailable')}</span>
         </div>
 
         {(added.length > 0 || removed.length > 0) && (
@@ -211,12 +199,14 @@ export default function SeasonMatrix({ team }) {
                       const c = cell(a.athlete_id, r.id)
                       const st = chipState(c)
                       const on = draft?.has(key(a.athlete_id, r.id))
+                      // Ruta viser hvor dere står hvis utkastet lagres.
+                      const av = avtale({ status: c?.status ?? null, assigned: !!on, answered: c?.answered })
                       return (
-                        <td key={r.id} className={`mcell ${st}${on ? ' assigned' : ''}${forst.has(r.id) ? ' forst' : ''}`}
-                          title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}`}
+                        <td key={r.id} className={`mcell ${av}${st === 'unavailable' ? ' unavailable' : ''}${forst.has(r.id) ? ' forst' : ''}`}
+                          title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}${c?.athlete_note ? ' · «' + c.athlete_note + '»' : ''}`}
                           onPointerDown={() => onDown(a.athlete_id, r.id)}
                           onPointerEnter={() => onEnter(a.athlete_id, r.id)}>
-                          <span className="mpill">{KORT[st] || (on ? t('mxAssignedCell') : '+')}</span>
+                          <span className="mpill">{KORT[av] || '+'}{c?.athlete_note && <i className="mnote" aria-label={t('note')} />}</span>
                         </td>
                       )
                     })}

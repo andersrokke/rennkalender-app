@@ -140,7 +140,8 @@ export function svarPa(url, o) {
     if (fn === 'team_race_athletes') return LOPERE.flatMap(p => TEAM_RACES.slice(0, 9).map((tr, i) => {
       const ar = ATHLETE_RACES.find(x => x.athlete_id === p.id && x.race_id === tr.race_id)
       return { athlete_id: p.id, full_name: p.full_name, birth_year: p.birth_year, gender: p.gender, race_id: tr.race_id,
-        status: ar?.status ?? null, assigned: !!ar && i % 3 === 0 && ar.status !== 'unavailable' }
+        status: ar?.status ?? (i % 4 === 1 ? 'planned' : null), assigned: (!!ar && i % 3 === 0 && ar.status !== 'unavailable') || (!ar && i % 4 === 1),
+        answered: !!ar, athlete_note: ar?.athlete_note ?? null, coach_note: null }
     }))
     if (fn === 'favoritt_tabell') return [
       { fis_code: '6535001', navn: 'Ida Moen', club: 'NTG', nation: 'NOR', birth_year: 2009, gender: 'W', sl: 62.1, gs: 55.4, sg: null, dh: null, egen: true, favoritt: false },

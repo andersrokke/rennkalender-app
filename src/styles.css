@@ -1424,3 +1424,37 @@ html[data-look="ny"] .matrix .rdate,html[data-look="ny"] .matrix .aload{font-siz
 html[data-look="ny"] .matrix .aname{font-size:14px;font-weight:650}
 html[data-look="ny"] .matrix .mhead,html[data-look="ny"] .matrix .corner{font-size:12px;font-weight:600}
 @media (min-width:1024px){.mx-page{padding:16px 40px 56px}}
+
+/* --- Avtale om renn: samme farger hos trener, løper og forelder --- */
+:root{--av-vt:#F2C063;--av-vl:#2F6FE0;--av-ok:#15803D}
+.tag.av{margin-left:0;font-weight:600;border-radius:999px;padding:3px 10px;text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px}
+html[data-look="ny"] .tag.av{border-radius:999px;font-family:inherit;text-transform:none;letter-spacing:0;font-size:12px;padding:3px 10px}
+.tag.av.venterTrener{background:color-mix(in srgb, var(--av-vt) 38%, var(--snow));color:var(--ink)}
+.tag.av.venterLoper{background:color-mix(in srgb, var(--av-vl) 12%, var(--snow));color:var(--av-vl);box-shadow:inset 0 0 0 1.5px var(--av-vl)}
+.tag.av.avtalt{background:color-mix(in srgb, var(--av-ok) 18%, var(--snow));color:var(--ink)}
+.tag.av.pameldt{background:var(--av-ok);color:#fff}
+.tag.av.kanIkke{background:color-mix(in srgb, var(--st-unavailable) 16%, var(--snow));color:var(--ink)}
+.controls .tag.av{margin-left:8px}
+.mx-valg{display:flex;flex-wrap:wrap;gap:10px}
+.mx-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--snow);color:var(--ink);font:inherit;font-size:13.5px;cursor:pointer}
+.mx-chip b{min-width:26px;padding:2px 7px;border-radius:999px;background:var(--panel-2);font-variant-numeric:tabular-nums;text-align:center}
+.mx-chip.venterTrener b{background:color-mix(in srgb, var(--av-vt) 45%, var(--snow))}
+.mx-chip.venterLoper b{background:color-mix(in srgb, var(--av-vl) 16%, var(--snow));color:var(--av-vl)}
+.mx-chip.avtalt b{background:color-mix(in srgb, var(--av-ok) 20%, var(--snow))}
+.mx-chip.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.mx-legend i.venterTrener{background:color-mix(in srgb, var(--av-vt) 45%, var(--snow))}
+.mx-legend i.venterLoper{background:color-mix(in srgb, var(--av-vl) 10%, var(--snow));box-shadow:inset 0 0 0 1.5px var(--av-vl)}
+.mx-legend i.avtalt{background:color-mix(in srgb, var(--av-ok) 20%, var(--snow))}
+.mx-legend i.pameldt{background:var(--av-ok)}
+.mx-legend i.kanIkke{background:color-mix(in srgb, var(--st-unavailable) 30%, var(--snow))}
+.matrix .mcell .mpill{position:relative}
+.matrix .mcell.ingen .mpill{border-color:var(--line)}
+.matrix .mcell.ingen:hover .mpill{border-color:var(--av-vl);color:var(--av-vl)}
+.matrix .mcell.venterTrener .mpill{background:color-mix(in srgb, var(--av-vt) 45%, var(--snow));color:var(--ink)}
+.matrix .mcell.venterLoper .mpill{background:color-mix(in srgb, var(--av-vl) 10%, var(--snow));color:var(--av-vl);border:1.5px solid var(--av-vl)}
+.matrix .mcell.avtalt .mpill{background:color-mix(in srgb, var(--av-ok) 20%, var(--snow));color:var(--ink)}
+.matrix .mcell.pameldt .mpill{background:var(--av-ok);color:#fff}
+.matrix .mcell.kanIkke .mpill{color:var(--mute);background:repeating-linear-gradient(45deg,transparent,transparent 5px,
+    color-mix(in srgb, var(--st-unavailable) 22%, transparent) 5px,color-mix(in srgb, var(--st-unavailable) 22%, transparent) 10px)}
+.matrix .mnote{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--ink);border:2px solid var(--snow)}

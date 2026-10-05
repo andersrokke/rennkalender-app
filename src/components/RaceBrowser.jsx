@@ -61,7 +61,7 @@ export default function RaceBrowser({ profile, team, isCoach, readOnly = false }
     if (mine.has(r.id)) await supabase.from('athlete_races').delete().eq('id', mine.get(r.id))
     else await supabase.from('athlete_races').upsert({
       athlete_id: profile.id, race_id: r.id, team_id: team?.id ?? null,
-      status: team ? 'wish' : 'planned', updated_at: new Date().toISOString()
+      status: team ? 'wish' : 'planned', updated_at: new Date().toISOString(), answered_at: new Date().toISOString()
     }, { onConflict: 'athlete_id,race_id' })
     load()
   }

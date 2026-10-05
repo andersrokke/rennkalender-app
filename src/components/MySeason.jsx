@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { avtaleFraRad } from '../avtale'
 import { supabase } from '../supabase'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
@@ -63,12 +64,14 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
   const counts = {
     total: merged.length,
     wish: merged.filter(x => x.mine?.status === 'wish').length,
-    entered: merged.filter(x => x.mine?.status === 'entered').length
+    entered: merged.filter(x => x.mine?.status === 'entered').length,
+    venterMeg: merged.filter(x => avtaleFraRad(x.mine) === 'venterLoper').length,
+    venterTrener: merged.filter(x => avtaleFraRad(x.mine) === 'venterTrener').length
   }
 
   async function setStatus(rid, status) {
     await supabase.from('athlete_races').upsert(
-      { athlete_id: profile.id, race_id: rid, team_id: team?.id ?? null, status, updated_at: new Date().toISOString() },
+      { athlete_id: profile.id, race_id: rid, team_id: team?.id ?? null, status, updated_at: new Date().toISOString(), answered_at: new Date().toISOString() },
       { onConflict: 'athlete_id,race_id' })
     load()
   }
@@ -83,7 +86,9 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
     <>
       <div className="controls"><span className="muted">
         <b>{counts.total}</b> {t('seasonCount')} · {counts.wish} {t('wishedN')} · {counts.entered} {t('enteredN')}
-      </span></div>
+      </span>
+      {counts.venterMeg > 0 && <span className="tag av venterLoper">{counts.venterMeg} {t(readOnly ? 'avWaitAthleteN' : 'avWaitYouN')}</span>}
+      {counts.venterTrener > 0 && <span className="tag av venterTrener">{counts.venterTrener} {t('avWaitCoachN')}</span>}</div>
       <div className="split">
         <RaceMap races={races} focus={focus} routes={routes} home={homePt} />
         <div className="list">
@@ -97,10 +102,9 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
               return (
                 <div>
                   <div className="race-badges">
-                    {row?.mine?.assigned_by
-                      ? <span className="tag assigned">{t('assignedBadge')}</span>
+                    {avtaleFraRad(row?.mine) !== 'ingen'
+                      ? <span className={`tag av ${avtaleFraRad(row?.mine)}`}>{t(`av_${avtaleFraRad(row?.mine)}_${readOnly ? 'f' : 'l'}`)}</span>
                       : row?.fromTeam && <span className="tag team">{t('teamPlanBadge')}</span>}
-                    {status === 'entered' && <span className="tag entered">{t('st_entered')}</span>}
                   </div>
                   {tr && (tr.coach_note || tr.entry_deadline || tr.travel_info) &&
                     <div className="muted">{tr.entry_deadline && <>{t('deadline')} {tr.entry_deadline} · </>}{tr.coach_note}{tr.travel_info && <> · {tr.travel_info}</>}</div>}

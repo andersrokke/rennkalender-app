@@ -22,7 +22,7 @@
     "test:ui": "cp scripts/preview/preview.html preview.html && sed \"s#\\.\\./\\.\\./src/#./#g\" scripts/preview/alle-skjermer.jsx > src/preview-main.jsx && echo \"Åpne /preview.html i dev-serveren og les window.__feil og window.__konsoll\"",
     "test:ui:data": "cp scripts/preview/preview.html preview.html && cp scripts/preview/testdata.js src/preview-testdata.js && sed -e \"s#\\.\\./\\.\\./src/#./#g\" -e \"s#./testdata.js#./preview-testdata.js#\" scripts/preview/alle-skjermer-med-data.jsx > src/preview-main.jsx && echo \"Åpne /preview.html i dev-serveren\"",
     "test:ui:clean": "rm -f preview.html src/preview-main.jsx src/preview-testdata.js",
-    "test:unit": "node scripts/unittest/nav.test.mjs && node scripts/unittest/resultater.test.mjs && node scripts/unittest/fis-kalender.test.mjs && node scripts/unittest/anbefalt.test.mjs && node scripts/unittest/pamelding.test.mjs && node scripts/unittest/favoritter.test.mjs && node scripts/unittest/reise.test.mjs && node scripts/unittest/hctiming.test.mjs"
+    "test:unit": "node scripts/unittest/nav.test.mjs && node scripts/unittest/resultater.test.mjs && node scripts/unittest/fis-kalender.test.mjs && node scripts/unittest/anbefalt.test.mjs && node scripts/unittest/pamelding.test.mjs && node scripts/unittest/favoritter.test.mjs && node scripts/unittest/reise.test.mjs && node scripts/unittest/hctiming.test.mjs && node scripts/unittest/avtale.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

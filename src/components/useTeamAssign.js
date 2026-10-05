@@ -41,7 +41,7 @@ export function chipState(r) {
 }
 // The coach's proposal alone is not an answer: a row created by assign_race
 // sits at 'planned' with assigned = true until the athlete says something.
-export const hasAnswered = r => !!r && r.status != null && !(r.assigned && r.status === 'planned')
+export const hasAnswered = r => !!r && r.status != null && (r.answered ?? !(r.assigned && r.status === 'planned'))
 // Who is actually going, however that came about.
 export const GOING = ['planned', 'entered', 'wish']
 export const isGoing = r => !!r && GOING.includes(r.status)

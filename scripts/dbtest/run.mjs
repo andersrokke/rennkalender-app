@@ -626,6 +626,21 @@ etterOnske.some(r => r.athlete_id === L1 && r.status === 'wish' && !r.assigned)
   : fail(`treneren ser ikke løperens renn: ${JSON.stringify(etterOnske)}`)
 ;(await q('select count(*)::int n from team_races where team_id=$1 and race_id=$2', [l1lag, rennId]))[0].n === 0
   ? ok('rennet er fortsatt ikke i lagets plan - lagkameratene får det ikke i sin sesong') : fail('løperens renn havnet i lagets plan')
+// Dialogen: løperen har svart, treneren ikke. Løperen kan ikke godkjenne seg selv.
+etterOnske.some(r => r.athlete_id === L1 && r.answered === true) ? ok('løperens eget valg teller som svar') : fail('ønsket ble ikke regnet som svar')
+await as(L1, `update athlete_races set assigned_by=$1, coach_note='ok fra trener' where athlete_id=$1 and race_id=$2`, [L1, rennId])
+{ const r = (await q('select assigned_by a, coach_note n from athlete_races where athlete_id=$1 and race_id=$2', [L1, rennId]))[0]
+  r.a === null && r.n === null ? ok('løperen kan ikke sette trenerens godkjenning eller notat selv') : fail(`løperen skrev trenerens felt: ${JSON.stringify(r)}`) }
+await as(l1trener, 'select public.assign_race($1,$2)', [rennId, [L1]])
+;(await hosTrener()).some(r => r.athlete_id === L1 && r.assigned && r.answered && r.status === 'wish')
+  ? ok('trener sier ja til et ønske: begge har svart') : fail('ja til ønske ga ikke avtale')
+await as(L1, `delete from athlete_races where athlete_id=$1 and race_id=$2`, [L1, rennId])
+await as(l1trener, 'select public.assign_race($1,$2)', [rennId, [L1]])
+;(await hosTrener()).some(r => r.athlete_id === L1 && r.assigned && r.answered === false)
+  ? ok('trener setter opp en løper: venter på løperens svar') : fail('tildeling ble regnet som løperens svar')
+await as(L1, `update athlete_races set status='planned' where athlete_id=$1 and race_id=$2`, [L1, rennId])
+;(await hosTrener()).some(r => r.athlete_id === L1 && r.assigned && r.answered === true)
+  ? ok('løperen bekrefter, og tildelingen står') : fail('bekreftelsen ble ikke registrert, eller tildelingen forsvant')
 await as(L1, `update athlete_races set status='unavailable' where athlete_id=$1 and race_id=$2`, [L1, rennId])
 ;(await hosTrener()).length === 0 ? ok('«kan ikke» alene gjør ikke rennet til lagets sak') : fail('«kan ikke» ga treneren et renn')
 await as(L1, `delete from athlete_races where athlete_id=$1 and race_id=$2`, [L1, rennId])

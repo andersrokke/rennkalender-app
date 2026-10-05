@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { avtaleFraRad } from '../avtale'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
 import RaceList from './RaceList.jsx'
@@ -118,13 +119,14 @@ export default function ChildRaces() {
                 return (
                   <div>
                     <div className="race-badges">
-                      {mine?.status
-                        ? <span className={`tag ${mine.status === 'entered' ? 'entered' : 'team'}`}>{t('st_' + mine.status)}</span>
+                      {avtaleFraRad(mine) !== 'ingen'
+                        ? <span className={`tag av ${avtaleFraRad(mine)}`}>{t(`av_${avtaleFraRad(mine)}_f`)}</span>
                         : <span className="tag team">{t('teamPlanBadge')}</span>}
                     </div>
                     {tr && (tr.entry_deadline || tr.coach_note || tr.travel_info) &&
                       <div className="muted">{tr.entry_deadline && <>{t('deadline')} {tr.entry_deadline} · </>}{tr.coach_note}{tr.travel_info && <> · {tr.travel_info}</>}</div>}
-                    {mine?.athlete_note && <div className="muted">{mine.athlete_note}</div>}
+                    {mine?.athlete_note && <div className="muted">«{mine.athlete_note}»</div>}
+                    {mine?.coach_note && <div className="muted">{t('coachSays')} {mine.coach_note}</div>}
                   </div>
                 )
               }} />
