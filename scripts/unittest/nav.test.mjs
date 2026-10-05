@@ -2,7 +2,7 @@
 //
 // Finnes fordi modusbyttet en gang bare byttet en etikett: en administrator
 // som eide et lag og valgte «forelder», fikk trenerens faner likevel.
-import { fanerFor, rolleFlagg } from '../../src/nav.js'
+import { fanerFor, rolleFlagg, tabForNav, navForState } from '../../src/nav.js'
 
 let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -35,6 +35,11 @@ sjekk('ingen uten admin får admin-fanen', ['parent', 'athlete', 'coach'].every(
 sjekk('rollen alene bestemmer flaggene', lik(rolleFlagg({ role: 'parent' }), { isCoach: false, isParent: true })
   && lik(rolleFlagg({ role: 'coach' }), { isCoach: true, isParent: false })
   && lik(rolleFlagg({ role: 'athlete' }), { isCoach: false, isParent: false }))
+
+// Bunnmenyen på mobil: hver knapp må føre til en skjerm.
+sjekk('kart og filtre tar deg til rennkalenderen', tabForNav('map') === 'races' && tabForNav('filter') === 'races' && tabForNav('list') === 'races')
+sjekk('min plan: sesongen for løper og trener, barna for forelder', tabForNav('plan') === 'mine' && tabForNav('plan', { isParent: true }) === 'children')
+sjekk('kart er bare markert når man står i rennkalenderen', navForState('races', 'map') === 'map' && navForState('next', 'map') !== 'map')
 
 console.log(feil ? `\n${feil} FEILET` : '\nAlt gikk gjennom')
 process.exit(feil ? 1 : 0)

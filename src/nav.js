@@ -8,13 +8,15 @@ export function tabForNav(key, { isParent = false } = {}) {
   // «Min plan» is no longer its own tab: the plan lives inside «Min sesong»,
   // and a guardian's equivalent is «Mine barn».
   if (key === 'plan') return isParent ? 'children' : 'mine'
-  if (key === 'list') return 'races'
+  // Kart og filtre hører til rennkalenderen. Før byttet de ikke fane, så fra
+  // «Neste renn» eller «Min utvikling» skjedde det ingenting når man trykket.
+  if (key === 'list' || key === 'map' || key === 'filter') return 'races'
   return null
 }
 
 // Which bottom-bar button should read as active for a given tab and pane.
 export function navForState(activeTab, pane, { isParent = false } = {}) {
-  if (pane === 'map') return 'map'
+  if (pane === 'map' && activeTab === 'races') return 'map'
   if (activeTab === 'mine' || activeTab === 'next' || activeTab === 'training'
     || (isParent && (activeTab === 'children' || activeTab === 'kidnext'))) return 'plan'
   return 'list'

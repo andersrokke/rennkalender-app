@@ -164,16 +164,15 @@ export default function App() {
   const active = tabs.some(([k]) => k === tab) ? tab : tabs[0][0]
 
   const pickPane = k => {
-    if (k === 'filter') return setSheet(true)
-    if (k === 'map') setPane('map')
-    else {
-      // «Renn» means the race list, so it has to switch tab as well as pane —
-      // otherwise the label and the content disagree.
-      const next = tabForNav(k, { isParent })
-      if (next) setTab(next)
-      setPane('list')
-    }
+    // Hver knapp i bunnen tar deg til en skjerm: kart og filtre til
+    // rennkalenderen, «Renn» til lista der, «Min plan» til sesongen.
+    const next = tabForNav(k, { isParent })
+    if (next) setTab(next)
+    setMenyApen(false)
+    setPane(k === 'map' ? 'map' : 'list')
     scrollTo({ top: 0 })
+    // Filterarket ligger i rennkalenderen, så det åpnes etter at den er tegnet.
+    if (k === 'filter') setTimeout(() => setSheet(true), 60)
   }
   const navActive = navForState(active, pane, { isParent })
 
@@ -202,7 +201,7 @@ export default function App() {
         </button>
         {!menyApen && <span className="meny-her">{ETIKETT[active]}</span>}
         <nav id="hovedmeny">{tabs.map(([k, l]) => (
-          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => { setTab(k); setMenyApen(false); scrollTo({ top: 0 }) }}>
+          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => { setTab(k); setPane('list'); setMenyApen(false); scrollTo({ top: 0 }) }}>
             <Ikon k={k} /><span>{l}</span>
           </button>
         ))}</nav>
