@@ -447,3 +447,6 @@ verify_jwt = true
 
 [functions.isonen-signups]
 verify_jwt = true
+
+[functions.race-weather]
+verify_jwt = true

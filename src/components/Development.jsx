@@ -303,7 +303,7 @@ export default function Development({ profile, team, isCoach, readOnly = false }
           laget valgt får beskjed om å velge én, i stedet for ti kort på rad. */}
       {shown.length === 1
         ? <ResultHistory fisCode={shown[0].fis_code} name={isCoach ? shown[0].full_name : null} nonce={hentet}
-            grenUtenfra={gren} sesongUtenfra={sesonger} />
+            grenUtenfra={gren} sesongUtenfra={sesonger} kanFore={readOnly ? null : profile.id} />
         : shown.length > 1 && <div className="card"><h2>{t('rhTitle')}</h2><p className="muted">{t('rhPickOne')}</p></div>}
       {isCoach && shown.length === 1 && (
         <div className="gv-inni"><GoodVenues fisCode={shown[0].fis_code} gender={shown[0].gender?.trim() || null} name={shown[0].full_name} /></div>

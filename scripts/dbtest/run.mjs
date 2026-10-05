@@ -716,6 +716,34 @@ ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) ==
 !ft.some(r => r.fis_code === '990002') ? ok('løpere man ikke følger er ikke med') : fail('favoritt_tabell tok med en man ikke følger')
 ;(await as(FOR, 'select * from public.favoritt_tabell()')).rows.every(r => r.fis_code !== '990001')
   ? ok('andres favoritter er ikke synlige') : fail('favoritter lakk mellom brukere')
+// --- vær og føre på renn ---
+// S2 har kjørt et renn. S2 kan føre føret; en løper som ikke kjørte og
+// forelderen kan ikke. Alle innloggede kan lese.
+await q(`insert into fis_athletes(fis_code, name) values ($1, 'Test') on conflict do nothing`, [s2kode])
+await q(`insert into fis_results(fis_code, fis_race_id, race_date, place, nation, discipline, position)
+  values ($1, 880001, current_date - 30, 'Aal', 'NOR', 'Slalom', '12')`, [s2kode])
+const foreRad = `insert into race_conditions(place, nation, race_date, fore, set_by) values ('Aal','NOR', current_date - 30, $2, $1)
+  on conflict (place, nation, race_date) do update set fore = excluded.fore, set_by = excluded.set_by`
+await as(S2, foreRad, [S2, 'ice'])
+;(await q(`select fore from race_conditions where place='Aal'`))[0]?.fore === 'ice' ? ok('løperen som kjørte kan føre føret') : fail('føret ble ikke lagret')
+try { await as(S1, foreRad, [S1, 'soft']); fail('en løper som ikke kjørte rennet førte føret') }
+catch { ok('en løper som ikke kjørte rennet kan ikke føre føret') }
+try { await as(FOR, foreRad, [FOR, 'soft']); fail('en forelder førte føret') }
+catch { ok('en forelder kan ikke føre føret') }
+try { await as(S2, foreRad, [S1, 'hard']); fail('føret ble ført i en annens navn') }
+catch { ok('føret kan ikke føres i en annens navn') }
+try { await as(S2, foreRad, [S2, 'gjørme']); fail('ukjent føre godtatt') }
+catch { ok('bare kjente føretyper godtas') }
+;(await as(FOR, `select fore from race_conditions where place='Aal'`)).rows[0]?.fore === 'ice' ? ok('forelderen kan lese føret') : fail('forelderen ser ikke føret')
+try { await as(S2, `insert into race_weather(place, nation, race_date, temp_middag) values ('Aal','NOR', current_date - 30, 20)`); fail('en bruker skrev vær') }
+catch { ok('vanlige brukere kan ikke skrive vær') }
+;(await q(`select count(*)::int n from public.vaer_mangler(50) where place='Aal'`))[0].n === 1 ? ok('renndagen står som manglende vær') : fail('vaer_mangler fant ikke renndagen')
+await q(`insert into race_weather(place, nation, race_date, funnet) values ('Aal','NOR', current_date - 30, false)`)
+;(await q(`select count(*)::int n from public.vaer_mangler(50) where place='Aal'`))[0].n === 0 ? ok('et sted som ikke ble funnet prøves ikke hver natt') : fail('ikke-funnet sted står fortsatt i køen')
+try { await as(S2, 'select * from public.vaer_mangler(5)'); fail('en bruker kalte vaer_mangler') }
+catch { ok('vaer_mangler er bare for jobben') }
+await q(`delete from race_conditions where place='Aal'`); await q(`delete from race_weather where place='Aal'`); await q(`delete from fis_results where fis_race_id = 880001`)
+
 await q(`delete from follows where fis_code in ('990001','990002')`)
 await q(`delete from fis_list_athletes where fis_code in ('990001','990002')`)
 

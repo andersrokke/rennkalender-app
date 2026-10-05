@@ -8,6 +8,7 @@ import { DISC_COLOR } from './useDevelopment'
 import {
   berik, filtrer, sorter, sorterOppsummering, perManed, nokkeltall, perSesongOgGren, sesongKort, poengOverTid, sesongGraf, sesongFelt, sesongNavn, FORSTE_SESONG
 } from '../resultater'
+import { medVaer, lagreFore, vaerGrupper, tempgruppe, vaertype, dagstemp, VAERTEGN, TEMPGRUPPER, VAERTYPER, FORE } from '../vaer'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'AC']
 const farge = g => DISC_COLOR[g] || '#B08CFF'
@@ -30,9 +31,10 @@ function MndTick({ x, y, payload, rader }) {
 // utvikling i grafer, oppsummering per sesong og gren, og hele lista - alt
 // styrt av de samme filtrene. Henter sine egne rader for én løper om gangen,
 // så et stort lag ikke støter mot radgrensen i API-et.
-export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = null, sesongUtenfra = null }) {
+export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = null, sesongUtenfra = null, kanFore = null }) {
   const t = useT()
   const p1 = v => fisPoints(v, t.lang)
+  const grader = v => v == null ? '–' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`
   const [raa, setRaa] = useState(null)
   const [sesong, setSesong] = useState([])        // valgte sesonger; tom = alle
   useEffect(() => { if (sesongUtenfra) setSesong(sesongUtenfra) }, [sesongUtenfra])
@@ -58,9 +60,23 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
     supabase.from('fis_results')
       .select('fis_race_id, race_date, place, nation, discipline, category, category_name, position, fis_points')
       .eq('fis_code', fisCode).gte('race_date', `${FORSTE_SESONG}-07-01`).order('race_date', { ascending: false })
-      .then(({ data }) => { if (!av) setRaa(data || []) })
+      .then(async ({ data }) => {
+        if (av) return
+        setRaa(data || [])
+        // Været og føret kommer etterpå, så lista ikke venter på dem.
+        const m = await medVaer(data || [])
+        if (!av) setRaa(m)
+      })
     return () => { av = true }
   }, [fisCode, nonce])
+
+  // kanFore er id-en til den som fører (løper eller trener); null for foreldre.
+  async function settFore(r, fore) {
+    const { error } = await lagreFore(r, fore, kanFore)
+    if (error) return alert(error.message)
+    setRaa(rr => rr.map(x => x.place === r.place && (x.nation || '') === (r.nation || '') && x.race_date === r.race_date
+      ? { ...x, fore: fore ? { fore } : null } : x))
+  }
 
   const alle = useMemo(() => berik(raa), [raa])
   const sesonger = useMemo(() => [...new Set(alle.map(r => r.sesong))].sort((a, b) => b - a), [alle])
@@ -73,6 +89,10 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const utvalg = useMemo(() => filtrer(alle, { sesong, gren, kategori }), [alle, sesong, gren, kategori])
   const n = useMemo(() => nokkeltall(utvalg), [utvalg])
   const liste = useMemo(() => sorter(bareFullfort ? utvalg.filter(r => r.plass != null) : utvalg, kol, retning), [utvalg, bareFullfort, kol, retning])
+  const medVaerN = utvalg.filter(r => r.vaer && !r.dns).length
+  const perTemp = useMemo(() => vaerGrupper(utvalg, tempgruppe, TEMPGRUPPER), [utvalg])
+  const perType = useMemo(() => vaerGrupper(utvalg, vaertype, VAERTYPER), [utvalg])
+  const perFore = useMemo(() => vaerGrupper(utvalg, f => f?.fore, FORE, 'fore'), [utvalg])
   const tid = useMemo(() => poengOverTid(utvalg), [utvalg])
   const felt = useMemo(() => sesongFelt(tid), [tid])
   // Sesonggrafen følger de samme valgene: med to sesonger valgt sammenlignes de to.
@@ -322,6 +342,31 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
           </table>
         </div>
 
+        {medVaerN >= 3 && (<>
+          <h3>{t('vrTitle')}</h3>
+          <p className="muted rh-vaernote">{t(kanFore ? 'vrSub' : 'vrSubRead').replace('{n}', medVaerN)}</p>
+          <div className="vr-rute">
+            {[[perTemp, 'vrTemp', 'vrT_'], [perType, 'vrType', 'vrV_'], [perFore, 'vrFore', 'snow_']].map(([gr, tittel, pre]) => (
+              <div className="vr-kort" key={tittel}>
+                <h4>{t(tittel)}</h4>
+                {gr.length === 0 ? <p className="muted">{t('vrForeNone')}</p> : (
+                  <table className="vr-tabell">
+                    <thead><tr><th /><th className="tall">{t('vrStarts')}</th><th className="tall">{t('finished')}</th><th className="tall">{t('vrAvg')}</th></tr></thead>
+                    <tbody>{gr.map(g => (
+                      <tr key={g.gruppe}>
+                        <td>{t(pre + g.gruppe)}</td>
+                        <td className="tall">{g.starter}</td>
+                        <td className="tall"><b style={{ color: PST_FARGE(g.andel) }}>{g.andel} %</b></td>
+                        <td className="tall">{p1(g.snittPoeng)}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                )}
+              </div>
+            ))}
+          </div>
+        </>)}
+
         <div className="rh-grafhode">
           <h3>{t('rhAllRaces')} <span className="muted">({liste.length})</span></h3>
           <label className="rh-kryss"><input type="checkbox" checked={bareFullfort} onChange={e => setBareFullfort(e.target.checked)} /> {t('rhOnlyFinished')}</label>
@@ -337,12 +382,13 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                   </button>
                 </th>
               ))}
+              <th>{t('vrCol')}</th><th>{t('vrFore')}</th>
             </tr></thead>
             <tbody>{liste.map((r, i) => (
               <Fragment key={r.fis_race_id}>
               {/* Sortert på dato får hver sesong sin egen overskriftsrad. */}
               {kol === 'dato' && (i === 0 || liste[i - 1].sesong !== r.sesong) && (
-                <tr className="rh-sesongrad"><td colSpan={6}>{sesongNavn(r.sesong)}
+                <tr className="rh-sesongrad"><td colSpan={8}>{sesongNavn(r.sesong)}
                   <span> · {liste.filter(x => x.sesong === r.sesong).length} {t('krCount')}</span></td></tr>
               )}
               <tr>
@@ -356,6 +402,18 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
                 <td><b style={{ color: farge(r.gren) }}>{r.gren}</b></td>
                 <td className="tall">{r.plass ?? <span className="muted">{r.position || '–'}</span>}</td>
                 <td className="tall">{p1(r.poeng)}</td>
+                <td className="nobr vr-celle" title={r.vaer ? `${t('vrMorning')} ${grader(r.vaer.temp_morgen)} · ${t('vrNoon')} ${grader(r.vaer.temp_middag)} · ${t('vrWind')} ${r.vaer.vind_ms ?? '–'} m/s${r.vaer.sno_cm ? ` · ${t('vrSnow')} ${r.vaer.sno_cm} cm` : ''}` : ''}>
+                  {r.vaer ? <><span aria-hidden="true">{VAERTEGN[vaertype(r.vaer)] || ''}</span> {grader(dagstemp(r.vaer))}
+                    <span className="muted"> {vaertype(r.vaer) ? t('vrV_' + vaertype(r.vaer)) : ''}</span></> : <span className="muted">–</span>}
+                </td>
+                <td>
+                  {kanFore ? (
+                    <select className="vr-fore" value={r.fore?.fore || ''} aria-label={t('vrFore')} onChange={e => settFore(r, e.target.value)}>
+                      <option value="">{t('vrForePick')}</option>
+                      {FORE.map(f => <option key={f} value={f}>{t('snow_' + f)}</option>)}
+                    </select>
+                  ) : r.fore ? t('snow_' + r.fore.fore) : <span className="muted">–</span>}
+                </td>
               </tr>
               </Fragment>
             ))}</tbody>

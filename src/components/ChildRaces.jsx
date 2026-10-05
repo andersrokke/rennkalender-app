@@ -6,6 +6,7 @@ import RaceList from './RaceList.jsx'
 import GoodVenues from './GoodVenues.jsx'
 import { fisPoints } from '../format'
 import { berik, sesongNavn, FORSTE_SESONG } from '../resultater'
+import { medVaer, vaertype, dagstemp, VAERTEGN } from '../vaer'
 
 // Rennene barna skal være med på - og bare dem. «Alle renn» er hele
 // kalenderen; denne er svaret på «hvor skal barnet mitt, og når». Alt leses
@@ -37,7 +38,7 @@ export default function ChildRaces() {
                 .eq('fis_code', k.fis_code).gte('race_date', `${FORSTE_SESONG}-07-01`).order('race_date', { ascending: false })
             : Promise.resolve({ data: [] })
         ])
-        res[k.athlete_id] = berik(fr)
+        res[k.athlete_id] = berik(await medVaer(fr || []))
         const m = new Map()
         ;(tr || []).filter(x => x.race).forEach(x => m.set(x.race.id, { race: x.race, tr: x }))
         ;(own || []).filter(x => x.race).forEach(a => {
@@ -83,7 +84,7 @@ export default function ChildRaces() {
                     <table className="ad-table rh-tabell">
                       <thead><tr>
                         <th>{t('rhDate')}</th><th>{t('rhPlace')}</th><th>{t('rhCat')}</th><th>{t('rhDisc')}</th>
-                        <th className="tall">{t('rhPos')}</th><th className="tall">{t('rhPts')}</th>
+                        <th className="tall">{t('rhPos')}</th><th className="tall">{t('rhPts')}</th><th>{t('vrCol')}</th><th>{t('vrFore')}</th>
                       </tr></thead>
                       <tbody>{res.filter(r => r.sesong === s).map(r => (
                         <tr key={r.fis_race_id}>
@@ -97,6 +98,8 @@ export default function ChildRaces() {
                           <td><b>{r.gren}</b></td>
                           <td className="tall">{r.plass ?? <span className="muted">{r.position || '–'}</span>}</td>
                           <td className="tall">{fisPoints(r.poeng, t.lang)}</td>
+                          <td className="nobr">{r.vaer ? <><span aria-hidden="true">{VAERTEGN[vaertype(r.vaer)] || ''}</span> {dagstemp(r.vaer) == null ? '–' : `${Math.round(dagstemp(r.vaer))}°`}</> : <span className="muted">–</span>}</td>
+                          <td>{r.fore ? t('snow_' + r.fore.fore) : <span className="muted">–</span>}</td>
                         </tr>
                       ))}</tbody>
                     </table>
