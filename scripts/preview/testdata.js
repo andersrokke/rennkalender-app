@@ -136,6 +136,12 @@ export function svarPa(url, o) {
         r(4, { place: 'Levi', host_nation: 'FIN' }), r(5, { place: 'Kvitfjell', frist: om(3), frist_kilde: 'isonen', pa_lista: true, lista_kjent: true }),
         r(6, { place: 'Duved', host_nation: 'SWE', status: 'entered' })]
     }
+    // Én rad per løper og renn i lagets plan, også der løperen ikke har svart.
+    if (fn === 'team_race_athletes') return LOPERE.flatMap(p => TEAM_RACES.slice(0, 9).map((tr, i) => {
+      const ar = ATHLETE_RACES.find(x => x.athlete_id === p.id && x.race_id === tr.race_id)
+      return { athlete_id: p.id, full_name: p.full_name, birth_year: p.birth_year, gender: p.gender, race_id: tr.race_id,
+        status: ar?.status ?? null, assigned: !!ar && i % 3 === 0 && ar.status !== 'unavailable' }
+    }))
     if (fn === 'favoritt_tabell') return [
       { fis_code: '6535001', navn: 'Ida Moen', club: 'NTG', nation: 'NOR', birth_year: 2009, gender: 'W', sl: 62.1, gs: 55.4, sg: null, dh: null, egen: true, favoritt: false },
       { fis_code: '6535004', navn: 'Lukas Røkke', club: 'NTG', nation: 'NOR', birth_year: 2009, gender: 'M', sl: 47.49, gs: 46.27, sg: 88.2, dh: 120.5, egen: true, favoritt: false },

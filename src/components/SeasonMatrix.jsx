@@ -119,84 +119,119 @@ export default function SeasonMatrix({ team }) {
   if (!races.length) return <div className="page"><div className="card"><p className="muted">{t('coachEmpty')}</p></div></div>
   if (!athletes.length) return <div className="page"><div className="card"><p className="muted">{t('noAthletesYet')}</p></div></div>
 
-  const Sel = ({ k, opts }) => (
-    <select style={{ width: 'auto' }} value={f[k]} onChange={e => setF(p => ({ ...p, [k]: e.target.value }))}>
-      {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-    </select>
+  const Sel = ({ k, navn, opts }) => (
+    <label>{navn}
+      <select value={f[k]} onChange={e => setF(p => ({ ...p, [k]: e.target.value }))}>
+        {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </label>
   )
+  const mndLang = m => MONTHS[m] || (x => x.charAt(0).toUpperCase() + x.slice(1))(new Date(m + '-15').toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' }))
+  const mnd = m => mndLang(m).slice(0, 3).toLowerCase()
+  const datoer = r => {
+    const a = r.start_date, b = r.end_date && r.end_date !== a ? r.end_date : null
+    if (!b) return `${Number(a.slice(8))}. ${mnd(a.slice(0, 7))}`
+    return a.slice(0, 7) === b.slice(0, 7)
+      ? `${Number(a.slice(8))}.–${Number(b.slice(8))}. ${mnd(a.slice(0, 7))}`
+      : `${Number(a.slice(8))}. ${mnd(a.slice(0, 7))} – ${Number(b.slice(8))}. ${mnd(b.slice(0, 7))}`
+  }
+  const grener = r => ['SL', 'GS', 'SG', 'DH', 'AC'].filter(g => (r.events || '').includes(g))
+  // Første renn i hver måned får en strek foran seg, så månedene skilles nedover også.
+  const forst = new Set(shownRaces.filter((r, i) => i === 0 || shownRaces[i - 1].start_date.slice(0, 7) !== r.start_date.slice(0, 7)).map(r => r.id))
+  const KORT = { wish: t('st_wish'), planned: t('st_planned'), entered: t('st_entered') + ' ✓', unavailable: t('st_unavailable') }
 
   return (
-    <>
-      <div className="controls">
-        <div className="group"><span>{t('athletesWord')}</span>
-          <Sel k="year" opts={[['all', t('allYears')], ...years.map(y => [String(y), String(y)])]} />
-          <Sel k="gender" opts={[['all', t('allGenders')], ['W', t('women')], ['M', t('men')]]} />
-          <input type="number" placeholder={t('maxPoints')} style={{ width: 110 }} value={f.maxPts}
-            onChange={e => setF(p => ({ ...p, maxPts: e.target.value }))} />
+    <div className="mx-page">
+      <div className="mx-top">
+        <div>
+          <h2>{t('mxTitle')}</h2>
+          <p>{t('matrixHint')}</p>
         </div>
-        <div className="group"><span>{t('racesN')}</span>
-          <Sel k="month" opts={[['all', t('allM')], ...[...new Set(races.map(r => r.start_date.slice(0, 7)))].sort().map(m => [m, MONTHS[m] || m])]} />
-          <Sel k="disc" opts={[['all', t('disc')], ...['SL', 'GS', 'SG', 'DH'].map(d => [d, d])]} />
-          <Sel k="cat" opts={[['all', t('cat')], ...cats.map(c => [c, c])]} />
+        <div className="mx-tall">
+          <div><b>{shownAthletes.length}</b><span>{t('athletesWord')}</span></div>
+          <div><b>{shownRaces.length}</b><span>{t('racesN')}</span></div>
+          <div><b>{draft ? draft.size : 0}</b><span>{t('mxAssigned')}</span></div>
         </div>
-        <div className="group"><span className="muted">{shownAthletes.length} × {shownRaces.length}</span></div>
       </div>
 
-      {(added.length > 0 || removed.length > 0) && (
-        <div className="matrix-save">
-          <button className="btn small primary" disabled={busy} onClick={save}>
-            {busy ? t('saving') : `${t('save')} (${added.length ? '+' + added.length : ''}${added.length && removed.length ? ' / ' : ''}${removed.length ? '−' + removed.length : ''})`}
-          </button>
-          <button className="btn small" onClick={() => setDraft(new Set(stored))}>{t('undo')}</button>
-        </div>
-      )}
+      <div className="mx-filter">
+        <Sel k="year" navn={t('mxYear')} opts={[['all', t('allYears')], ...years.map(y => [String(y), String(y)])]} />
+        <Sel k="gender" navn={t('mxGender')} opts={[['all', t('allGenders')], ['W', t('women')], ['M', t('men')]]} />
+        <label>{t('maxPoints')}
+          <input type="number" placeholder="–" value={f.maxPts} onChange={e => setF(p => ({ ...p, maxPts: e.target.value }))} />
+        </label>
+        <span className="skille" />
+        <Sel k="month" navn={t('mxMonth')} opts={[['all', t('allM')], ...[...new Set(races.map(r => r.start_date.slice(0, 7)))].sort().map(m => [m, mndLang(m)])]} />
+        <Sel k="disc" navn={t('disc')} opts={[['all', t('mxAll')], ...['SL', 'GS', 'SG', 'DH'].map(d => [d, d])]} />
+        <Sel k="cat" navn={t('cat')} opts={[['all', t('mxAll')], ...cats.map(c => [c, c])]} />
+      </div>
 
-      <div className="matrix-wrap">
-        <table className="matrix">
-          <thead>
-            <tr>
-              <th className="corner" rowSpan={2}>{t('athleteCol')}</th>
-              {months.map(m => <th key={m.mk} className="mhead" colSpan={m.count}>{MONTHS[m.mk] || m.mk}</th>)}
-            </tr>
-            <tr>
-              {shownRaces.map(r => (
-                <th key={r.id} className="rhead" title={`${r.place} · ${r.category} · ${r.events}`}
-                  onClick={() => toggleMany(colPairs(r.id), !allOn(colPairs(r.id)))}>
-                  <span className="rplace">{r.place}</span>
-                  <span className="rdate">{r.start_date.slice(8)}.</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {shownAthletes.map(a => {
-              const l = load(a.athlete_id)
-              return (
-                <tr key={a.athlete_id}>
-                  <th className="ahead" onClick={() => toggleMany(rowPairs(a.athlete_id), !allOn(rowPairs(a.athlete_id)))}>
-                    <span className="aname">{a.full_name}</span>
-                    <span className="aload">{l.n} {t('racesN')} · {l.d} {t('raceDaysN')}</span>
+      <div className="mx-card">
+        <div className="mx-legend">
+          <span><i style={{ background: 'color-mix(in srgb, var(--st-wish) 26%, var(--snow))' }} />{t('mxLegWish')}</span>
+          <span><i style={{ background: 'color-mix(in srgb, var(--st-planned) 20%, var(--snow))' }} />{t('st_planned')}</span>
+          <span><i style={{ background: 'var(--st-planned)' }} />{t('st_entered')}</span>
+          <span><i style={{ background: 'color-mix(in srgb, var(--st-unavailable) 30%, var(--snow))' }} />{t('st_unavailable')}</span>
+          <span><i className="tildelt" />{t('mxLegAssigned')}</span>
+        </div>
+
+        {(added.length > 0 || removed.length > 0) && (
+          <div className="matrix-save">
+            <span>{t('mxUnsaved')}</span>
+            <button className="btn small primary" disabled={busy} onClick={save}>
+              {busy ? t('saving') : `${t('save')} (${added.length ? '+' + added.length : ''}${added.length && removed.length ? ' / ' : ''}${removed.length ? '−' + removed.length : ''})`}
+            </button>
+            <button className="btn small" onClick={() => setDraft(new Set(stored))}>{t('undo')}</button>
+          </div>
+        )}
+
+        <div className="matrix-wrap">
+          <table className="matrix">
+            <thead>
+              <tr>
+                <th className="corner" rowSpan={2}>{t('athleteCol')}</th>
+                {months.map(m => <th key={m.mk} className="mhead" colSpan={m.count}>{mndLang(m.mk)}</th>)}
+              </tr>
+              <tr>
+                {shownRaces.map(r => (
+                  <th key={r.id} className={`rhead${forst.has(r.id) ? ' forst' : ''}`} title={`${r.place} · ${r.category} · ${r.events}`}
+                    onClick={() => toggleMany(colPairs(r.id), !allOn(colPairs(r.id)))}>
+                    <span className="rplace">{r.place}</span>
+                    <span className="rdate">{datoer(r)}</span>
+                    <span className="rev">{grener(r).map(g => <b key={g}>{g}</b>)}</span>
                   </th>
-                  {shownRaces.map(r => {
-                    const c = cell(a.athlete_id, r.id)
-                    const st = chipState(c)
-                    const on = draft?.has(key(a.athlete_id, r.id))
-                    return (
-                      <td key={r.id} className={`mcell ${st}${on ? ' assigned' : ''}`}
-                        title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}`}
-                        onPointerDown={() => onDown(a.athlete_id, r.id)}
-                        onPointerEnter={() => onEnter(a.athlete_id, r.id)}>
-                        {on && <span className="dot" />}
-                      </td>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shownAthletes.map(a => {
+                const l = load(a.athlete_id)
+                return (
+                  <tr key={a.athlete_id}>
+                    <th className="ahead" onClick={() => toggleMany(rowPairs(a.athlete_id), !allOn(rowPairs(a.athlete_id)))}>
+                      <span className="aname">{a.full_name}</span>
+                      <span className="aload">{l.n} {t('racesN')} · {l.d} {t('raceDaysN')}</span>
+                    </th>
+                    {shownRaces.map(r => {
+                      const c = cell(a.athlete_id, r.id)
+                      const st = chipState(c)
+                      const on = draft?.has(key(a.athlete_id, r.id))
+                      return (
+                        <td key={r.id} className={`mcell ${st}${on ? ' assigned' : ''}${forst.has(r.id) ? ' forst' : ''}`}
+                          title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}`}
+                          onPointerDown={() => onDown(a.athlete_id, r.id)}
+                          onPointerEnter={() => onEnter(a.athlete_id, r.id)}>
+                          <span className="mpill">{KORT[st] || (on ? t('mxAssignedCell') : '+')}</span>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div className="hint">{t('matrixHint')}</div>
-    </>
+    </div>
   )
 }
