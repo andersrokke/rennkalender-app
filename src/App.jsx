@@ -65,6 +65,8 @@ export default function App() {
   const [pane, setPane] = useState('list')
   const [planCount, setPlanCount] = useState(0)
   const [recovery, setRecovery] = useState(false)
+  // Menyen på smale skjermer: lukket til man trykker «Meny».
+  const [menyApen, setMenyApen] = useState(false)
   // Lagene treneren er trener for. Er det flere, vises en velger i toppen.
   const [grupper, setGrupper] = useState([])
 
@@ -183,7 +185,7 @@ export default function App() {
   return (
     <LangContext.Provider value={lang}>
       <div className="app-shell">
-      <header className="topbar">
+      <header className={`topbar ${menyApen ? 'apen' : ''}`}>
         <h1><span className="merke" aria-hidden="true" />{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
         {team && isCoach && grupper.length > 1 && (
           <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
@@ -194,8 +196,13 @@ export default function App() {
             {grupper.map(g => <option key={g.id} value={g.id}>{g.er_hus ? `${g.name} · ${d.groupHouse}` : g.name}</option>)}
           </select>
         )}
-        <nav>{tabs.map(([k, l]) => (
-          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => setTab(k)}>
+        <button type="button" className="meny-knapp" aria-expanded={menyApen} aria-controls="hovedmeny" onClick={() => setMenyApen(v => !v)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">{menyApen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}</svg>
+          <span>{menyApen ? d.menuClose : d.menu}</span>
+        </button>
+        {!menyApen && <span className="meny-her">{ETIKETT[active]}</span>}
+        <nav id="hovedmeny">{tabs.map(([k, l]) => (
+          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => { setTab(k); setMenyApen(false); scrollTo({ top: 0 }) }}>
             <Ikon k={k} /><span>{l}</span>
           </button>
         ))}</nav>

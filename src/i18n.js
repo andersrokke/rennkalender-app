@@ -203,7 +203,7 @@ export const I18N = {
     nrSolo: 'Sesongen din', nrSoloNote: 'renn framover i planen din.',
     nrAlsoGoing: '{names} skal også.', nrOnlyYou: 'Ingen andre fra laget har svart ennå.',
     nrSeason: 'Sesongen din', gateEmpty: 'Ingen renn i planen ennå.',
-    appTitle: 'Alpinrace 2026/27',
+    appTitle: 'Alpinrace 2026/27', menu: 'Meny', menuClose: 'Lukk',
     // tabs
     season: 'Lagets sesong', athletes: 'Løpere', races: 'Alle renn', plan: 'Min plan',
     mine: 'Min sesong', settingsTab: 'Profil', settingsTabCoach: 'Lag og profil',
@@ -565,7 +565,7 @@ export const I18N = {
     nrSolo: 'Your season', nrSoloNote: 'races coming up in your plan.',
     nrAlsoGoing: '{names} are going too.', nrOnlyYou: 'Nobody else on the team has answered yet.',
     nrSeason: 'Your season', gateEmpty: 'No races in the plan yet.',
-    appTitle: 'Alpinrace 2026/27',
+    appTitle: 'Alpinrace 2026/27', menu: 'Menu', menuClose: 'Close',
     season: 'Team season', athletes: 'Athletes', races: 'All races', plan: 'My plan',
     mine: 'My season', settingsTab: 'Profile', settingsTabCoach: 'Team and profile',
     coach: 'coach', parent: 'parent', athlete: 'athlete', signOut: 'Sign out',

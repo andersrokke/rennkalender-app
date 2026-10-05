@@ -1344,3 +1344,33 @@ html[data-look="ny"] .month em{font-family:var(--mono);font-style:normal;font-si
 
 /* Merket i appen er logoen selv, ikke en farget firkant. */
 html[data-look="ny"] .topbar h1 .merke,.pv-merke .merke{background:url(/logo.svg) center/cover no-repeat}
+
+/* Menyen på smale skjermer: én knapp. Trykker man den, kommer alle punktene
+   under hverandre, med språk, tema og utlogging nederst. */
+.meny-knapp,.meny-her{display:none}
+@media (max-width:1023px){
+  html[data-look="ny"] .topbar{padding:10px 14px;gap:8px 12px;align-items:center;position:sticky;top:0;z-index:950}
+  html[data-look="ny"] .topbar h1{flex:1 1 auto;font-size:17px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-look="ny"] .meny-knapp{display:inline-flex;align-items:center;gap:8px;order:0;margin-left:auto;padding:9px 14px;border:1px solid var(--line);
+    border-radius:8px;background:var(--snow);color:var(--slate);font-weight:600;font-size:14px}
+  html[data-look="ny"] .meny-knapp svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  html[data-look="ny"] .topbar.apen .meny-knapp{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+  html[data-look="ny"] .meny-her{display:block;order:1;flex:1 0 100%;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  /* Lukket: bare merket, knappen og navnet på siden man står på. */
+  html[data-look="ny"] .topbar nav,
+  html[data-look="ny"] .topbar .side-valg,
+  html[data-look="ny"] .topbar .modus,
+  html[data-look="ny"] .topbar .gruppevelger,
+  html[data-look="ny"] .topbar > .btn{display:none}
+  /* Åpen: alt under hverandre. */
+  html[data-look="ny"] .topbar.apen{max-height:100vh;overflow-y:auto;padding-bottom:18px;box-shadow:var(--lift-lg)}
+  html[data-look="ny"] .topbar.apen nav{display:flex;flex-direction:column;order:3;width:100%;gap:2px;overflow:visible;margin-top:6px}
+  html[data-look="ny"] .topbar.apen nav button{width:100%;justify-content:flex-start;gap:14px;padding:14px 12px;border-radius:10px;font-size:16px;
+    font-weight:500;color:var(--slate);box-shadow:none;white-space:normal;text-align:left}
+  html[data-look="ny"] .topbar.apen nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  html[data-look="ny"] .topbar.apen nav .nav-ikon{width:20px;height:20px}
+  html[data-look="ny"] .topbar.apen .gruppevelger{display:block;order:2;width:100%}
+  html[data-look="ny"] .topbar.apen .side-valg{display:flex;order:4;width:100%;padding-top:12px;margin-top:6px;border-top:1px solid var(--line)}
+  html[data-look="ny"] .topbar.apen .modus{display:block;order:5;width:100%}
+  html[data-look="ny"] .topbar.apen > .btn{display:inline-flex;order:6;margin-left:0}
+}

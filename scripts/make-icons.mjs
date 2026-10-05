@@ -18,7 +18,7 @@ const svg = readFileSync('public/logo.svg')
 // sin egen ramme i stedet for å legges på en gjennomsiktig kant.
 function medLuft(andel) {
   const s = readFileSync('public/logo.svg', 'utf8')
-  const kropp = s.slice(s.indexOf('<rect width="512"'), s.lastIndexOf('</svg>'))
+  const kropp = s.slice(s.indexOf('<rect width="512" height="512" rx'), s.lastIndexOf('</svg>'))
   const bak = kropp.slice(0, kropp.indexOf('/>') + 2)
   const resten = kropp.slice(kropp.indexOf('/>') + 2)
   return Buffer.from(
