@@ -15,7 +15,7 @@ export default function SeasonMatrix({ team }) {
   const [races, setRaces] = useState([])
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ year: 'all', gender: 'all', disc: 'all', maxPts: '', month: 'all', cat: 'all' })
+  const [f, setF] = useState({ year: 'all', gender: 'all', disc: 'all', month: 'all', cat: 'all' })
   const drag = useRef(null)
 
   // Rennene i matrisa er de team_race_athletes() gir: lagets plan pluss renn
@@ -44,9 +44,7 @@ export default function SeasonMatrix({ team }) {
   const cats = [...new Set(races.flatMap(r => (r.category || '').split(' • ')).filter(Boolean))].sort()
   const shownAthletes = athletes.filter(a =>
     (f.year === 'all' || String(a.birth_year) === f.year) &&
-    (f.gender === 'all' || a.gender === f.gender) &&
-    (!f.maxPts || (a[f.disc === 'all' ? 'gs' : f.disc.toLowerCase()] != null &&
-      Number(a[f.disc === 'all' ? 'gs' : f.disc.toLowerCase()]) <= Number(f.maxPts))))
+    (f.gender === 'all' || a.gender === f.gender))
   const shownRaces = races.filter(r =>
     (f.month === 'all' || r.start_date.slice(0, 7) === f.month) &&
     (f.disc === 'all' || (r.events || '').includes(f.disc)) &&
@@ -157,9 +155,6 @@ export default function SeasonMatrix({ team }) {
       <div className="mx-filter">
         <Sel k="year" navn={t('mxYear')} opts={[['all', t('allYears')], ...years.map(y => [String(y), String(y)])]} />
         <Sel k="gender" navn={t('mxGender')} opts={[['all', t('allGenders')], ['W', t('women')], ['M', t('men')]]} />
-        <label>{t('maxPoints')}
-          <input type="number" placeholder="–" value={f.maxPts} onChange={e => setF(p => ({ ...p, maxPts: e.target.value }))} />
-        </label>
         <span className="skille" />
         <Sel k="month" navn={t('mxMonth')} opts={[['all', t('allM')], ...[...new Set(races.map(r => r.start_date.slice(0, 7)))].sort().map(m => [m, mndLang(m)])]} />
         <Sel k="disc" navn={t('disc')} opts={[['all', t('mxAll')], ...['SL', 'GS', 'SG', 'DH'].map(d => [d, d])]} />
