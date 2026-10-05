@@ -199,6 +199,22 @@ await c.query(`insert into auth.users(id,email) values (gen_random_uuid(),'aldri
 const again = await as(ADM, `select public.admin_invite_coach('aldri.inne@example.com') as id`)
 again.rows[0].id ? ok('invitasjon kan sendes på nytt til en som aldri logget inn')
   : fail('fikk ikke sendt invitasjonen på nytt')
+// Send på nytt: beholder notatet, nekter for en som har logget inn, og for andre enn administrator.
+{
+  await c.query(`update coach_invites set sent_at = now() - interval '2 days' where email = 'ny.trener@example.com'`)
+  const r = await as(ADM, `select public.admin_resend_invite(' NY.trener@example.com') as id`)
+  const etter = await c.query(`select note, sent_at from coach_invites where email = 'ny.trener@example.com'`)
+  r.rows[0].id === inv.rows[0].id && etter.rows[0].note === 'Velkommen' && etter.rows[0].sent_at === null
+    ? ok('invitasjon sendes på nytt med notatet i behold') : fail('send på nytt endret invitasjonen feil')
+  await c.query(`update coach_invites set sent_at = now() where email = 'ny.trener@example.com'`)
+  try { await as(ADM, `select public.admin_resend_invite('ny.trener@example.com')`); fail('sendte på nytt med en gang') }
+  catch (e) { e.message.includes('nettopp') ? ok('send på nytt har ett minutts sperre') : fail(e.message) }
+  await c.query(`update coach_invites set sent_at = null where email = 'ny.trener@example.com'`)
+  try { await as(ADM, `select public.admin_resend_invite('a@test.rennkalender')`); fail('sendte på nytt til en som er inne') }
+  catch (e) { e.message.includes('allerede logget inn') ? ok('send på nytt avvises for en som har logget inn') : fail(e.message) }
+  try { await as(A, `select public.admin_resend_invite('ny.trener@example.com')`); fail('løper sendte invitasjon på nytt') }
+  catch { ok('bare administrator kan sende invitasjon på nytt') }
+}
 try { await as(ADM, `select public.admin_invite_coach('ikke en adresse')`); fail('ugyldig adresse godtatt') }
 catch { ok('ugyldig e-postadresse avvises') }
 const inv2 = await as(ADM, `select public.admin_invite_coach('NY.Trener@Example.com ') as id`)

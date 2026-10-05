@@ -130,6 +130,14 @@ function Trenere({ rader, t, onEndret }) {
     onEndret()
   }
 
+  async function sendIgjen(i) {
+    setBusy(true); setMsg(null)
+    const { error } = await supabase.rpc('admin_resend_invite', { p_email: i.email })
+    setBusy(false)
+    setMsg(error ? { bad: true, text: error.message } : { text: t('adInviteSent').replace('{e}', i.email) })
+    onEndret()
+  }
+
   async function avbryt(id) {
     await supabase.rpc('admin_cancel_invite', { p_id: id })
     onEndret()
@@ -169,6 +177,7 @@ function Trenere({ rader, t, onEndret }) {
 
       <div className="card">
         <h2>{t('adInvites')} <span className="muted">({rader?.length ?? 0})</span></h2>
+        {msg && <p className={msg.bad ? 'error' : 'success'}>{msg.text}</p>}
         {!rader?.length ? <p className="muted">{t('adNoInvites')}</p> : (
           <ul className="fb-list">
             {rader.map(i => {
@@ -191,6 +200,9 @@ function Trenere({ rader, t, onEndret }) {
                   {i.send_error && <p className="fb-note" style={{ borderColor: 'var(--danger)' }}>{i.send_error}</p>}
                   {!inne && (
                     <div className="row" style={{ marginTop: 10, gap: 8 }}>
+                      <button type="button" className="btn small primary" disabled={busy} onClick={() => sendIgjen(i)}>
+                        {t('adResend')}
+                      </button>
                       <button type="button" className="btn small" onClick={() => avbryt(i.id)}>
                         {t('adCancelInvite')}
                       </button>
@@ -216,11 +228,13 @@ function Brukere({ rader, meg, t, onEndret }) {
   const [lag, setLag] = useState([])
   useEffect(() => { supabase.rpc('admin_teams').then(({ data }) => setLag(data || [])) }, [rader])
 
+  const [sendt, setSendt] = useState(null)
   const kall = async (fn, args) => {
     setTravel(JSON.stringify(args))
     const { error } = await supabase.rpc(fn, args)
     setTravel(null)
     if (error) alert(error.message); else onEndret()
+    return !error
   }
 
   if (!rader) return <div className="card muted">{t('adLoading')}</div>
@@ -304,6 +318,12 @@ function Brukere({ rader, meg, t, onEndret }) {
                           onClick={() => kall('admin_set_admin', { p_user: u.id, p_on: !u.is_admin })}>
                           {u.is_admin ? t('adDemote') : t('adPromote')}
                         </button>
+                        {u.role === 'coach' && !u.last_sign_in_at && u.email && (
+                          <button type="button" className="btn small" disabled={!!travel}
+                            onClick={async () => { if (await kall('admin_resend_invite', { p_email: u.email })) setSendt(u.email) }}>
+                            {sendt === u.email ? t('adResent') : t('adResend')}
+                          </button>
+                        )}
                         {u.id !== meg && (
                           <button type="button" className="btn small danger" disabled={!!travel}
                             onClick={() => confirm(t('adDeleteConfirm').replace('{n}', u.full_name || u.email))
