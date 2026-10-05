@@ -2,12 +2,12 @@
 //
 // Finnes fordi modusbyttet en gang bare byttet en etikett: en administrator
 // som eide et lag og valgte «forelder», fikk trenerens faner likevel.
-import { fanerFor, rolleFlagg, tabForNav, navForState } from '../../src/nav.js'
+import { fanerFor, startFane, rolleFlagg, tabForNav, navForState } from '../../src/nav.js'
 
 let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
-const TRENER = ['season', 'matrix', 'athletes', 'races', 'training', 'dev', 'favoritter', 'settings', 'feedback']
+const TRENER = ['races', 'matrix', 'season', 'athletes', 'training', 'dev', 'favoritter', 'settings', 'feedback']
 const LOPER = ['next', 'mine', 'races', 'training', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
 const FORELDER = ['kidnext', 'children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
 const trenerfaner = ['season', 'matrix', 'athletes']
@@ -24,8 +24,13 @@ sjekk('admin som løper: ingen trenerfaner', !fanerFor(eier('athlete'), true).so
 sjekk('admin som trener: trenerfaner pluss admin', lik(fanerFor(eier('coach'), true), [...TRENER, 'admin']))
 sjekk('admin uten lag lander på admin', fanerFor(eier('parent'), false)[0] === 'admin')
 
-sjekk('første fane: neste renn for løper og forelder, lagets sesong for trener',
-  fanerFor({ role: 'athlete' }, true)[0] === 'next' && fanerFor({ role: 'parent' }, false)[0] === 'kidnext' && fanerFor({ role: 'coach' }, true)[0] === 'season')
+sjekk('startfane: neste renn for løper og forelder',
+  startFane({ role: 'athlete' }, true) === 'next' && startFane({ role: 'parent' }, false) === 'kidnext')
+sjekk('startfane: trener lander på lagets sesong når laget har renn, ellers på alle renn',
+  startFane({ role: 'coach' }, true, { lagetHarRenn: true }) === 'season' && startFane({ role: 'coach' }, true) === 'races')
+sjekk('startfane: admin uten lag lander på admin', startFane(eier('parent'), false) === 'admin')
+sjekk('trenerens meny følger arbeidet: alle renn, sesongoppsett, lagets sesong',
+  lik(fanerFor({ role: 'coach' }, true).slice(0, 3), ['races', 'matrix', 'season']))
 
 // Vanlige brukere.
 sjekk('forelder uten admin: nøyaktig foreldrefanene', lik(fanerFor({ role: 'parent' }, false), FORELDER))

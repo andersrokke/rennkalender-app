@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
-import { tabForNav, navForState, rolleFlagg, fanerFor } from './nav'
+import { tabForNav, navForState, rolleFlagg, fanerFor, startFane } from './nav'
 import { supabase } from './supabase'
 import { PROFIL_FELT } from './profil'
 import Auth from './components/Auth.jsx'
@@ -119,6 +119,17 @@ export default function App() {
       .then(({ count }) => setPlanCount(count || 0))
   }, [profile?.id, tab])
 
+  // Har laget renn i planen? Avgjør hvor treneren lander. null = vet ikke ennå.
+  const [lagetHarRenn, setLagetHarRenn] = useState(null)
+  useEffect(() => {
+    if (profile?.role !== 'coach' || !profile?.team_id) return setLagetHarRenn(false)
+    let av = false
+    setLagetHarRenn(null)
+    supabase.from('team_races').select('id', { count: 'exact', head: true }).eq('team_id', profile.team_id)
+      .then(({ count }) => { if (!av) setLagetHarRenn((count || 0) > 0) })
+    return () => { av = true }
+  }, [profile?.role, profile?.team_id])
+
   const reload = () => loadProfile(session.user.id)
   const setPref = async patch => {
     if (patch.lang) saveLang(patch.lang)
@@ -142,6 +153,9 @@ export default function App() {
     </LangContext.Provider>
   )
   if (!profile) return <div className="page muted">{I18N.no.loadingProfile}</div>
+  // Treneren lander på lagets sesong bare når laget har renn. Til vi vet det,
+  // vises ingenting, så siden ikke hopper fra én skjerm til en annen.
+  if (profile.role === 'coach' && profile.team_id && !tab && lagetHarRenn === null) return <div className="page muted">{I18N.no.loadingProfile}</div>
   if (!profile.onboarded) return (
     <LangContext.Provider value={lang}><Onboarding profile={profile} onDone={reload} /></LangContext.Provider>
   )
@@ -162,7 +176,7 @@ export default function App() {
   const tabs = fanerFor(profile, !!team).map(k => [k, ETIKETT[k]])
   // Aktiv fane må være en fane denne modusen har. Uten sjekken kunne en fane
   // fra forrige modus bli stående, og tegne en skjerm rollen ikke skal se.
-  const active = tabs.some(([k]) => k === tab) ? tab : tabs[0][0]
+  const active = tabs.some(([k]) => k === tab) ? tab : startFane(profile, !!team, { lagetHarRenn: !!lagetHarRenn })
 
   const pickPane = k => {
     // Hver knapp i bunnen tar deg til en skjerm: kart og filtre til

@@ -16,7 +16,9 @@ export default function SeasonMatrix({ team }) {
   const [races, setRaces] = useState([])
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [vis, setVis] = useState('alle')         // alle | venterTrener | venterLoper | avtalt
+  const [valgt, setVis] = useState(null)         // null = ikke valgt ennå | alle | venterTrener | venterLoper | avtalt
+  // Siden åpner på det som venter på treneren, hvis det finnes noe.
+  const vis = valgt ?? (rows.some(x => avtale(x) === 'venterTrener') ? 'venterTrener' : 'alle')
   const drag = useRef(null)
 
   // Rennene i matrisa er de team_race_athletes() gir: lagets plan pluss renn
@@ -128,8 +130,8 @@ export default function SeasonMatrix({ team }) {
   // Første renn i hver måned får en strek foran seg, så månedene skilles nedover også.
   const forst = new Set(shownRaces.filter((r, i) => i === 0 || shownRaces[i - 1].start_date.slice(0, 7) !== r.start_date.slice(0, 7)).map(r => r.id))
   const KORT = { venterTrener: t('mxWants'), venterLoper: t('mxWaitAthlete'), avtalt: t('mxAgreed'), pameldt: t('st_entered') + ' ✓', kanIkke: t('st_unavailable') }
-  const VALG = [['alle', t('mxAll'), rows.filter(x => avtale(x) !== 'ingen').length], ['venterTrener', t('mxWaitYou'), antall('venterTrener')],
-    ['venterLoper', t('mxWaitAthlete'), antall('venterLoper')], ['avtalt', t('mxAgreed'), antall('avtalt')]]
+  const VALG = [['venterTrener', t('mxWaitYou'), antall('venterTrener')], ['venterLoper', t('mxWaitAthlete'), antall('venterLoper')],
+    ['avtalt', t('mxAgreed'), antall('avtalt')], ['alle', t('mxAll'), rows.filter(x => avtale(x) !== 'ingen').length]]
 
   return (
     <div className="mx-page">
