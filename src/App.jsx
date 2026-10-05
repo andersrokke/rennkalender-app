@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
-import { tabForNav, navForState, rolleFlagg, fanerFor, startFane } from './nav'
+import { tabForNav, navForState, rolleFlagg, fanerFor, startFane, hjemFane, menyGrupper } from './nav'
+import CoachHome from './components/CoachHome.jsx'
 import { supabase } from './supabase'
 import { PROFIL_FELT } from './profil'
 import Auth from './components/Auth.jsx'
@@ -33,9 +34,11 @@ import MobileNav from './components/MobileNav.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
 // Ikonene i sidemenyen. Enkle strekikoner, tegnet i samme rutenett.
+const HUS = 'M4 11l8-7 8 7M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9'
 const IKON = {
+  home: HUS,
   training: 'M4 19V5m0 14h16M8 15l3-4 3 2 4-6',
-  next: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  next: HUS,
   mine: 'M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm4 9 2 2 4-4',
   season: 'M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z',
   matrix: 'M4 5h16v14H4zM4 10h16M4 15h16M10 5v14M15 5v14',
@@ -48,7 +51,7 @@ const IKON = {
   pamelding: 'M9 5h6m-6 0a2 2 0 0 0-2 2H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1a2 2 0 0 0-2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4',
   kidraces: 'M5 21V4m0 1h11l-2 3.5 2 3.5H5',
   kiddev: 'M3 17l6-6 4 4 8-8M15 7h6v6',
-  kidnext: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  kidnext: HUS,
   settings: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1',
   feedback: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z',
   admin: 'M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6Zm-3 9 2 2 4-4'
@@ -119,17 +122,6 @@ export default function App() {
       .then(({ count }) => setPlanCount(count || 0))
   }, [profile?.id, tab])
 
-  // Har laget renn i planen? Avgjør hvor treneren lander. null = vet ikke ennå.
-  const [lagetHarRenn, setLagetHarRenn] = useState(null)
-  useEffect(() => {
-    if (profile?.role !== 'coach' || !profile?.team_id) return setLagetHarRenn(false)
-    let av = false
-    setLagetHarRenn(null)
-    supabase.from('team_races').select('id', { count: 'exact', head: true }).eq('team_id', profile.team_id)
-      .then(({ count }) => { if (!av) setLagetHarRenn((count || 0) > 0) })
-    return () => { av = true }
-  }, [profile?.role, profile?.team_id])
-
   const reload = () => loadProfile(session.user.id)
   const setPref = async patch => {
     if (patch.lang) saveLang(patch.lang)
@@ -153,9 +145,6 @@ export default function App() {
     </LangContext.Provider>
   )
   if (!profile) return <div className="page muted">{I18N.no.loadingProfile}</div>
-  // Treneren lander på lagets sesong bare når laget har renn. Til vi vet det,
-  // vises ingenting, så siden ikke hopper fra én skjerm til en annen.
-  if (profile.role === 'coach' && profile.team_id && !tab && lagetHarRenn === null) return <div className="page muted">{I18N.no.loadingProfile}</div>
   if (!profile.onboarded) return (
     <LangContext.Provider value={lang}><Onboarding profile={profile} onDone={reload} /></LangContext.Provider>
   )
@@ -167,16 +156,18 @@ export default function App() {
   const { isCoach, isParent } = rolleFlagg(profile)
   const d = I18N[lang]
   const ETIKETT = {
-    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.nextTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
+    children: d.children, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.hjemTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
-    next: d.nextTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
+    home: d.hjemTab, next: d.hjemTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
     settings: isCoach && team ? d.settingsTabCoach : d.settingsTab
   }
   const tabs = fanerFor(profile, !!team).map(k => [k, ETIKETT[k]])
   // Aktiv fane må være en fane denne modusen har. Uten sjekken kunne en fane
   // fra forrige modus bli stående, og tegne en skjerm rollen ikke skal se.
-  const active = tabs.some(([k]) => k === tab) ? tab : startFane(profile, !!team, { lagetHarRenn: !!lagetHarRenn })
+  const active = tabs.some(([k]) => k === tab) ? tab : startFane(profile, !!team)
+
+  const gaTil = k => { setTab(k); setPane('list'); setMenyApen(false); scrollTo({ top: 0 }) }
 
   const pickPane = k => {
     // Hver knapp i bunnen tar deg til en skjerm: kart og filtre til
@@ -200,7 +191,8 @@ export default function App() {
     <LangContext.Provider value={lang}>
       <div className="app-shell">
       <header className={`topbar ${menyApen ? 'apen' : ''}`}>
-        <h1><span className="merke" aria-hidden="true" />{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
+        <h1 className="hjem-lenke" role="link" tabIndex={0} title={d.hjemTab} onClick={() => gaTil(hjemFane(profile))}
+          onKeyDown={e => { if (e.key === 'Enter') gaTil(hjemFane(profile)) }}><span className="merke" aria-hidden="true" />{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
         {team && isCoach && grupper.length > 1 && (
           <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
             onChange={async e => {
@@ -215,10 +207,15 @@ export default function App() {
           <span>{menyApen ? d.menuClose : d.menu}</span>
         </button>
         {!menyApen && <span className="meny-her">{ETIKETT[active]}</span>}
-        <nav id="hovedmeny">{tabs.map(([k, l]) => (
-          <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => { setTab(k); setPane('list'); setMenyApen(false); scrollTo({ top: 0 }) }}>
-            <Ikon k={k} /><span>{l}</span>
-          </button>
+        <nav id="hovedmeny">{menyGrupper(profile).map(g => (
+          <div className="meny-gruppe" key={g.k || 'hjem'}>
+            {g.k && <span className="meny-gruppenavn">{d['mg_' + g.k]}</span>}
+            {g.faner.map(k => (
+              <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => gaTil(k)}>
+                <Ikon k={k} /><span>{ETIKETT[k]}</span>
+              </button>
+            ))}
+          </div>
         ))}</nav>
         <div className="spacer" />
         <div className="side-valg">
@@ -246,9 +243,10 @@ export default function App() {
       {/* Sidens navn står øverst på skjermene som ikke åpner med et eget
           kort med overskrift - kalenderen, sesongen og matrisa. */}
       {['races', 'season', 'mine', 'matrix', 'next', 'kidnext', 'children'].includes(active) && (
-        <div className="side-hode"><h2>{ETIKETT[active]}</h2>{team && !isParent && <span>{team.name}</span>}</div>
+        <div className="side-hode"><h2>{active === 'next' || active === 'kidnext' ? d.nextTab : ETIKETT[active]}</h2>{team && !isParent && <span>{team.name}</span>}</div>
       )}
       <InstallPrompt />
+      {active === 'home' && (team ? <CoachHome profile={profile} team={team} onGo={gaTil} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'matrix' && (team ? <SeasonMatrix team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
       {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}

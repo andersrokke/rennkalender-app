@@ -1458,3 +1458,57 @@ html[data-look="ny"] .tag.av{border-radius:999px;font-family:inherit;text-transf
 .matrix .mcell.kanIkke .mpill{color:var(--mute);background:repeating-linear-gradient(45deg,transparent,transparent 5px,
     color-mix(in srgb, var(--st-unavailable) 22%, transparent) 5px,color-mix(in srgb, var(--st-unavailable) 22%, transparent) 10px)}
 .matrix .mnote{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--ink);border:2px solid var(--snow)}
+
+/* --- Meny i grupper, og hjem --- */
+.meny-gruppe{display:contents}
+.meny-gruppenavn{display:none}
+.hjem-lenke{cursor:pointer}
+@media (min-width:1024px){
+  html[data-look="ny"] .meny-gruppe{display:flex;flex-direction:column;gap:2px}
+  html[data-look="ny"] .meny-gruppe + .meny-gruppe{margin-top:14px}
+  html[data-look="ny"] .meny-gruppenavn{display:block;padding:0 12px 4px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint, var(--mute))}
+}
+@media (max-width:1023px){
+  html[data-look="ny"] .topbar.apen .meny-gruppe{display:flex;flex-direction:column;gap:2px;width:100%}
+  html[data-look="ny"] .topbar.apen .meny-gruppe + .meny-gruppe{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  html[data-look="ny"] .topbar.apen .meny-gruppenavn{display:block;padding:0 12px 2px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+}
+.hjem{display:flex;flex-direction:column;gap:18px}
+.hjem .card{margin:0}
+.hjem-hode h2{margin:0 0 4px;font-size:26px}
+.hjem-hode p{margin:0}
+.hjem-rute{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.hjem-kort{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:18px 20px;border-radius:14px;
+  border:1px solid var(--line);background:var(--snow);color:var(--ink);font:inherit;cursor:pointer}
+.hjem-kort:hover{border-color:var(--ink)}
+.hjem-kort b{font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
+.hjem-kort span{font-weight:650;font-size:15px}
+.hjem-kort small{font-size:13px;color:var(--mute);line-height:1.4}
+.hjem-kort.venterTrener{background:color-mix(in srgb, var(--av-vt) 30%, var(--snow));border-color:color-mix(in srgb, var(--av-vt) 80%, var(--line))}
+.hjem-kort.venterLoper b{color:var(--av-vl)}
+.hjem-kort.avtalt b{color:var(--av-ok)}
+.hjem-tittel{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.hjem h3{margin:0 0 8px;font-size:16px}
+.hjem-tittel h3{margin:0}
+.hjem-renn{list-style:none;margin:0;padding:0}
+.hjem-renn li{display:flex;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.hjem-renn li:first-child{border-top:0}
+.hjem-renn .nar{flex:0 0 64px;font-weight:650;font-variant-numeric:tabular-nums}
+.hjem-renn .hva{min-width:0;flex:1}
+.hjem-renn .hvem{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hjem-steg{margin:0;padding:0;list-style:none;counter-reset:steg}
+.hjem-steg li{counter-increment:steg;display:grid;grid-template-columns:34px 1fr auto;gap:2px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.hjem-steg li:first-child{border-top:0}
+.hjem-steg li::before{content:counter(steg);grid-row:span 2;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.hjem-steg li.ferdig::before{content:"✓";background:var(--av-ok)}
+.hjem-steg li b{grid-column:2}
+.hjem-steg li span{grid-column:2;color:var(--mute);font-size:14px}
+.hjem-steg li .btn{grid-column:3;grid-row:1 / span 2}
+.hjem-steg code{font-weight:700;letter-spacing:.08em;color:var(--ink)}
+.hjem-snarveier{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.hjem-snarveier button{display:flex;flex-direction:column;gap:2px;text-align:left;padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--ink);font:inherit;cursor:pointer}
+.hjem-snarveier button:hover{border-color:var(--accent)}
+.hjem-snarveier span{font-size:13px;color:var(--mute)}
+@media (max-width:600px){.hjem-steg li{grid-template-columns:34px 1fr}.hjem-steg li .btn{grid-column:2;grid-row:auto;justify-self:start;margin-top:6px}}

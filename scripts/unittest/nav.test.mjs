@@ -2,15 +2,15 @@
 //
 // Finnes fordi modusbyttet en gang bare byttet en etikett: en administrator
 // som eide et lag og valgte «forelder», fikk trenerens faner likevel.
-import { fanerFor, startFane, rolleFlagg, tabForNav, navForState } from '../../src/nav.js'
+import { fanerFor, startFane, hjemFane, menyGrupper, rolleFlagg, tabForNav, navForState } from '../../src/nav.js'
 
 let feil = 0
 const lik = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
-const TRENER = ['races', 'matrix', 'season', 'athletes', 'training', 'dev', 'favoritter', 'settings', 'feedback']
-const LOPER = ['next', 'mine', 'races', 'training', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
-const FORELDER = ['kidnext', 'children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
-const trenerfaner = ['season', 'matrix', 'athletes']
+const TRENER = ['home', 'races', 'matrix', 'season', 'athletes', 'training', 'dev', 'favoritter', 'settings', 'feedback']
+const LOPER = ['next', 'mine', 'races', 'steder', 'training', 'dev', 'favoritter', 'settings', 'feedback']
+const FORELDER = ['kidnext', 'children', 'pamelding', 'kidraces', 'races', 'kiddev', 'settings', 'feedback']
+const trenerfaner = ['home', 'season', 'matrix', 'athletes']
 
 // Administratoren som eier et lag, i hver av de tre modusene.
 const eier = rolle => ({ id: 'a', role: rolle, is_admin: true })
@@ -22,15 +22,19 @@ sjekk('admin som forelder: ikke treningslogg, ikke egen sesong',
 sjekk('admin som løper: løperfaner pluss admin', lik(fanerFor(eier('athlete'), true), [...LOPER, 'admin']))
 sjekk('admin som løper: ingen trenerfaner', !fanerFor(eier('athlete'), true).some(f => trenerfaner.includes(f)))
 sjekk('admin som trener: trenerfaner pluss admin', lik(fanerFor(eier('coach'), true), [...TRENER, 'admin']))
-sjekk('admin uten lag lander på admin', fanerFor(eier('parent'), false)[0] === 'admin')
+sjekk('admin uten lag lander på admin', startFane(eier('parent'), false) === 'admin')
 
 sjekk('startfane: neste renn for løper og forelder',
   startFane({ role: 'athlete' }, true) === 'next' && startFane({ role: 'parent' }, false) === 'kidnext')
-sjekk('startfane: trener lander på lagets sesong når laget har renn, ellers på alle renn',
-  startFane({ role: 'coach' }, true, { lagetHarRenn: true }) === 'season' && startFane({ role: 'coach' }, true) === 'races')
-sjekk('startfane: admin uten lag lander på admin', startFane(eier('parent'), false) === 'admin')
+sjekk('startfane: trener lander på hjem, og admin med lag gjør det samme',
+  startFane({ role: 'coach' }, true) === 'home' && startFane(eier('coach'), true) === 'home')
+sjekk('hjem er første fane i alle roller',
+  hjemFane({ role: 'coach' }) === 'home' && hjemFane({ role: 'athlete' }) === 'next' && hjemFane({ role: 'parent' }) === 'kidnext')
 sjekk('trenerens meny følger arbeidet: alle renn, sesongoppsett, lagets sesong',
-  lik(fanerFor({ role: 'coach' }, true).slice(0, 3), ['races', 'matrix', 'season']))
+  lik(menyGrupper({ role: 'coach' }).find(g => g.k === 'renn').faner, ['races', 'matrix', 'season']))
+sjekk('hver fane står i nøyaktig én gruppe, og kontoen er sist',
+  ['coach', 'athlete', 'parent'].every(r => { const g = menyGrupper(eier(r)); const alle = g.flatMap(x => x.faner)
+    return new Set(alle).size === alle.length && g[g.length - 1].k === 'konto' && g[g.length - 1].faner.includes('admin') }))
 
 // Vanlige brukere.
 sjekk('forelder uten admin: nøyaktig foreldrefanene', lik(fanerFor({ role: 'parent' }, false), FORELDER))

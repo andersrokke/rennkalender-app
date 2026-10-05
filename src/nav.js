@@ -29,28 +29,39 @@ export function rolleFlagg(profile) {
   return { isCoach: profile.role === 'coach', isParent: profile.role === 'parent' }
 }
 
-// Fanene for en profil, som nøkler. En forelder ser barna sine, rennkalenderen
-// og profilen - aldri trenerens eller løperens skjermer, uansett hva kontoen
-// ellers eier. Administratorfanen kommer i tillegg, først når man ikke har lag.
-// Den første fanen er den man lander på for løper og forelder: neste renn.
-// Trenerens meny følger arbeidet: finne renn, bli enig med løperne, og se
-// lagets sesong. Hvor treneren lander avgjør startFane().
-export function fanerFor(profile, harLag) {
+// Menyen for en profil, delt i grupper. Rekkefølgen følger arbeidet: først
+// hjem, så rennene, så trening og utvikling, og kontoen til slutt.
+// En forelder ser barna sine, rennkalenderen og profilen - aldri trenerens
+// eller løperens skjermer, uansett hva kontoen ellers eier.
+export function menyGrupper(profile) {
   const { isCoach, isParent } = rolleFlagg(profile)
-  const base = isParent
-    ? ['kidnext', 'children', 'pamelding', 'kidraces', 'kiddev', 'races', 'settings', 'feedback']
-    : isCoach
-      ? ['races', 'matrix', 'season', 'athletes', 'training', 'dev', 'favoritter', 'settings', 'feedback']
-      : ['next', 'mine', 'races', 'training', 'dev', 'steder', 'favoritter', 'settings', 'feedback']
-  if (!profile.is_admin) return base
-  return harLag ? [...base, 'admin'] : ['admin', ...base]
+  const konto = ['settings', 'feedback', ...(profile.is_admin ? ['admin'] : [])]
+  if (isParent) return [
+    { k: null, faner: ['kidnext'] },
+    { k: 'renn', faner: ['children', 'pamelding', 'kidraces', 'races'] },
+    { k: 'utvikling', faner: ['kiddev'] },
+    { k: 'konto', faner: konto }]
+  if (isCoach) return [
+    { k: null, faner: ['home'] },
+    { k: 'renn', faner: ['races', 'matrix', 'season'] },
+    { k: 'laget', faner: ['athletes', 'training', 'dev', 'favoritter'] },
+    { k: 'konto', faner: konto }]
+  return [
+    { k: null, faner: ['next'] },
+    { k: 'renn', faner: ['mine', 'races', 'steder'] },
+    { k: 'utvikling', faner: ['training', 'dev', 'favoritter'] },
+    { k: 'konto', faner: konto }]
 }
 
-// Fanen man lander på. En trener med renn i lagets plan lander på lagets
-// sesong; uten renn er den siden tom, og da er rennkalenderen stedet å begynne.
-export function startFane(profile, harLag, { lagetHarRenn = false } = {}) {
-  const faner = fanerFor(profile, harLag)
-  if (faner[0] === 'admin') return 'admin'
-  if (rolleFlagg(profile).isCoach) return lagetHarRenn ? 'season' : 'races'
-  return faner[0]
+// Fanene som en flat liste. Den første er hjem.
+export function fanerFor(profile) {
+  return menyGrupper(profile).flatMap(g => g.faner)
 }
+
+// Fanen man lander på, og den «Hjem» tar deg til. En administrator uten lag
+// har ikke noe eget å se, og lander på administrasjonen.
+export function startFane(profile, harLag) {
+  if (profile.is_admin && !harLag) return 'admin'
+  return fanerFor(profile)[0]
+}
+export const hjemFane = profile => fanerFor(profile)[0]
