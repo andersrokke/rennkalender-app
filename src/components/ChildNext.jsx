@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { hentLag } from '../lag'
 import { PROFIL_FELT } from '../profil'
 import { useT } from '../i18n'
 import NextRace from './NextRace.jsx'
@@ -29,7 +30,7 @@ export default function ChildNext({ onOpenRace }) {
       const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', valgt).single()
       if (av) return
       if (p?.team_id) {
-        const { data: tm } = await supabase.from('teams').select('*').eq('id', p.team_id).single()
+        const tm = await hentLag(p.team_id)
         if (!av) setLag(tm || null)
       }
       if (!av) setBarn(p || null)

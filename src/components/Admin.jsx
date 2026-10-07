@@ -380,7 +380,7 @@ function Lag({ rader, t, onEndret }) {
               <tr key={l.id}>
                 <td>
                   {l.parent_team_id && <span className="muted">↳ </span>}{l.name}
-                  {l.is_school && <span className="ad-merke admin">{t('adSchool')}</span>}
+                  {l.kind === 'club' ? <span className="ad-merke admin">{t('adClub')}</span> : l.is_school && <span className="ad-merke admin">{t('adSchool')}</span>}
                 </td>
                 <td>
                   {l.is_school ? <span className="muted">–</span> : (
@@ -407,7 +407,7 @@ function Lag({ rader, t, onEndret }) {
                 <td>
                   <div className="ad-handlinger">
                     <button type="button" className="btn small" onClick={() => nyttNavn(l)}>{t('adRename')}</button>
-                    {!l.is_school && (
+                    {!l.is_school && l.kind !== 'club' && (
                       <button type="button" className="btn small danger"
                         onClick={() => confirm(t('adDeleteTeamConfirm').replace('{n}', l.name))
                           && kall('admin_delete_team', { p_team: l.id })}>

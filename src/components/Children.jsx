@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { hentLag } from '../lag'
 import { PROFIL_FELT } from '../profil'
 import { useT } from '../i18n'
 import { fmt } from '../util'
@@ -36,7 +37,7 @@ export default function Children({ profile }) {
     const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', kid.athlete_id).single()
     setChild(p || null)
     if (p?.team_id) {
-      const { data: tm } = await supabase.from('teams').select('*').eq('id', p.team_id).single()
+      const tm = await hentLag(p.team_id)
       setTeam(tm || null)
     }
   }

@@ -3,6 +3,7 @@ import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
 import { tabForNav, navForState, rolleFlagg, fanerFor, startFane, hjemFane, menyGrupper } from './nav'
 import CoachHome from './components/CoachHome.jsx'
+import { hentLag } from './lag'
 import Utvikling from './components/Utvikling.jsx'
 import { supabase } from './supabase'
 import { PROFIL_FELT } from './profil'
@@ -78,7 +79,7 @@ export default function App() {
     if (p?.role === 'coach') supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))
     else setGrupper([])
     if (p?.team_id) {
-      const { data: t } = await supabase.from('teams').select('*').eq('id', p.team_id).single()
+      const t = await hentLag(p.team_id)
       setTeam(t)
     } else setTeam(null)
   }, [])

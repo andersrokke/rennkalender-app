@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { avtaleFraRad } from '../avtale'
 import { supabase } from '../supabase'
+import { erSkigymnas } from '../lag'
 import RaceMap from './RaceMap.jsx'
 import RaceList from './RaceList.jsx'
 import TripPlan from './TripPlan.jsx'
@@ -57,7 +58,8 @@ export default function MySeason({ profile, team, readOnly = false, forelder = n
   // ny oppdatering. React stopper det etter femti runder - som en advarsel i
   // utvikling, som et kast i produksjon.
   // Rennene i lagets plan: dit reiser laget samlet, og skigymnaset dekker det.
-  const lagRenn = useMemo(() => new Set(merged.filter(x => x.fromTeam).map(x => x.race.id)), [merged])
+  // En klubb dekker ingenting, så der står reisen som vanlig kjøring.
+  const lagRenn = useMemo(() => erSkigymnas(team) ? new Set(merged.filter(x => x.fromTeam).map(x => x.race.id)) : null, [merged, team])
   const planned = useMemo(
     () => merged.filter(x => x.mine?.status !== 'unavailable').map(x => x.race), [merged])
 

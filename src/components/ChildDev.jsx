@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { hentLag } from '../lag'
 import { PROFIL_FELT } from '../profil'
 import { useT } from '../i18n'
 import Development from './Development.jsx'
@@ -33,7 +34,7 @@ export default function ChildDev() {
       if (av) return
       setBarn(p || null)
       if (p?.team_id) {
-        const { data: tm } = await supabase.from('teams').select('*').eq('id', p.team_id).single()
+        const tm = await hentLag(p.team_id)
         if (!av) setLag(tm || null)
       }
     })()
