@@ -28,9 +28,11 @@ const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'f
 
 const today = () => new Date().toISOString().slice(0, 10)
 const blank = () => ({
-  date: today(), resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
+  date: today(), dager: [], resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
   gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', note: ''
 })
+// Dagen etter, som ISO-dato.
+const dagenEtter = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) }
 const num = v => (v === '' || v == null ? null : Number(v))
 
 export default function TrainingLog({ profile, team, isCoach, tidtaking = null }) {
@@ -131,13 +133,25 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
     set({ slope_id: v })
   }
 
+  // Samlinger har gjerne samme forhold dag etter dag, så én økt kan føres på
+  // flere dager på én gang, og rettes etterpå om noe var annerledes.
+  const dager = [form.date, ...form.dager].filter(Boolean)
+  // Dagen etter den siste; er den i morgen, tas dagen før den første i stedet.
+  const dagenFor = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10) }
+  const leggTilDag = () => {
+    const sortert = [...dager].sort()
+    const neste = dagenEtter(sortert[sortert.length - 1])
+    const ny = neste <= today() ? neste : dagenFor(sortert[0])
+    set({ dager: [...form.dager, ny].sort() })
+  }
+
   async function save(e) {
     e.preventDefault()
     setBusy(true); setMsg(null)
-    const { error } = await supabase.from('training_sessions').insert({
+    const { error } = await supabase.from('training_sessions').insert(dager.map(dato => ({
       athlete_id: who,
       team_id: team?.id ?? null,
-      date: form.date,
+      date: dato,
       discipline: form.discipline,
       slope_id: form.slope_id ? Number(form.slope_id) : null,
       // Fritekst brukes bare når bakken ikke er i registeret, så de to aldri
@@ -151,10 +165,16 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
       temp_c: num(form.temp_c), minutes: num(form.minutes), rpe: num(form.rpe),
       note: form.note.trim() || null,
       created_by: profile.id
-    })
+    })))
     setBusy(false)
     if (error) return setMsg({ bad: true, text: error.message })
-    setForm(blank()); setMsg({ text: t('tlSaved') }); oppdater()
+    // Skjemaet blir stående: neste økt er som regel nesten lik. Bare dagene
+    // nullstilles, til dagen etter den siste som ble ført.
+    const sisteDag = dager[dager.length - 1]
+    const nesteDag = dagenEtter(sisteDag) <= today() ? dagenEtter(sisteDag) : today()
+    setForm(f => ({ ...f, date: nesteDag, dager: [] }))
+    setMsg({ text: dager.length > 1 ? t('tlSavedN').replace('{n}', dager.length) : t('tlSavedKeep') })
+    oppdater()
   }
 
   return (
@@ -182,6 +202,15 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
             <label htmlFor="tl-date">{t('tlDate')}</label>
             <input id="tl-date" type="date" required value={form.date}
               max={today()} onChange={e => set({ date: e.target.value })} />
+            <div className="tl-dager">
+              {form.dager.map((d, i) => (
+                <span className="chip on" key={d}>{d.slice(8)}.{d.slice(5, 7)}
+                  <button type="button" aria-label={t('remove')} onClick={() => set({ dager: form.dager.filter((_, j) => j !== i) })}>×</button>
+                </span>
+              ))}
+              <button type="button" className="btn small" onClick={leggTilDag}>{t('tlAddDay')}</button>
+            </div>
+            {form.dager.length > 0 && <small className="muted">{t('tlDaysHint').replace('{n}', dager.length)}</small>}
           </div>
           <div>
             <label htmlFor="tl-resort">{t('tlResort')}</label>
@@ -305,7 +334,8 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
         <textarea id="tl-note" value={form.note} onChange={e => set({ note: e.target.value })} />
 
         <div className="row" style={{ marginTop: 14 }}>
-          <button className="btn primary" disabled={busy}>{busy ? t('tlSaving') : t('tlSave')}</button>
+          <button className="btn primary" disabled={busy}>{busy ? t('tlSaving') : dager.length > 1 ? t('tlSaveN').replace('{n}', dager.length) : t('tlSave')}</button>
+          <button type="button" className="btn" onClick={() => { setForm(blank()); setMsg(null) }}>{t('tlClear')}</button>
           {msg && <span className={msg.bad ? 'error' : 'notice'} style={{ margin: 0 }}>{msg.text}</span>}
         </div>
       </form>

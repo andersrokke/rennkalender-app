@@ -1529,3 +1529,8 @@ html[data-look="ny"] .tag.av{border-radius:999px;font-family:inherit;text-transf
 .rh-vaernote{max-width:70ch;font-size:13.5px}
 .vr-celle{font-variant-numeric:tabular-nums}
 select.vr-fore{width:auto;min-width:112px;padding:4px 26px 4px 8px;font-size:13px;height:auto}
+
+/* --- Treningslogg: flere dager på én økt --- */
+.tl-dager{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.tl-dager .chip{display:inline-flex;align-items:center;gap:6px;padding-right:6px}
+.tl-dager .chip button{border:0;background:transparent;color:inherit;font-size:15px;line-height:1;padding:0 2px;cursor:pointer}
