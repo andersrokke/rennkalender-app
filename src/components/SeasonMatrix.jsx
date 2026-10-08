@@ -12,9 +12,13 @@ const key = (a, r) => `${a}|${r}`
 // same encoding as the chips in «Lagets sesong».
 export default function SeasonMatrix({ team }) {
   const t = useT()
-  const { rows, apply, loading } = useTeamAssign(team.id)
+  const { rows, apply, loading, reload } = useTeamAssign(team.id)
   const [races, setRaces] = useState([])
   const [draft, setDraft] = useState(null)
+  // Hva et klikk gjør: ja (sett opp), nei, eller kommentar.
+  const [modus, setModus] = useState('ja')
+  const [nei, setNei] = useState(null)              // utkast: nøkler treneren har sagt nei til
+  const [notat, setNotat] = useState(null)          // { a, r, tekst } som redigeres
   const [busy, setBusy] = useState(false)
   const [valgt, setVis] = useState(null)         // null = ikke valgt ennå | alle | venterTrener | venterLoper | avtalt
   // Siden åpner på det som venter på treneren, hvis det finnes noe.
@@ -33,7 +37,8 @@ export default function SeasonMatrix({ team }) {
   }, [rennIder])
 
   const stored = useMemo(() => new Set(rows.filter(r => r.assigned).map(r => key(r.athlete_id, r.race_id))), [rows])
-  useEffect(() => { setDraft(new Set(stored)) }, [stored])
+  const storedNei = useMemo(() => new Set(rows.filter(r => r.declined).map(r => key(r.athlete_id, r.race_id))), [rows])
+  useEffect(() => { setDraft(new Set(stored)); setNei(new Set(storedNei)) }, [stored, storedNei])
 
   const athletes = useMemo(() => {
     const m = new Map()
@@ -81,9 +86,27 @@ export default function SeasonMatrix({ team }) {
   // drag across cells: the first cell decides whether we are turning on or off
   const onDown = (a, r) => {
     if (locked(a, r)) return
+    const c = cell(a, r)
+    if (modus === 'notat') {
+      if (!c?.status) return   // ingen rad å skrive på
+      setNotat({ a, r, tekst: c.coach_note || '' }); return
+    }
+    if (modus === 'nei') {
+      if (!c?.status) return   // nei er svaret på et ønske; uten rad er det ingenting å svare på
+      const k = key(a, r)
+      setNei(n => { const x = new Set(n); x.has(k) ? x.delete(k) : x.add(k); return x })
+      setDraft(d => { const x = new Set(d); x.delete(k); return x })
+      return
+    }
     const on = !draft.has(key(a, r))
     drag.current = on
     set(a, r, on)
+    if (on) setNei(n => { const x = new Set(n); x.delete(key(a, r)); return x })
+  }
+  async function lagreNotat() {
+    const { error } = await supabase.rpc('coach_race_note', { p_race_id: notat.r, p_athlete: notat.a, p_note: notat.tekst })
+    if (error) return alert(error.message)
+    setNotat(null); reload()
   }
   const onEnter = (a, r) => { if (drag.current !== null && drag.current !== undefined) set(a, r, drag.current) }
   useEffect(() => {
@@ -103,13 +126,21 @@ export default function SeasonMatrix({ team }) {
   }
 
   const added = draft ? [...draft].filter(k => !stored.has(k)) : []
-  const removed = draft ? [...stored].filter(k => !draft.has(k)) : []
+  const removed = draft ? [...stored].filter(k => !draft.has(k) && !nei?.has(k)) : []
+  const neiNye = nei ? [...nei].filter(k => !storedNei.has(k)) : []
+  const neiBorte = nei ? [...storedNei].filter(k => !nei.has(k) && !draft?.has(k)) : []
+  const endringer = added.length + removed.length + neiNye.length + neiBorte.length
   async function save() {
     setBusy(true)
     const byRace = {}
-    added.forEach(k => { const [a, r] = k.split('|'); (byRace[r] = byRace[r] || { add: [], rem: [] }).add.push(a) })
-    removed.forEach(k => { const [a, r] = k.split('|'); (byRace[r] = byRace[r] || { add: [], rem: [] }).rem.push(a) })
-    for (const [r, v] of Object.entries(byRace)) await apply(Number(r), v.add, v.rem)
+    const legg = (k, felt) => { const [a, r] = k.split('|'); (byRace[r] = byRace[r] || { add: [], rem: [], nei: [], ja: [] })[felt].push(a) }
+    added.forEach(k => legg(k, 'add')); removed.forEach(k => legg(k, 'rem')); neiNye.forEach(k => legg(k, 'nei')); neiBorte.forEach(k => legg(k, 'ja'))
+    for (const [r, v] of Object.entries(byRace)) {
+      if (v.nei.length) await supabase.rpc('decline_race', { p_race_id: Number(r), p_athletes: v.nei })
+      if (v.ja.length) await supabase.rpc('decline_race', { p_race_id: Number(r), p_athletes: v.ja, p_on: false })
+      if (v.add.length || v.rem.length) await apply(Number(r), v.add, v.rem)
+    }
+    if (!Object.values(byRace).some(v => v.add.length || v.rem.length)) await reload()
     setBusy(false)
   }
 
@@ -129,7 +160,7 @@ export default function SeasonMatrix({ team }) {
   const grener = r => ['SL', 'GS', 'SG', 'DH', 'AC'].filter(g => (r.events || '').includes(g))
   // Første renn i hver måned får en strek foran seg, så månedene skilles nedover også.
   const forst = new Set(shownRaces.filter((r, i) => i === 0 || shownRaces[i - 1].start_date.slice(0, 7) !== r.start_date.slice(0, 7)).map(r => r.id))
-  const KORT = { venterTrener: t('mxWants'), venterLoper: t('mxWaitAthlete'), avtalt: t('mxAgreed'), pameldt: t('st_entered') + ' ✓', kanIkke: t('st_unavailable') }
+  const KORT = { venterTrener: t('mxWants'), venterLoper: t('mxWaitAthlete'), avtalt: t('mxAgreed'), pameldt: t('st_entered') + ' ✓', kanIkke: t('st_unavailable'), trenerNei: t('mxNo') }
   const VALG = [['venterTrener', t('mxWaitYou'), antall('venterTrener')], ['venterLoper', t('mxWaitAthlete'), antall('venterLoper')],
     ['avtalt', t('mxAgreed'), antall('avtalt')], ['alle', t('mxAll'), rows.filter(x => avtale(x) !== 'ingen').length]]
 
@@ -158,15 +189,35 @@ export default function SeasonMatrix({ team }) {
           <span><i className="avtalt" />{t('mxLegAgreed')}</span>
           <span><i className="pameldt" />{t('st_entered')}</span>
           <span><i className="kanIkke" />{t('st_unavailable')}</span>
+          <span><i className="trenerNei" />{t('mxLegNo')}</span>
         </div>
 
-        {(added.length > 0 || removed.length > 0) && (
+        <div className="mx-modus" role="radiogroup" aria-label={t('mxClickDoes')}>
+          <span>{t('mxClickDoes')}</span>
+          {[['ja', t('mxModeYes')], ['nei', t('mxModeNo')], ['notat', t('mxModeNote')]].map(([k, navn]) => (
+            <button key={k} type="button" role="radio" aria-checked={modus === k} className={`chip${modus === k ? ' on' : ''}`} onClick={() => setModus(k)}>{navn}</button>
+          ))}
+          <small className="muted">{t('mxMode_' + modus)}</small>
+        </div>
+
+        {notat && (
+          <div className="mx-notat">
+            <b>{t('mxNoteTo').replace('{n}', athletes.find(x => x.athlete_id === notat.a)?.full_name || '').replace('{r}', races.find(x => x.id === notat.r)?.place || '')}</b>
+            <textarea value={notat.tekst} maxLength={300} placeholder={t('mxNotePh')} onChange={e => setNotat(n => ({ ...n, tekst: e.target.value }))} />
+            <div className="row" style={{ gap: 8 }}>
+              <button type="button" className="btn small primary" onClick={lagreNotat}>{t('save')}</button>
+              <button type="button" className="btn small" onClick={() => setNotat(null)}>{t('cancel')}</button>
+            </div>
+          </div>
+        )}
+
+        {endringer > 0 && (
           <div className="matrix-save">
             <span>{t('mxUnsaved')}</span>
             <button className="btn small primary" disabled={busy} onClick={save}>
-              {busy ? t('saving') : `${t('save')} (${added.length ? '+' + added.length : ''}${added.length && removed.length ? ' / ' : ''}${removed.length ? '−' + removed.length : ''})`}
+              {busy ? t('saving') : `${t('save')} (${[added.length ? '+' + added.length : '', removed.length ? '−' + removed.length : '', neiNye.length ? neiNye.length + ' ' + t('mxModeNo').toLowerCase() : ''].filter(Boolean).join(' / ')})`}
             </button>
-            <button className="btn small" onClick={() => setDraft(new Set(stored))}>{t('undo')}</button>
+            <button className="btn small" onClick={() => { setDraft(new Set(stored)); setNei(new Set(storedNei)) }}>{t('undo')}</button>
           </div>
         )}
 
@@ -202,13 +253,13 @@ export default function SeasonMatrix({ team }) {
                       const st = chipState(c)
                       const on = draft?.has(key(a.athlete_id, r.id))
                       // Ruta viser hvor dere står hvis utkastet lagres.
-                      const av = avtale({ status: c?.status ?? null, assigned: !!on, answered: c?.answered })
+                      const av = avtale({ status: c?.status ?? null, assigned: !!on, answered: c?.answered, declined: !!nei?.has(key(a.athlete_id, r.id)) })
                       return (
                         <td key={r.id} className={`mcell ${av}${st === 'unavailable' ? ' unavailable' : ''}${forst.has(r.id) ? ' forst' : ''}`}
-                          title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}${c?.athlete_note ? ' · «' + c.athlete_note + '»' : ''}`}
+                          title={`${a.full_name} · ${r.place} · ${c?.status ? t('st_' + c.status) : t('noAnswer')}${c?.athlete_note ? ' · «' + c.athlete_note + '»' : ''}${c?.coach_note ? ' · ' + t('coachSays') + ' ' + c.coach_note : ''}`}
                           onPointerDown={() => onDown(a.athlete_id, r.id)}
                           onPointerEnter={() => onEnter(a.athlete_id, r.id)}>
-                          <span className="mpill">{KORT[av] || '+'}{c?.athlete_note && <i className="mnote" aria-label={t('note')} />}</span>
+                          <span className="mpill">{KORT[av] || '+'}{(c?.athlete_note || c?.coach_note) && <i className="mnote" aria-label={t('note')} />}</span>
                         </td>
                       )
                     })}

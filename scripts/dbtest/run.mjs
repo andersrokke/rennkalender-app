@@ -650,6 +650,17 @@ await as(l1trener, 'select public.assign_race($1,$2)', [rennId, [L1]])
 await as(L1, `update athlete_races set status='planned' where athlete_id=$1 and race_id=$2`, [L1, rennId])
 ;(await hosTrener()).some(r => r.athlete_id === L1 && r.assigned && r.answered === true)
   ? ok('løperen bekrefter, og tildelingen står') : fail('bekreftelsen ble ikke registrert, eller tildelingen forsvant')
+// Nei fra treneren: opphever tildelingen, synlig for løperen, og løperen kan ikke fjerne det. Ja opphever nei.
+await as(l1trener, `select public.decline_race($1,$2,'Vi tar Hafjell uka etter')`, [rennId, [L1]])
+{ const r = (await hosTrener()).find(r => r.athlete_id === L1)
+  r.declined && !r.assigned && r.coach_note === 'Vi tar Hafjell uka etter' ? ok('trener sier nei med begrunnelse') : fail(`nei: ${JSON.stringify(r)}`) }
+await as(L1, `update athlete_races set coach_declined_at=null, coach_note=null, status='wish' where athlete_id=$1 and race_id=$2`, [L1, rennId])
+;(await q('select coach_declined_at d, coach_note n from athlete_races where athlete_id=$1 and race_id=$2', [L1, rennId]))[0].d !== null ? ok('løperen kan ikke fjerne trenerens nei') : fail('løperen fjernet nei')
+try { await as(L1, `select public.decline_race($1,$2)`, [rennId, [L1]]); fail('løper sa nei som trener') } catch { ok('bare trener kan si nei') }
+await as(l1trener, `select public.coach_race_note($1,$2,'Ny kommentar')`, [rennId, L1])
+;(await q('select coach_note n from athlete_races where athlete_id=$1 and race_id=$2', [L1, rennId]))[0].n === 'Ny kommentar' ? ok('trener skriver kommentar til løperen') : fail('kommentar ble ikke lagret')
+await as(l1trener, 'select public.assign_race($1,$2)', [rennId, [L1]])
+;(await hosTrener()).some(r => r.athlete_id === L1 && r.assigned && !r.declined) ? ok('et ja opphever nei') : fail('nei ble stående etter ja')
 await as(L1, `update athlete_races set status='unavailable' where athlete_id=$1 and race_id=$2`, [L1, rennId])
 ;(await hosTrener()).length === 0 ? ok('«kan ikke» alene gjør ikke rennet til lagets sak') : fail('«kan ikke» ga treneren et renn')
 await as(L1, `delete from athlete_races where athlete_id=$1 and race_id=$2`, [L1, rennId])

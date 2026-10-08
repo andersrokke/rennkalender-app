@@ -1604,3 +1604,15 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 
 .tm-okt{display:flex;flex-direction:column;gap:2px;margin:12px 0 6px}
 .tm-okt b{font-size:16px;text-transform:capitalize}
+
+/* --- Trener sier nei, og kommentar --- */
+:root{--av-nei:#9A3412}
+.tag.av.trenerNei{background:color-mix(in srgb, var(--av-nei) 14%, var(--snow));color:var(--av-nei)}
+.mx-legend i.trenerNei{background:color-mix(in srgb, var(--av-nei) 22%, var(--snow))}
+.matrix .mcell.trenerNei .mpill{background:color-mix(in srgb, var(--av-nei) 14%, var(--snow));color:var(--av-nei);text-decoration:line-through}
+.mx-modus{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13.5px}
+.mx-modus > span{color:var(--mute)}
+.mx-modus small{flex-basis:100%;font-size:12.5px}
+@media (min-width:900px){.mx-modus small{flex-basis:auto;margin-left:6px}}
+.mx-notat{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.mx-notat textarea{min-height:64px}
