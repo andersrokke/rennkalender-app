@@ -68,6 +68,19 @@ export default function Onboarding({ profile, onDone }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const L = t(lang)
+  // Løperen finner seg selv i FIS-lista: navn inn, treff ut, ett trykk.
+  const [fisSok, setFisSok] = useState('')
+  const [treff, setTreff] = useState([])
+  const [valgtFis, setValgtFis] = useState(null)
+  useEffect(() => {
+    if (valgtFis || fisSok.trim().length < 3) { setTreff([]); return }
+    let av = false
+    const id = setTimeout(async () => {
+      const { data } = await supabase.rpc('fis_sok', { q: fisSok.trim() })
+      if (!av) setTreff((data || []).slice(0, 8))
+    }, 250)
+    return () => { av = true; clearTimeout(id) }
+  }, [fisSok, valgtFis])
 
   const saved = profile.full_name || ''
   const clean = saved && !saved.includes('@') ? saved : ''
@@ -112,11 +125,11 @@ export default function Onboarding({ profile, onDone }) {
         // Feil kode svarer tomt i stedet for å kaste, så forsøket kan telles.
         if (code && !lagId) throw new Error(L.codeInvalid)
         const { error: e2 } = await supabase.from('profiles')
-          .update({ full_name: name, role: 'athlete', onboarded: true, lang }).eq('id', profile.id)
+          .update({ full_name: name, role: 'athlete', onboarded: true, lang, ...fisFelt() }).eq('id', profile.id)
         if (e2) throw e2
       } else if (mode === 'solo') {
         const { error } = await supabase.from('profiles')
-          .update({ full_name: name, role: 'athlete', team_id: null, onboarded: true, lang }).eq('id', profile.id)
+          .update({ full_name: name, role: 'athlete', team_id: null, onboarded: true, lang, ...fisFelt() }).eq('id', profile.id)
         if (error) throw error
       } else if (mode === 'parent') {
         // Koden kommer fra barnets egen profil, ikke på e-post. Har man den
@@ -131,11 +144,45 @@ export default function Onboarding({ profile, onDone }) {
         if (e2) throw e2
       }
       glemLagkode(); glemForeldrekode()
+      // Løperen møtes av «Dette er deg» etterpå, med resultatene hentet.
+      if (mode === 'team' || mode === 'solo') { try { sessionStorage.setItem('alpinrace.velkommen', '1') } catch { /* privat modus */ } }
       onDone()
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
 
   const go = { coach: L.goCoach, team: L.goTeam, solo: L.goSolo, parent: L.goParent }[mode]
+  // FIS-kode, årgang og kjønn fra treffet løperen valgte; ellers ingenting.
+  const fisFelt = () => valgtFis ? { fis_code: valgtFis.fis_code, birth_year: valgtFis.birth_year || null, gender: valgtFis.gender ? String(valgtFis.gender).trim() : null } : {}
+  const FisVelger = () => (
+    <>
+      <label>{L.fisFind}</label>
+      {valgtFis ? (
+        <div className="ob-fis-valgt">
+          <b>{valgtFis.first_name} {valgtFis.last_name}</b>
+          <span className="muted"> · {[valgtFis.club, valgtFis.birth_year, 'FIS ' + valgtFis.fis_code].filter(Boolean).join(' · ')}</span>
+          <button type="button" className="btn small link" onClick={() => { setValgtFis(null); setFisSok('') }}>{L.fisChange}</button>
+        </div>
+      ) : (
+        <>
+          <input value={fisSok} placeholder={L.fisFindPh} autoComplete="off" onChange={e => setFisSok(e.target.value)} />
+          {treff.length > 0 && (
+            <ul className="ob-fis-treff">
+              {treff.map(x => (
+                <li key={x.fis_code}>
+                  <button type="button" onClick={() => { setValgtFis(x); setTreff([]) }}>
+                    <b>{x.first_name} {x.last_name}</b>
+                    <span className="muted">{[x.club, x.birth_year, x.nation].filter(Boolean).join(' · ')}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {fisSok.trim().length >= 3 && !treff.length && <p className="ob-hint">{L.fisNone}</p>}
+        </>
+      )}
+      <p className="ob-hint">{L.fisWhy}</p>
+    </>
+  )
 
   return (
     <div className="ob">
@@ -180,6 +227,8 @@ export default function Onboarding({ profile, onDone }) {
               <input key="lagkode" name="code" autoCapitalize="none" autoCorrect="off" spellCheck="false"
                 defaultValue={fraLenke} placeholder={L.codePh} />
             </>)}
+
+            {(mode === 'team' || mode === 'solo') && <FisVelger />}
 
             {mode === 'parent' && (<>
               <label>{L.codeParent}</label>

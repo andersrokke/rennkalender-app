@@ -1616,3 +1616,38 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 @media (min-width:900px){.mx-modus small{flex-basis:auto;margin-left:6px}}
 .mx-notat{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel-2)}
 .mx-notat textarea{min-height:64px}
+
+/* --- Dette er deg --- */
+.vk{display:flex;flex-direction:column;gap:16px}
+.vk .card{margin:0}
+.vk-hode h2{margin:4px 0 6px;font-size:28px;line-height:1.15}
+.vk-hode p{margin:0;max-width:62ch}
+.vk-merke{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px}
+.vk-tall{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.vk-tall div{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-radius:12px;background:var(--snow);border:1px solid var(--line)}
+.vk-tall b{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.vk-tall span{font-size:12.5px;color:var(--mute)}
+.vk-tall .vk-poeng{grid-column:1 / -1}
+.vk-tall .vk-poeng b{font-size:20px}
+.vk-renn{list-style:none;margin:0;padding:0}
+.vk-renn li{display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.vk-renn li:first-child{border-top:0}
+.vk-renn .nar{flex:0 0 74px;white-space:nowrap;font-weight:650;font-variant-numeric:tabular-nums}
+.vk-renn .hva{flex:1;min-width:0}
+.vk-hist{font-size:13px;margin-top:2px}
+.vk-valg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.vk-valg button{display:flex;flex-direction:column;gap:2px;text-align:left;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit;cursor:pointer}
+.vk-valg button:hover{border-color:var(--accent)}
+.vk-valg span{font-size:13px;color:var(--mute)}
+.vk-ferdig{margin-top:14px}
+.vk-henter{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;text-align:center}
+.vk-henter h2{margin:0;font-size:22px}
+.vk-spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:vk-snurr .9s linear infinite}
+@keyframes vk-snurr{to{transform:rotate(360deg)}}
+.ob-fis-treff{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ob-fis-treff li + li{border-top:1px solid var(--line)}
+.ob-fis-treff button{display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;padding:9px 12px;border:0;background:#fff;font:inherit;cursor:pointer}
+.ob-fis-treff button:hover{background:var(--panel-2)}
+.ob-fis-treff span{font-size:12.5px}
+.ob-fis-valgt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+@media (max-width:600px){.vk-renn li{flex-wrap:wrap}.vk-renn .btn{margin-left:88px}}

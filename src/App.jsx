@@ -5,6 +5,7 @@ import { tabForNav, navForState, rolleFlagg, fanerFor, startFane, hjemFane, meny
 import CoachHome from './components/CoachHome.jsx'
 import { hentLag } from './lag'
 import Utvikling from './components/Utvikling.jsx'
+import Velkommen from './components/Velkommen.jsx'
 import { supabase } from './supabase'
 import { PROFIL_FELT } from './profil'
 import Auth from './components/Auth.jsx'
@@ -121,6 +122,9 @@ export default function App() {
       .then(({ count }) => setPlanCount(count || 0))
   }, [profile?.id, tab])
 
+  // Rett etter registrering møtes løperen av «Dette er deg», med resultatene hentet.
+  const [velkommen, setVelkommen] = useState(() => { try { return sessionStorage.getItem('alpinrace.velkommen') === '1' } catch { return false } })
+  const ferdigVelkommen = () => { try { sessionStorage.removeItem('alpinrace.velkommen') } catch {} setVelkommen(false); setTab(null) }
   const [som, setSom] = useState(null)
   const [somTeam, setSomTeam] = useState(null)
   async function seSom(id) {
@@ -274,7 +278,9 @@ export default function App() {
           nede i «Min utvikling». En foresatt ser oekter, men foerer ingen. */}
       {active === 'training' && <div className="page"><TrainingLog profile={vis} team={visTeam} isCoach={isCoach} readOnly={!!som}
         tidtaking={<Timing profile={vis} team={visTeam} isCoach={isCoach} />} /></div>}
-      {active === 'next' && <NextRace profile={vis} team={visTeam} onOpenRace={() => setTab('mine')} />}
+      {active === 'next' && (velkommen && !som && !isCoach && !isParent
+        ? <Velkommen profile={vis} team={visTeam} hent onDone={ferdigVelkommen} onGo={k => { ferdigVelkommen(); gaTil(k) }} />
+        : <NextRace profile={vis} team={visTeam} onOpenRace={() => setTab('mine')} tomt={<Velkommen profile={vis} team={visTeam} onGo={gaTil} />} />)}
       {active === 'mine' && <MySeason profile={vis} team={visTeam} readOnly={!!som} />}
       {active === 'races' && <RaceBrowser profile={vis} team={visTeam} isCoach={isCoach} readOnly={isParent} />}
       {active === 'children' && <Children profile={vis} />}

@@ -24,6 +24,7 @@ import Pamelding from '../../src/components/Pamelding.jsx'
 import FavTab from '../../src/components/FavTab.jsx'
 import Admin from '../../src/components/Admin.jsx'
 import Onboarding from '../../src/components/Onboarding.jsx'
+import Velkommen from '../../src/components/Velkommen.jsx'
 import { LangContext } from '../../src/i18n'
 import { svarPa, LOPERE, TRENER, TEAM } from './testdata.js'
 import App from '../../src/App.jsx'
@@ -116,6 +117,7 @@ const skjermer = [
   ['Forelder: barnets sesong (med kostnader)', <MySeason profile={lukas} team={TEAM} readOnly forelder={forelder} />],
   ['Admin (klikk gjennom fanene)', <Admin profile={{ id: 'anders', is_admin: true }} />],
   ['Løper uten lag: Settings (skigymnas-velger)', <Settings profile={{ ...lukas, team_id: null }} team={null} isCoach={false} onChange={ingen} />],
+  ['Løper: Dette er deg', <Velkommen profile={lukas} team={TEAM} onGo={ingen} />],
   ['Onboarding', <Onboarding profile={{ id: 'ny', full_name: '', lang: 'no' }} onDone={ingen} />]
 ]
 
@@ -131,7 +133,8 @@ if (somHvem) {
 } else
 createRoot(document.getElementById('root')).render(
   <LangContext.Provider value="no">
-    {skjermer.map(([navn, el]) => (
+    {/* ?skjerm=Navn viser bare én skjerm, til skjermbilder. */}
+    {skjermer.filter(([navn]) => !new URLSearchParams(location.search).get('skjerm') || navn === new URLSearchParams(location.search).get('skjerm')).map(([navn, el]) => (
       <div key={navn} style={{ borderTop: '3px dashed #999', padding: '8px 0' }}>
         <p style={{ margin: '0 16px', fontWeight: 700 }}>▶ {navn}</p>
         <Fanger navn={navn}>{el}</Fanger>

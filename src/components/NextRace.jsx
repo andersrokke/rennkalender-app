@@ -24,7 +24,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 const daysTo = d => Math.round((new Date(d + 'T12:00:00') - new Date()) / 864e5)
 const initials = n => (n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
-export default function NextRace({ profile, team, onOpenRace }) {
+export default function NextRace({ profile, team, onOpenRace, tomt = null }) {
   const t = useT()
   const [rows, setRows] = useState([])
   const [history, setHistory] = useState([])
@@ -101,6 +101,7 @@ export default function NextRace({ profile, team, onOpenRace }) {
 
   if (loading) return <div className="page muted">{t('loading')}</div>
 
+  if (!next && tomt) return tomt
   if (!next) return (
     <div className="nextwrap">
       <div className="nr-empty">
