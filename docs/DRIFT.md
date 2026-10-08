@@ -967,3 +967,10 @@ nettleseren, `?look=ny` slår det nye på igjen. Alle grafer deler stil gjennom
 - **Hoder:** CSP og resten ligger i `netlify.toml`. En ny ekstern kilde (kart,
   skrift, API) må føres opp i CSP-en.
 - Klientrollene har ikke TRUNCATE, og uinnloggede har ingen skriverett.
+
+## Røyktest før push
+
+`npm run test:smoke` åpner appen i en usynlig Chrome som trener og løper, på
+bred og smal skjerm, og feiler hvis en side er tom eller konsollen har feil.
+Git-kroken i `.githooks/pre-push` kjører bygg, enhetstester og røyktesten
+før hver push. Slå den på i en ny klone med `git config core.hooksPath .githooks`.

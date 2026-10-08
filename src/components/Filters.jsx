@@ -16,6 +16,9 @@ export function erEndret(f) {
 
 export function applyFilter(races, f) {
   return races.filter(r => {
+    // FIS legger inn renn før stedet er bestemt («TBD»). Uten sted kan ingen
+    // planlegge dem, så de holdes utenfor til stedet kommer.
+    if (/^tbd$/i.test((r.place || '').trim())) return false
     if (!f.country.has(gruppe(r))) return false
     if (!r.gender.split(' ').some(g => f.gender.has(g))) return false
     if (f.month !== 'all' && !(r.start_date.startsWith(f.month) || r.end_date.startsWith(f.month))) return false

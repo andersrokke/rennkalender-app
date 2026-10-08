@@ -1,0 +1,8 @@
+#!/bin/sh
+# Alt som pushes går rett til produksjon. Bygg, enhetstester og røyktest må
+# gå gjennom først. Slå på med: git config core.hooksPath .githooks
+cd "$(git rev-parse --show-toplevel)" || exit 1
+echo "pre-push: bygg, enhetstester og røyktest …"
+npm run build >/dev/null 2>&1 || { echo "pre-push: bygget feiler"; exit 1; }
+npm run test:unit >/dev/null 2>&1 || { echo "pre-push: enhetstestene feiler - kjør npm run test:unit"; exit 1; }
+npm run test:smoke || { echo "pre-push: røyktesten feiler - kjør npm run test:smoke"; exit 1; }
