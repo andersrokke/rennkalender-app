@@ -68,6 +68,21 @@ export const SLOPES = [
 ]
 const FORE = ['ice', 'salted', 'hard', 'grippy', 'soft', 'slush', 'powder', 'artificial']
 const VAER = ['sun', 'cloudy', 'flat_light', 'snow', 'fog', 'rain', 'wind']
+// Én tidtakingsøkt fra Brower: åtte løp på Lukas, noen på de andre, og to
+// uten kobling.
+export const TIMING_IMPORTS = [{ id: 'ti1', team_id: 'ntg', session_date: '2026-09-27', discipline: 'GS', venue: 'Hafjell', note: 'Brower', rows_total: 14, rows_mapped: 12 }]
+export const TIMING_RUNS = []
+{
+  let id = 1
+  const legg = (aid, navn, bib, tider) => tider.forEach((ms, i) => TIMING_RUNS.push({
+    id: 'tr' + id++, import_id: 'ti1', team_id: 'ntg', athlete_id: aid, source_name: navn, bib, run_no: i + 1,
+    run_time_ms: ms, run_time_text: ms == null ? '0' : String(ms / 1000), status: ms == null ? 'DNF' : 'OK', splits_ms: [], extra: {},
+    athlete: aid ? { id: aid, full_name: LOPERE.find(l => l.id === aid)?.full_name } : null
+  }))
+  legg('lukas', 'Lukas', '2', [29351, 28972, 28633, 28508, 28366, 28684, 28307, 27562])
+  legg('a1', 'Ida', '13', [29712, 29775, null, 29530])
+  legg(null, '#30', '30', [28854, 28504])
+}
 export const SESSIONS = []
 let sid = 0
 for (const p of LOPERE) for (let i = 0; i < 45; i++) {
@@ -174,7 +189,7 @@ export function svarPa(url, o) {
   if (!m) return enkelt ? null : []
   const alle = {
     races: RACES, venues: VENUES, teams: [TEAM], profiles: [...LOPERE, TRENER],
-    athlete_races: ATHLETE_RACES, team_races: TEAM_RACES, training_sessions: SESSIONS, slopes: SLOPES,
+    athlete_races: ATHLETE_RACES, team_races: TEAM_RACES, training_sessions: SESSIONS, slopes: SLOPES, timing_imports: TIMING_IMPORTS, timing_runs: TIMING_RUNS,
     race_signups: SIGNUPS, race_signup_latest: SIGNUPS, fis_points: FIS_POINTS, fis_results: FIS_RESULTS,
     fis_athletes: LOPERE.filter(p => p.fis_code).map(p => ({ fis_code: p.fis_code, competitor_id: 'c' + p.id,
       name: p.full_name, club: 'NTG', nation: 'NOR', birth_year: p.birth_year, updated_at: '2026-09-20' }))

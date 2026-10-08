@@ -185,7 +185,8 @@ export const I18N = {
     fisNotOnList: 'Du har ingen poeng på denne lista ennå. Grafen stopper på den siste lista du står på.',
     fisNoOneOnList: 'Ingen på laget har poeng på denne lista ennå.',
     // mellomtider
-    tmTitle: 'Tidtaking', tmSub: 'Tider fra treningen, og hvor i løypa tiden går. Løypa deles i seksjoner mellom fotocellene; beste seksjonstid i økta er referansen, uansett hvem som satte den.',
+    tmTitle: 'Tidtaking', tmSub: 'Tider fra treningen: beste og snitt per løper, og hvert løp. Har tidtakeren mellomtider, vises også hvor i løypa tiden går.',
+    tmRuns: 'Løp', tmAvg: 'Snitt', tmEach: 'Hvert løp', tmUnlinked: 'ikke koblet', tmSplitsTitle: 'Hvor i løypa tiden går',
     tmEmpty: 'Ingen tidtaking ennå. Tidene dukker opp her når treneren laster dem opp.',
     tmNoSplits: 'Denne økta har ingen fullførte løp med mellomtider.',
     tmYouLose: 'Du taper mest tid i', tmSection: 'Seksjon', tmPerRun: 'i snitt per løp', tmThisRun: 'på dette løpet',
@@ -591,7 +592,8 @@ export const I18N = {
     fisNotOnList: 'You have no points on this list yet. The chart ends at the last list you appear on.',
     fisNoOneOnList: 'Nobody on the team has points on this list yet.',
     // split times
-    tmTitle: 'Timing', tmSub: 'Times from training, and where on the course the time goes. The course is split into sections between the photocells; the fastest section in the session is the reference, whoever set it.',
+    tmTitle: 'Timing', tmRuns: 'Runs', tmAvg: 'Avg', tmEach: 'Each run', tmUnlinked: 'not linked', tmSplitsTitle: 'Where on the course the time goes',
+    tmSub: 'Times from training: best and average per athlete, and every run. With split times, also where on the course the time goes.',
     tmEmpty: 'No timing yet. Times appear here when the coach uploads them.',
     tmNoSplits: 'This session has no finished runs with split times.',
     tmYouLose: 'You lose most time in', tmSection: 'Section', tmPerRun: 'on average per run', tmThisRun: 'on this run',

@@ -110,6 +110,64 @@ export function SplitTable({ table, t }) {
   )
 }
 
+// Løpene per løper: beste, snitt og hvert enkelt løp. Dette er det treneren
+// og løperen leser først; mellomtidene er et tillegg når tidtakeren har dem.
+// Ukoblede løp grupperes på navnet fra fila, så de ikke forsvinner.
+export function perLoper(runs) {
+  const m = new Map()
+  for (const r of runs) {
+    const k = r.athlete_id || `kilde:${r.source_name}`
+    const x = m.get(k) || { k, navn: r.athlete?.full_name || r.source_name, koblet: !!r.athlete_id, lop: [] }
+    x.lop.push(r)
+    m.set(k, x)
+  }
+  const ut = [...m.values()].map(x => {
+    const tider = x.lop.filter(r => r.run_time_ms != null).map(r => r.run_time_ms)
+    return { ...x, beste: tider.length ? Math.min(...tider) : null, snitt: tider.length ? tider.reduce((a, b) => a + b, 0) / tider.length : null,
+      fullfort: tider.length, lop: [...x.lop].sort((a, b) => (a.run_no ?? 0) - (b.run_no ?? 0)) }
+  })
+  const oktBeste = ut.filter(x => x.beste != null).length ? Math.min(...ut.filter(x => x.beste != null).map(x => x.beste)) : null
+  // Koblede først, så raskest først; navn uten tider sist.
+  ut.sort((a, b) => Number(b.koblet) - Number(a.koblet) || (a.beste ?? Infinity) - (b.beste ?? Infinity) || a.navn.localeCompare(b.navn, 'nb'))
+  return { rader: ut, oktBeste }
+}
+
+function LopTabell({ data, t, bareEgen = null }) {
+  const rader = bareEgen ? data.rader.filter(x => x.k === bareEgen) : data.rader
+  if (!rader.length) return null
+  return (
+    <div className="tm-wrap">
+      <table className="tm tm-lop">
+        <thead><tr>
+          <th>{t('athleteCol')}</th><th>{t('tmRuns')}</th><th>{t('tmBest')}</th><th>{t('tmAvg')}</th><th className="tm-alle">{t('tmEach')}</th>
+        </tr></thead>
+        <tbody>
+          {rader.map(x => (
+            <tr key={x.k} className={x.koblet ? '' : 'tm-ukoblet'}>
+              <td>{x.navn}{!x.koblet && <em> · {t('tmUnlinked')}</em>}</td>
+              <td>{x.fullfort}{x.lop.length > x.fullfort && <em> / {x.lop.length}</em>}</td>
+              <td className={x.beste != null && x.beste === data.oktBeste ? 'tm-best' : ''}>
+                {x.beste == null ? '–' : <>{s2(x.beste, t.lang)}{data.oktBeste != null && x.beste !== data.oktBeste && <em> {delta(x.beste - data.oktBeste, t.lang)}</em>}</>}
+              </td>
+              <td>{x.snitt == null ? '–' : s2(x.snitt, t.lang)}</td>
+              <td className="tm-alle">
+                <span className="tm-lopliste">
+                  {x.lop.map(r => (
+                    <span key={r.id} className={`tm-ett${r.run_time_ms == null ? ' dnf' : r.run_time_ms === x.beste ? ' beste' : ''}`}
+                      title={`${t('tmRunNo')} ${r.run_no ?? '–'}${r.bib ? ' · bib ' + r.bib : ''}`}>
+                      {r.run_time_ms == null ? (r.status || 'DNF') : s2(r.run_time_ms, t.lang)}
+                    </span>
+                  ))}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function Timing({ profile, team = null, isCoach = false }) {
   const t = useT()
   const [imports, setImports] = useState([])
@@ -154,6 +212,7 @@ export default function Timing({ profile, team = null, isCoach = false }) {
   }, [pick])
 
   const table = useMemo(() => buildTable(runs), [runs])
+  const lopene = useMemo(() => perLoper(runs), [runs])
   const mine = useMemo(() => ownLoss(table, profile.id), [table, profile.id])
   const session = imports.find(i => i.id === pick)
   const dnf = runs.filter(r => r.run_time_ms == null).length
@@ -193,8 +252,13 @@ export default function Timing({ profile, team = null, isCoach = false }) {
         </p>
       )}
 
-      {!table ? <p className="muted">{t('tmNoSplits')}</p> : (
+      {/* Løperen ser bare sine egne løp; treneren ser alle. Foreldre får
+          barnets, siden RLS bare gir dem de radene. */}
+      <LopTabell data={lopene} t={t} bareEgen={isCoach ? null : (lopene.rader.some(x => x.k === profile.id) ? profile.id : null)} />
+
+      {table && (
         <>
+          <h3 className="tm-h3">{t('tmSplitsTitle')}</h3>
           {mine && (
             <p className="tm-lead">
               {t('tmYouLose')} <b>{t('tmSection')} {mine.worst + 1}</b>
