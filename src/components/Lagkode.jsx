@@ -53,6 +53,11 @@ export default function Lagkode({ team, kanBytte = false, onEndret }) {
         <button type="button" className="btn small" onClick={() => kopier(invitasjon, 'tekst')}>
           {kopiert === 'tekst' ? t('csCopied') : t('csCopyText')}
         </button>
+        {/* Invitasjonen rett inn i en SMS. Lenka åpner meldingsappen med
+            teksten ferdig skrevet; treneren velger mottaker selv. Ingen
+            telefonnummer lagres hos oss. På maskiner uten meldingsapp gjør
+            lenka ingenting, derfor står kopieringsknappene ved siden av. */}
+        <a className="btn small" href={`sms:?&body=${encodeURIComponent(invitasjon)}`}>{t('csSendSms')}</a>
       </div>
       <p className="lk-lenke"><a href={lenke}>{lenke}</a></p>
       {kanBytte && (
