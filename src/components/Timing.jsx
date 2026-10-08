@@ -246,10 +246,13 @@ export default function Timing({ profile, team = null, isCoach = false }) {
       )}
 
       {session && (
-        <p className="muted">
-          {session.rows_mapped} {t('tmOfRuns')} {session.rows_total} {t('tmMapped')}
-          {session.note && <> · {session.note}</>}
-        </p>
+        <div className="tm-okt">
+          <b>{session.session_date ? new Date(session.session_date + 'T12:00').toLocaleDateString(t.lang === 'en' ? 'en-GB' : 'nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '–'}</b>
+          <span className="muted">
+            {[session.discipline, session.venue, session.note].filter(Boolean).join(' · ')}
+            {' · '}{session.rows_mapped} {t('tmOfRuns')} {session.rows_total} {t('tmMapped')}
+          </span>
+        </div>
       )}
 
       {/* Løperen ser bare sine egne løp; treneren ser alle. Foreldre får

@@ -725,6 +725,34 @@ ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) ==
 !ft.some(r => r.fis_code === '990002') ? ok('løpere man ikke følger er ikke med') : fail('favoritt_tabell tok med en man ikke følger')
 ;(await as(FOR, 'select * from public.favoritt_tabell()')).rows.every(r => r.fis_code !== '990001')
   ? ok('andres favoritter er ikke synlige') : fail('favoritter lakk mellom brukere')
+// --- tidtaking kobles når løperen registrerer seg ---
+// Treneren C1 lastet opp en økt før løperne fantes. Når «Hugo Testesen» kommer
+// inn på laget, kobles «Hugo»-løpene; «Kari» passer to løpere og kobles ikke.
+{
+  const lag = (await q('select team_id t from profiles where id=$1', [C1]))[0].t
+  const imp = (await q(`insert into timing_imports(team_id, uploaded_by, filename) values ($1,$2,'okt.csv') returning id`, [lag, C1]))[0].id
+  for (const [navn, bib, tid] of [['Hugo', '94', 28630], ['Hugo', '94', 29695], ['TESTESEN Ole Magnus', '1', 28471], ['#30', '30', 28675]])
+    await q(`insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status) values ($1,$2,null,$3,$4,1,$5,'OK')`, [imp, lag, navn, bib, tid])
+  const HUGO = 'eeeeeeee-0000-0000-0000-000000000001', OLE = 'eeeeeeee-0000-0000-0000-000000000002', K1 = 'eeeeeeee-0000-0000-0000-000000000003', K2 = 'eeeeeeee-0000-0000-0000-000000000004'
+  for (const [id, navn] of [[HUGO, 'Hugo Testesen'], [OLE, 'Ole Magnus Testesen'], [K1, 'Kari Prøve'], [K2, 'Kari Øvelse']]) {
+    await c.query(`insert into auth.users(id,email) values ($1,$2)`, [id, id.slice(-4) + '@tidtaking.test'])
+    await q(`insert into profiles(id, full_name, role, team_id) values ($1,$2,'athlete',null) on conflict (id) do update set full_name=excluded.full_name, role='athlete', team_id=null`, [id, navn])
+    await q(`update profiles set team_id=$2 where id=$1`, [id, lag])
+  }
+  // To Kari-er på laget, så kommer en fil med «Kari»: ingen av dem får løpene.
+  await q(`insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status) values ($1,$2,null,'Kari','13',1,29712,'OK')`, [imp, lag])
+  await q(`update profiles set full_name='Kari Prøve' where id=$1`, [K1])
+  const hvem = async navn => (await q(`select athlete_id a from timing_runs where import_id=$1 and source_name=$2`, [imp, navn])).map(r => r.a)
+  ;(await hvem('Hugo')).every(a => a === HUGO) ? ok('fornavnet i fila kobles til løperen som kom inn') : fail('Hugo ble ikke koblet')
+  ;(await hvem('TESTESEN Ole Magnus')).every(a => a === OLE) ? ok('HC Timing-navn med etternavn først kobles også') : fail('Ole Magnus ble ikke koblet')
+  ;(await hvem('Kari')).every(a => a === null) ? ok('et fornavn to løpere deler kobles ikke') : fail('Kari ble koblet til feil løper')
+  ;(await hvem('#30')).every(a => a === null) ? ok('løp uten navn rører ikke') : fail('#30 ble koblet')
+  ;(await q(`select athlete_id a from timing_aliases where team_id=$1 and source_name='Hugo'`, [lag]))[0]?.a === HUGO ? ok('navnet huskes til neste opplasting') : fail('alias ble ikke lagret')
+  await q(`delete from timing_imports where id=$1`, [imp])
+  await q(`delete from timing_aliases where team_id=$1 and source_name in ('Hugo','TESTESEN Ole Magnus')`, [lag])
+  for (const id of [HUGO, OLE, K1, K2]) { await q('delete from profiles where id=$1', [id]); await c.query('delete from auth.users where id=$1', [id]) }
+}
+
 // --- vær og føre på renn ---
 // S2 har kjørt et renn. S2 kan føre føret; en løper som ikke kjørte og
 // forelderen kan ikke. Alle innloggede kan lese.

@@ -27,8 +27,17 @@ export default function TimingImport({ team, profile, onLagret }) {
   const [lagrer, setLagrer] = useState(false)
 
   useEffect(() => {
-    supabase.from('profiles').select('id, full_name').eq('team_id', team.id).eq('role', 'athlete').order('full_name')
-      .then(({ data }) => setLopere(data || []))
+    // Kandidatene er lagets egne løpere. Står treneren på huset, tas gruppene
+    // under med, så hovedtreneren kan laste opp for hele skolen. Aldri andre.
+    ;(async () => {
+      let ider = [team.id]
+      if (!team.parent_team_id) {
+        const { data: g } = await supabase.from('teams').select('id').eq('parent_team_id', team.id)
+        ider = [team.id, ...(g || []).map(x => x.id)]
+      }
+      const { data } = await supabase.from('profiles').select('id, full_name').in('team_id', ider).eq('role', 'athlete').order('full_name')
+      setLopere(data || [])
+    })()
     supabase.from('timing_aliases').select('source_name, athlete_id').eq('team_id', team.id)
       .then(({ data }) => setKjente(Object.fromEntries((data || []).map(a => [a.source_name, a.athlete_id]))))
     // Hvem hadde hvilket startnummer sist? Nyeste først, så første treff per nummer gjelder.

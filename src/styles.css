@@ -1601,3 +1601,6 @@ table.tm.tm-lop{min-width:0}
 .tm-ett.dnf{color:var(--mute);background:transparent;border:1px dashed var(--line)}
 table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12px}
 @media (max-width:700px){.tm-alle{display:none}}
+
+.tm-okt{display:flex;flex-direction:column;gap:2px;margin:12px 0 6px}
+.tm-okt b{font-size:16px;text-transform:capitalize}
