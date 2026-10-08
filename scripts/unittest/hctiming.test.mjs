@@ -1,5 +1,5 @@
 // Leseren for HC Timing-eksporten. Navnene her er oppdiktet.
-import { csvLinje, tidTilMs, lesHcTiming, foreslaLoper, foreslaKoblinger } from '../../src/hctiming.js'
+import { csvLinje, tidTilMs, lesHcTiming, lesBrower, lesTidtaking, erBrower, foreslaLoper, foreslaKoblinger } from '../../src/hctiming.js'
 
 let feil = 0
 const sjekk = (navn, ok) => { console.log((ok ? 'OK    ' : 'FEIL  ') + navn); if (!ok) feil++ }
@@ -57,6 +57,27 @@ sjekk('to ulike startnummer på samme navn gir ikke forslag på nummer', F['BYTT
 sjekk('løp uten startnummer får aldri forslag', F['NO BIB INPUT @START'].id === null && F['NO BIB INPUT @START'].grunn === 'utenBib')
 sjekk('en løper foreslås ikke to ganger', Object.values(F).filter(x => x.id === 'd').length === 1 && Object.values(F).filter(x => x.id === 'a').length === 1)
 sjekk('uten noe å gå på er alt ukjent', Object.values(foreslaKoblinger(N)).every(x => x.id === null))
+
+// Brower: én økt per fil, fornavn, og rader uten navn.
+const BROWER = ['sep=>', 'SESSION', 'Team Name>Testlaget', 'Start List Name>Trening', 'Session #>7', 'Date>09/27/26', 'Time>3:03 PM', 'Event>GS', 'Hill>Testbakken', 'Snow conditions>Hard', 'Weather>', '',
+  'Bib#>Name>YOB>Class>Gender>Start Time>Finish Time>Split 1>Split 2>Split 3>Status>SEQ>Run#',
+  '2>Kari>2007>U21>Female>4:54:46.125 PM>27,562>0>0>0>>8>2',
+  '30>>>>>4:54:05.393 PM>28,675>0>0>0>>7>2',
+  '9>Ola>2009>U18>Male>4:53:35.247 PM>0>0>0>0>DNF>6>2',
+  '2>Kari>2007>U21>Female>3:28:58.663 PM>29,351>13,2>0>0>>3>1',
+  '9>Ola>2009>U18>Male>3:28:00.592 PM>29,227>0>0>0>>2>1'].join('\n')
+sjekk('Brower kjennes igjen på sep=> og SESSION', erBrower(BROWER) && !erBrower(KOMMA))
+const b = lesBrower(BROWER)
+sjekk('Brower: hodet gir dato, bakke, gren og føre', b.okt.dato === '2026-09-27' && b.okt.bakke === 'Testbakken' && b.okt.gren === 'GS' && b.okt.fore === 'hard' && b.okt.lag === 'Testlaget')
+sjekk('Brower: fem løp, eldste først', b.rader.length === 5 && b.rader[0].extra.seq === '2' && b.rader[0].run_no === 1 && b.kilde === 'Brower')
+sjekk('Brower: tida leses med komma som desimal', b.rader.find(r => r.source_name === 'Kari' && r.run_no === 2).run_time_ms === 27562)
+sjekk('Brower: 0 i mål med DNF er brutt løp', b.rader.find(r => r.source_name === 'Ola' && r.run_no === 2).status === 'DNF' && b.rader.find(r => r.source_name === 'Ola' && r.run_no === 2).run_time_ms === null)
+sjekk('Brower: rad uten navn heter startnummeret', b.rader.some(r => r.source_name === '#30' && r.bib === '30' && !r.ukjent && r.run_time_ms === 28675))
+sjekk('Brower: mellomtid 0 er ikke tatt, en tatt mellomtid beholdes', b.rader.find(r => r.source_name === 'Kari' && r.run_no === 1).splits_ms[0] === 13200 && b.rader.find(r => r.source_name === 'Kari' && r.run_no === 2).splits_ms.length === 0)
+sjekk('lesTidtaking velger riktig leser', lesTidtaking(BROWER).kilde === 'Brower' && lesTidtaking(KOMMA).kilde === 'HC Timing')
+sjekk('fornavn alene kobles når bare én på laget heter det', foreslaLoper('Ola', LOPERE) === 'b' && foreslaLoper('ola', LOPERE) === 'b' && foreslaLoper('Aase', LOPERE) === 'c')
+sjekk('fornavn alene kobles ikke når det er tvetydig eller for kort', foreslaLoper('Kari', LOPERE) === null && foreslaLoper('Ola', [...LOPERE, { id: 'z', full_name: 'Ola Annen' }]) === null && foreslaLoper('Al', LOPERE) === null)
+sjekk('startnummer uten navn kobles via startnummeret fra sist', foreslaKoblinger([{ navn: '#30', bibs: ['30'] }], { lopere: LOPERE, sisteBib: { 30: 'b' } })['#30'].id === 'b')
 
 console.log(feil ? `\n${feil} feil` : '\nAlt gikk gjennom')
 process.exit(feil ? 1 : 0)

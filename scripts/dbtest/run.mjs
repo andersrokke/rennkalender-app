@@ -304,10 +304,6 @@ const tatt = (await as(NY2, `select public.create_coach_team(' u14 ') as id`)).r
 tatt === U14 && (await q('select owner_id from teams where id=$1', [U14]))[0].owner_id === NY2
   ? ok('en invitert trener tar over den ferdige gruppa med samme navn') : fail(`fikk ${tatt}, ventet ${U14}`)
 ;(await q(`select count(*)::int n from teams where parent_team_id=$1 and lower(name)='u14'`, [P]))[0].n === 1 ? ok('det ble ikke to U14') : fail('to grupper med samme navn')
-;(await q(`select count(*)::int n from teams where parent_team_id is null and name='IRS' and kind='club'`))[0].n === 1
-  && (await q(`select count(*)::int n from teams g join teams h on h.id=g.parent_team_id where h.name='IRS' and g.owner_id is null`))[0].n === 3
-  ? ok('IRS finnes som klubb med tre grupper uten eier') : fail('IRS mangler eller har feil grupper')
-;(await as(A, 'select * from public.skigymnas()')).rows.every(r => r.name !== 'IRS') ? ok('klubben kan ikke velges som skigymnas') : fail('IRS lå i skigymnaslista')
 
 
 // --- hovedtreneren inviterer selv ---

@@ -82,6 +82,88 @@ export function lesHcTiming(tekst) {
   return { feil: null, rader, mellomtider: inter.length, hoder, kilde: 'HC Timing' }
 }
 
+// Brower Timing eksporterer én økt per fil, med «>» som skilletegn:
+//   sep=>
+//   SESSION
+//   Team Name>NTG
+//   Date>09/27/26
+//   Snow conditions>Hard
+//   ...
+//   Bib#>Name>YOB>Class>Gender>Start Time>Finish Time>Split 1>Split 2>Split 3>Status>SEQ>Run#
+//   94>Hugo>2008>U21>Male>4:56:45.382 PM>28,63>0>0>0>>81>8
+// Navnet er bare fornavnet, og en rad uten navn er et startnummer tidtakeren
+// ikke har satt navn på. Finish Time er løpets tid i sekunder; 0 betyr ingen
+// tid. Mellomtidene er løpende fra start, 0 betyr ikke tatt.
+const BROWER_FORE = { hard: 'hard', ice: 'ice', icy: 'ice', soft: 'soft', slush: 'slush', powder: 'powder', salted: 'salted', salt: 'salted' }
+const BROWER_GREN = { sl: 'SL', slalom: 'SL', gs: 'GS', 'giant slalom': 'GS', sg: 'SG', 'super g': 'SG', 'super-g': 'SG', dh: 'DH', downhill: 'DH' }
+
+export function erBrower(tekst) {
+  const topp = String(tekst || '').slice(0, 200)
+  return /^\ufeff?"?sep=>"?\s*\r?\n\s*SESSION/i.test(topp)
+}
+
+export function lesBrower(tekst) {
+  const linjer = String(tekst || '').replace(/^\ufeff/, '').split(/\r?\n/).map(l => l.trimEnd())
+  const hi = linjer.findIndex(l => /^Bib#>/i.test(l) && />Name>/i.test(l) && />Finish Time>/i.test(l))
+  if (hi < 0) return { feil: 'ukjent', rader: [], mellomtider: 0, hoder: [] }
+  // Hodet: nøkkel>verdi, fram til kolonneraden.
+  const okt = {}
+  for (const l of linjer.slice(0, hi)) {
+    const m = /^([^>]+)>(.*)$/.exec(l)
+    if (m) okt[m[1].trim().toLowerCase()] = m[2].trim()
+  }
+  const dm = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(okt.date || '')
+  const dato = dm ? `${dm[3].length === 2 ? '20' + dm[3] : dm[3]}-${dm[1].padStart(2, '0')}-${dm[2].padStart(2, '0')}` : null
+  const hoder = linjer[hi].split('>').map(h => h.trim().toUpperCase())
+  const kol = navn => hoder.indexOf(navn)
+  const iBib = kol('BIB#'), iNavn = kol('NAME'), iMal = kol('FINISH TIME'), iStatus = kol('STATUS'), iRun = kol('RUN#'), iSeq = kol('SEQ'), iStart = kol('START TIME')
+  const inter = hoder.map((h, i) => (/^SPLIT \d+$/.test(h) ? i : -1)).filter(i => i >= 0)
+  const ms = v => { const x = tidTilMs(v); return x ? x : null }   // 0 er «ingen tid»
+
+  const rader = []
+  for (const linje of linjer.slice(hi + 1)) {
+    if (!linje.trim()) continue
+    const c = linje.split('>').map(x => x.trim())
+    const bib = c[iBib] || null
+    const navn = c[iNavn] || ''
+    if (!navn && !bib) continue
+    const total = ms(c[iMal])
+    const mellom = inter.map(i => ms(c[i]))
+    const gyldige = mellom.filter(v => v != null)
+    const stiger = gyldige.every((v, i) => i === 0 || v > gyldige[i - 1]) && (total == null || !gyldige.length || gyldige[gyldige.length - 1] < total)
+    const ord = (c[iStatus] || '').toUpperCase()
+    const status = total != null ? (stiger ? 'OK' : 'FEIL') : STATUSORD.test(ord) ? ord.replace(/\d$/, '') : 'DNF'
+    rader.push({
+      // Uten navn kjennes løpet bare på startnummeret; det er nok til å huske
+      // hvem som hadde det sist.
+      source_name: navn || `#${bib}`,
+      bib,
+      run_no: iRun >= 0 && /^\d+$/.test(c[iRun] || '') ? +c[iRun] : null,
+      run_time_ms: status === 'OK' ? total : null,
+      run_time_text: c[iMal] && c[iMal] !== '0' ? c[iMal] : null,
+      status,
+      splits_ms: mellom.filter(v => v != null).length ? mellom : [],
+      extra: { seq: iSeq >= 0 ? c[iSeq] || null : null, start: iStart >= 0 ? c[iStart] || null : null },
+      ukjent: false
+    })
+  }
+  // Eldste løp først, slik HC Timing-lista også leses.
+  rader.sort((a, b) => (+a.extra.seq || 0) - (+b.extra.seq || 0))
+  return {
+    feil: null, rader, mellomtider: rader.some(r => r.splits_ms.length) ? inter.length : 0, hoder, kilde: 'Brower',
+    okt: {
+      dato, lag: okt['team name'] || null, navn: okt['start list name'] || null, nr: okt['session #'] || null,
+      bakke: okt.hill || null, gren: BROWER_GREN[(okt.event || '').toLowerCase()] || null,
+      fore: BROWER_FORE[(okt['snow conditions'] || '').toLowerCase()] || null, vaer: okt.weather || null
+    }
+  }
+}
+
+// Kjenner igjen fila og leser den med riktig leser.
+export function lesTidtaking(tekst) {
+  return erBrower(tekst) ? lesBrower(tekst) : lesHcTiming(tekst)
+}
+
 // «ETTERNAVN Fornavn Mellomnavn» fra fila mot «Fornavn Mellomnavn Etternavn» i
 // appen. Tidtakeren skriver ofte uten nordiske tegn (OE for Ø, AA for Å).
 const ren = s => String(s || '').toLowerCase()
@@ -93,9 +175,12 @@ const ordsett = s => new Set(s.split(' ').filter(Boolean))
 // Foreslår hvilken løper et navn i fila hører til. Krever at alle ordene i det
 // korteste navnet finnes i det andre, og minst to ord - ett felles fornavn er
 // ikke nok til å koble noens tider til en annen.
+// Brower skriver bare fornavnet. Da godtas ett ord, men bare som fornavnet
+// til nøyaktig én løper på laget.
 export function foreslaLoper(kildenavn, lopere) {
   const treff = lopere.filter(l => varianter(kildenavn).some(a => varianter(l.full_name).some(b => {
     const x = ordsett(a), y = ordsett(b)
+    if (x.size === 1) { const o = [...x][0]; return o.length >= 3 && b.split(' ')[0] === o }
     const [kort, lang] = x.size <= y.size ? [x, y] : [y, x]
     return kort.size >= 2 && [...kort].every(o => lang.has(o))
   })))

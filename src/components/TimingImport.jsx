@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../supabase'
 import { useT } from '../i18n'
-import { lesHcTiming, foreslaKoblinger } from '../hctiming'
+import { lesTidtaking, foreslaKoblinger } from '../hctiming'
 import { s2 } from './Timing.jsx'
 
 const GRENER = ['SL', 'GS', 'SG', 'DH', 'FREE']
@@ -61,9 +61,13 @@ export default function TimingImport({ team, profile, onLagret }) {
     const f = e.target.files?.[0]
     if (!f) return
     setFeil(null)
-    const res = lesHcTiming(await f.text())
+    const res = lesTidtaking(await f.text())
     if (res.feil || !res.rader.length) { setLest(null); setFeil(t('tiUnknown')); return }
     setLest({ filnavn: f.name, ...res })
+    // Brower har dato, bakke og gren i fila; da slipper treneren å skrive dem.
+    if (res.okt?.dato) setDato(res.okt.dato)
+    if (res.okt?.bakke) setSted(res.okt.bakke)
+    if (res.okt?.gren) setGren(res.okt.gren)
     // Forslag: det treneren valgte sist for navnet, et entydig navnetreff, eller
     // den som hadde startnummeret sist.
     const perNavn = new Map()
@@ -86,7 +90,7 @@ export default function TimingImport({ team, profile, onLagret }) {
     const koblet = r => (valg[r.source_name] && ![BEHOLD, UTE].includes(valg[r.source_name])) ? valg[r.source_name] : null
     const { data: imp, error: e1 } = await supabase.from('timing_imports').insert({
       team_id: team.id, uploaded_by: profile.id, filename: lest.filnavn, session_date: dato, discipline: gren,
-      venue: sted.trim() || null, note: 'HC Timing', rows_total: med.length, rows_mapped: med.filter(koblet).length, raw_headers: lest.hoder
+      venue: sted.trim() || null, note: lest.kilde || 'HC Timing', rows_total: med.length, rows_mapped: med.filter(koblet).length, raw_headers: lest.hoder
     }).select('id').single()
     if (e1) { setLagrer(false); setFeil(e1.message); return }
     const { error: e2 } = await supabase.from('timing_runs').insert(med.map(r => ({
@@ -120,7 +124,7 @@ export default function TimingImport({ team, profile, onLagret }) {
       ) : (
         <div className="ti-skjema">
           <h3>{lest.filnavn}</h3>
-          <p className="muted">{lest.rader.length} {t('tiRuns')} · {navn.length} {t('tiNames')} · {lest.mellomtider} {t('tiSplits')}</p>
+          <p className="muted">{lest.kilde} · {lest.rader.length} {t('tiRuns')} · {navn.length} {t('tiNames')} · {lest.mellomtider} {t('tiSplits')}{lest.okt?.fore && <> · {t('snow_' + lest.okt.fore)}</>}</p>
           <div className="ti-felt">
             <div><label htmlFor="ti-dato">{t('tiDate')}</label><input id="ti-dato" type="date" value={dato} onChange={e => setDato(e.target.value)} /></div>
             <div><label htmlFor="ti-gren">{t('rhDisc')}</label>
