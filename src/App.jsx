@@ -121,6 +121,16 @@ export default function App() {
       .then(({ count }) => setPlanCount(count || 0))
   }, [profile?.id, tab])
 
+  const [som, setSom] = useState(null)
+  const [somTeam, setSomTeam] = useState(null)
+  async function seSom(id) {
+    if (!id) { setSom(null); setSomTeam(null); setTab(null); return }
+    const { data: p, error } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', id).single()
+    if (error || !p) return alert(I18N[lang].somFail)
+    setSomTeam(p.team_id ? await hentLag(p.team_id) : null)
+    setSom(p); setTab(null); setMenyApen(false); scrollTo({ top: 0 })
+  }
+
   const reload = () => loadProfile(session.user.id)
   const setPref = async patch => {
     if (patch.lang) saveLang(patch.lang)
@@ -159,12 +169,12 @@ export default function App() {
     training: d.tlTitle, season: d.season, matrix: d.matrix, athletes: d.athletes,
     home: d.hjemTab, next: d.hjemTab, mine: d.mine, dev: isCoach ? d.devTitleCoach : d.dev,
     // «Lag og profil» bare når treneren faktisk har et lag.
-    settings: isCoach && team ? d.settingsTabCoach : d.settingsTab
+    settings: isCoach && visTeam ? d.settingsTabCoach : d.settingsTab
   }
-  const tabs = fanerFor(profile, !!team).map(k => [k, ETIKETT[k]])
+  const tabs = fanerFor(vis, !!visTeam).filter(k => !som || !['settings', 'feedback', 'admin'].includes(k)).map(k => [k, ETIKETT[k]])
   // Aktiv fane må være en fane denne modusen har. Uten sjekken kunne en fane
   // fra forrige modus bli stående, og tegne en skjerm rollen ikke skal se.
-  const active = tabs.some(([k]) => k === tab) ? tab : startFane(profile, !!team)
+  const active = tabs.some(([k]) => k === tab) ? tab : startFane(vis, !!visTeam)
 
   const gaTil = k => { setTab(k); setPane('list'); setMenyApen(false); scrollTo({ top: 0 }) }
 
@@ -190,10 +200,10 @@ export default function App() {
     <LangContext.Provider value={lang}>
       <div className="app-shell">
       <header className={`topbar ${menyApen ? 'apen' : ''}`}>
-        <h1 className="hjem-lenke" role="link" tabIndex={0} title={d.hjemTab} onClick={() => gaTil(hjemFane(profile))}
-          onKeyDown={e => { if (e.key === 'Enter') gaTil(hjemFane(profile)) }}><span className="merke" aria-hidden="true" />{d.appTitle}{team && !isParent && grupper.length < 2 && <small>{team.name}</small>}</h1>
-        {team && isCoach && grupper.length > 1 && (
-          <select className="gruppevelger" value={team.id} aria-label={d.groupPick}
+        <h1 className="hjem-lenke" role="link" tabIndex={0} title={d.hjemTab} onClick={() => gaTil(hjemFane(vis))}
+          onKeyDown={e => { if (e.key === 'Enter') gaTil(hjemFane(vis)) }}><span className="merke" aria-hidden="true" />{d.appTitle}{visTeam && !isParent && grupper.length < 2 && <small>{visTeam.name}</small>}</h1>
+        {visTeam && isCoach && grupper.length > 1 && (
+          <select className="gruppevelger" value={visTeam.id} aria-label={d.groupPick}
             onChange={async e => {
               const { error } = await supabase.rpc('bytt_gruppe', { p_team: e.target.value })
               if (error) alert(error.message); else reload()
@@ -206,7 +216,7 @@ export default function App() {
           <span>{menyApen ? d.menuClose : d.menu}</span>
         </button>
         {!menyApen && <span className="meny-her">{ETIKETT[active]}</span>}
-        <nav id="hovedmeny">{menyGrupper(profile).map(g => (
+        <nav id="hovedmeny">{menyGrupper(vis).map(g => (
           <div className="meny-gruppe" key={g.k || 'hjem'}>
             {g.k && <span className="meny-gruppenavn">{d['mg_' + g.k]}</span>}
             {g.faner.map(k => (
@@ -225,9 +235,9 @@ export default function App() {
             byttes på ordentlig, ikke som en maske over: flere funksjoner i basen
             spør om rollen, og en visning som sa noe annet enn basen ville gitt
             feil man ikke kunne forklare. */}
-        {profile.is_admin && (
+        {profile.is_admin && !som && (
           <span className="modus" title={d.modeTitle}>
-            <Seg opts={[['coach', d.coach], ['athlete', d.athlete], ['parent', d.parent]]} value={profile.role}
+            <Seg opts={[['coach', d.coach], ['athlete', d.athlete], ['parent', d.parent]]} value={vis.role}
               onPick={async r => {
                 const { error } = await supabase.rpc('admin_set_role', { p_user: profile.id, p_role: r })
                 if (error) return alert(error.message)
@@ -235,35 +245,41 @@ export default function App() {
               }} />
           </span>
         )}
-        <span className="who">{profile.full_name} · {isCoach ? d.coach : profile.role === 'parent' ? d.parent : d.athlete}</span>
+        <span className="who">{profile.full_name} · {isCoach ? d.coach : vis.role === 'parent' ? d.parent : d.athlete}</span>
         <button className="btn small" onClick={() => supabase.auth.signOut()}>{d.signOut}</button>
       </header>
       <main className="app-main" data-fane={active}>
+      {som && (
+        <div className="som-banner" role="status">
+          <span>{d.somBanner.replace('{n}', som.full_name || '')}</span>
+          <button type="button" className="btn small" onClick={() => seSom(null)}>{d.somExit}</button>
+        </div>
+      )}
       {/* Sidens navn står øverst på skjermene som ikke åpner med et eget
           kort med overskrift - kalenderen, sesongen og matrisa. */}
       {['races', 'season', 'mine', 'matrix', 'next', 'kidnext', 'children'].includes(active) && (
-        <div className="side-hode"><h2>{active === 'next' || active === 'kidnext' ? d.nextTab : ETIKETT[active]}</h2>{team && !isParent && <span>{team.name}</span>}</div>
+        <div className="side-hode"><h2>{active === 'next' || active === 'kidnext' ? d.nextTab : ETIKETT[active]}</h2>{visTeam && !isParent && <span>{visTeam.name}</span>}</div>
       )}
       <InstallPrompt />
-      {active === 'home' && (team ? <CoachHome profile={profile} team={team} onGo={gaTil} /> : <NoTeam profile={profile} onDone={reload} />)}
-      {active === 'season' && (team ? <CoachSeason profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
-      {active === 'matrix' && (team ? <SeasonMatrix team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
-      {active === 'athletes' && (team ? <Athletes profile={profile} team={team} /> : <NoTeam profile={profile} onDone={reload} />)}
+      {active === 'home' && (visTeam ? <CoachHome profile={vis} team={visTeam} onGo={gaTil} /> : <NoTeam profile={vis} onDone={reload} />)}
+      {active === 'season' && (visTeam ? <CoachSeason profile={vis} team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
+      {active === 'matrix' && (visTeam ? <SeasonMatrix team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
+      {active === 'athletes' && (visTeam ? <Athletes profile={vis} team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
       {/* Egen fane, oeverst: loggen foeres ofte, og laa foer tre skjermlengder
           nede i «Min utvikling». En foresatt ser oekter, men foerer ingen. */}
-      {active === 'training' && <div className="page"><TrainingLog profile={profile} team={team} isCoach={isCoach}
-        tidtaking={<Timing profile={profile} team={team} isCoach={isCoach} />} /></div>}
-      {active === 'next' && <NextRace profile={profile} team={team} onOpenRace={() => setTab('mine')} />}
-      {active === 'mine' && <MySeason profile={profile} team={team} />}
-      {active === 'races' && <RaceBrowser profile={profile} team={team} isCoach={isCoach} readOnly={isParent} />}
-      {active === 'children' && <Children profile={profile} />}
+      {active === 'training' && <div className="page"><TrainingLog profile={vis} team={visTeam} isCoach={isCoach} readOnly={!!som}
+        tidtaking={<Timing profile={vis} team={visTeam} isCoach={isCoach} />} /></div>}
+      {active === 'next' && <NextRace profile={vis} team={visTeam} onOpenRace={() => setTab('mine')} />}
+      {active === 'mine' && <MySeason profile={vis} team={visTeam} readOnly={!!som} />}
+      {active === 'races' && <RaceBrowser profile={vis} team={visTeam} isCoach={isCoach} readOnly={isParent} />}
+      {active === 'children' && <Children profile={vis} />}
       {active === 'kiddev' && <ChildDev />}
       {active === 'kidnext' && <ChildNext onOpenRace={() => setTab('children')} />}
       {active === 'pamelding' && <Pamelding />}
-      {active === 'dev' && <Utvikling profile={profile} team={team} isCoach={isCoach} />}
-      {active === 'feedback' && <Feedback profile={profile} />}
-      {active === 'admin' && <Admin profile={profile} />}
-      {active === 'settings' && <Settings profile={profile} team={team} isCoach={isCoach} onChange={reload} />}
+      {active === 'dev' && <Utvikling profile={vis} team={visTeam} isCoach={isCoach} readOnly={!!som} />}
+      {active === 'feedback' && <Feedback profile={vis} />}
+      {active === 'admin' && <Admin profile={profile} onSeSom={seSom} />}
+      {active === 'settings' && <Settings profile={vis} team={visTeam} isCoach={isCoach} onChange={reload} />}
       </main>
       </div>
       <div className="scrim" onClick={() => setSheet(false)} />

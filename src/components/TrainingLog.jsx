@@ -35,7 +35,7 @@ const blank = () => ({
 const dagenEtter = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) }
 const num = v => (v === '' || v == null ? null : Number(v))
 
-export default function TrainingLog({ profile, team, isCoach, tidtaking = null }) {
+export default function TrainingLog({ profile, team, isCoach, tidtaking = null, readOnly = false }) {
   const t = useT()
   const [slopes, setSlopes] = useState([])
   const [mates, setMates] = useState([])
@@ -186,7 +186,7 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
       <h2>{t('tlTitle')}</h2>
       <p className="muted">{t('tlSub')}</p>
 
-      <form onSubmit={save}>
+      {!readOnly && <form onSubmit={save}>
         {isCoach && mates.length > 0 && (
           <>
             <label htmlFor="tl-who">{t('tlFor')}</label>
@@ -338,7 +338,7 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null }
           <button type="button" className="btn" onClick={() => { setForm(blank()); setMsg(null) }}>{t('tlClear')}</button>
           {msg && <span className={msg.bad ? 'error' : 'notice'} style={{ margin: 0 }}>{msg.text}</span>}
         </div>
-      </form>
+      </form>}
 
       </div>
 

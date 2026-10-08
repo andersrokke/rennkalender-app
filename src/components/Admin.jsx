@@ -25,7 +25,7 @@ function siden(s, t) {
   return t('adDaysAgo').replace('{n}', Math.round(min / 1440))
 }
 
-export default function Admin({ profile }) {
+export default function Admin({ profile, onSeSom = null }) {
   const t = useT()
   const [fane, setFane] = useState('oversikt')
   const [d, setD] = useState({})
@@ -59,7 +59,7 @@ export default function Admin({ profile }) {
 
       {fane === 'oversikt' && <Oversikt o={d.oversikt} t={t} />}
       {fane === 'trenere' && <Trenere rader={d.trenere} t={t} onEndret={last} />}
-      {fane === 'brukere' && <Brukere rader={d.brukere} meg={profile.id} t={t} onEndret={last} />}
+      {fane === 'brukere' && <Brukere rader={d.brukere} meg={profile.id} t={t} onEndret={last} onSeSom={onSeSom} />}
       {fane === 'lag' && <Lag rader={d.lag} t={t} onEndret={last} />}
       {fane === 'drift' && <Drift o={d.drift} t={t} />}
       {fane === 'aktivitet' && <Aktivitet o={d.aktivitet} t={t} />}
@@ -223,7 +223,7 @@ function Trenere({ rader, t, onEndret }) {
 // «hvem hører til hvor» - og det siste er spørsmålet en administrator har.
 const ROLLEORDEN = { coach: 0, athlete: 1, parent: 2 }
 
-function Brukere({ rader, meg, t, onEndret }) {
+function Brukere({ rader, meg, t, onEndret, onSeSom }) {
   const [travel, setTravel] = useState(null)
   const [lag, setLag] = useState([])
   useEffect(() => { supabase.rpc('admin_teams').then(({ data }) => setLag(data || [])) }, [rader])
@@ -318,6 +318,9 @@ function Brukere({ rader, meg, t, onEndret }) {
                           onClick={() => kall('admin_set_admin', { p_user: u.id, p_on: !u.is_admin })}>
                           {u.is_admin ? t('adDemote') : t('adPromote')}
                         </button>
+                        {onSeSom && u.role === 'athlete' && u.onboarded && (
+                          <button type="button" className="btn small" disabled={!!travel} onClick={() => onSeSom(u.id)}>{t('adSeeAs')}</button>
+                        )}
                         {u.role === 'coach' && !u.last_sign_in_at && u.email && (
                           <button type="button" className="btn small" disabled={!!travel}
                             onClick={async () => { if (await kall('admin_resend_invite', { p_email: u.email })) setSendt(u.email) }}>

@@ -1553,3 +1553,8 @@ select.vr-fore{width:auto;min-width:112px;padding:4px 26px 4px 8px;font-size:13p
 .lp-tabell .tag.av{margin:0 4px 0 0}
 .lp-fis{font-size:12px;margin-left:6px}
 .lp-tabell .ad-handlinger{display:flex;gap:6px;flex-wrap:nowrap}
+
+/* --- Se som (administrator) --- */
+.som-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 24px;
+  background:color-mix(in srgb, var(--av-vt) 45%, var(--snow));border-bottom:1px solid color-mix(in srgb, var(--av-vt) 80%, var(--line));font-size:14px;font-weight:600}
+@media (min-width:1024px){.som-banner{padding:10px 40px}}
