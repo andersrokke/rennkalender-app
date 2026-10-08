@@ -1558,3 +1558,25 @@ select.vr-fore{width:auto;min-width:112px;padding:4px 26px 4px 8px;font-size:13p
 .som-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 24px;
   background:color-mix(in srgb, var(--av-vt) 45%, var(--snow));border-bottom:1px solid color-mix(in srgb, var(--av-vt) 80%, var(--line));font-size:14px;font-weight:600}
 @media (min-width:1024px){.som-banner{padding:10px 40px}}
+
+/* --- Hjem: slik virker det --- */
+.hjem-intro{margin:10px 0 0;max-width:62ch;font-size:15px;line-height:1.5}
+.hjem-steg li{grid-template-columns:34px 1fr auto;gap:2px 12px}
+.hjem-steg li em{grid-column:2;font-style:normal;font-size:13px;color:var(--mute);margin-top:4px}
+.hjem-steg li em.ok{color:var(--av-ok);font-weight:600}
+.hjem-steg li::before{grid-row:span 3}
+.hjem-steg li .btn{grid-row:1 / span 3}
+.hjem-rollerute{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.hjem-rollerute div{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:10px;background:var(--panel-2)}
+.hjem-rollerute b{font-size:14px}
+.hjem-rollerute span{font-size:13.5px;color:var(--mute);line-height:1.45}
+@media (max-width:600px){
+  .hjem-rute{grid-template-columns:repeat(3,1fr);gap:8px}
+  .hjem-kort{padding:12px 10px}
+  .hjem-kort b{font-size:26px}
+  .hjem-kort span{font-size:13px}
+  .hjem-kort small{display:none}
+  .hjem-steg li{grid-template-columns:30px 1fr}
+  .hjem-steg li .btn{grid-column:2;grid-row:auto;justify-self:start;margin-top:6px}
+  .hjem-steg li::before{grid-row:span 1}
+}

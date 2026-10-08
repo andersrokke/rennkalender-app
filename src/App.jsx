@@ -162,7 +162,12 @@ export default function App() {
   // rolle, så en administrator som byttet til forelder fikk trenerens skjermer
   // likevel. Basen følger samme regel: is_coach_of krever rollen trener.
   // Selve utledningen ligger i nav.js, der den kan testes uten å tegne appen.
-  const { isCoach, isParent } = rolleFlagg(profile)
+  // «Se som»: en administrator kan se appen slik en løper ser den, bare lesing.
+  // Det er leseretten treneren alt har som brukes; ingen innlogging byttes,
+  // og det som ikke kan leses som trener, vises ikke her heller.
+  const vis = som || profile
+  const visTeam = som ? somTeam : team
+  const { isCoach, isParent } = rolleFlagg(vis)
   const d = I18N[lang]
   const ETIKETT = {
     children: d.kidraces, kidraces: d.kidraces, kiddev: d.kiddev, kidnext: d.hjemTab, favoritter: d.favoritter, pamelding: d.pamelding, steder: d.steder, races: d.races, feedback: d.fbTab, admin: d.adTab,
