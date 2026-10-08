@@ -123,8 +123,18 @@ export default function App() {
   }, [profile?.id, tab])
 
   // Rett etter registrering møtes løperen av «Dette er deg», med resultatene hentet.
+  // Flagget settes av registreringen. I tillegg: en løper med FIS-kode som
+  // aldri er hentet fra FIS, får velkomsten uansett - flagget kan gå tapt
+  // mellom faner, og resultatene må inn før appen er verdt noe for henne.
   const [velkommen, setVelkommen] = useState(() => { try { return sessionStorage.getItem('alpinrace.velkommen') === '1' } catch { return false } })
   const ferdigVelkommen = () => { try { sessionStorage.removeItem('alpinrace.velkommen') } catch {} setVelkommen(false); setTab(null) }
+  useEffect(() => {
+    if (!profile?.onboarded || profile.role !== 'athlete' || !profile.fis_code || velkommen) return
+    let av = false
+    supabase.from('fis_athletes').select('fis_code').eq('fis_code', profile.fis_code).maybeSingle()
+      .then(({ data, error }) => { if (!av && !error && !data) setVelkommen(true) })
+    return () => { av = true }
+  }, [profile?.id, profile?.fis_code, profile?.onboarded])
   const [som, setSom] = useState(null)
   const [somTeam, setSomTeam] = useState(null)
   async function seSom(id) {
