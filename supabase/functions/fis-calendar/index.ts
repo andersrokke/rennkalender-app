@@ -10,7 +10,7 @@ import { forOfte } from "../_shared/vakt.ts";
 // Ingenting slettes. Leser siden ingen rader - fordi FIS har endret oppsettet
 // eller er nede - gjøres det ingenting, og svaret sier det.
 
-const UA = { "user-agent": "Mozilla/5.0 Rennkalender/1.0 (public FIS data)" };
+const UA = { "user-agent": "Mozilla/5.0 Alpinrace/1.0 (public FIS data)" };
 // To slags utvalg: en cup (alle renn i kategorien, uansett land) eller et
 // land (alle renn som går der, uansett kategori). De nordiske rennene er lagt
 // inn for hånd med egne merknader, og hentes ikke herfra.

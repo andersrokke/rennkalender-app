@@ -12,7 +12,7 @@ const CORS = {
 };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b, null, 1), { status, headers: { ...CORS, "content-type": "application/json" } });
 
-const UA = { "user-agent": "Mozilla/5.0 Rennkalender/1.0 (public FIS data)" };
+const UA = { "user-agent": "Mozilla/5.0 Alpinrace/1.0 (public FIS data)" };
 const decode = (s: string) => s.replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
 const tokens = (html: string) => decode(html.replace(/<!--[\s\S]*?-->/g, "")).split(/<[^>]+>/).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
 

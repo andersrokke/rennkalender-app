@@ -1,4 +1,4 @@
-# Drift av Rennkalender
+# Drift av Alpinrace
 
 Alt bakenfor appen — database, edge-funksjoner og cron — ligger i `supabase/` i
 dette repoet. Produksjonsprosjektet er `hggzbixirdaamvkjvgul` (eu-west-1).
@@ -309,7 +309,7 @@ hvis `RESEND_API_KEY` er satt, ellers ingenting.
 | `GMAIL_USER` | all e-post | Faller tilbake til Resend. Er ingen av delene satt, blir ingenting sendt, og svaret sier det rett ut. |
 | `GMAIL_APP_PASSWORD` | all e-post | Som over. Dette er et **app-passord** fra Google-kontoen, ikke innloggingspassordet, og krever at totrinnsbekreftelse er på. |
 | `RESEND_API_KEY` | all e-post | Alternativ til Gmail. Krever verifisert domene for å sende til andre enn deg selv. |
-| `REMINDER_FROM` | all e-post | Faller tilbake på `Rennkalender <no-reply@rennkalender.app>`. Ved Gmail brukes bare visningsnavnet herfra; adressen settes til `GMAIL_USER`, siden Gmail uansett skriver om avsenderen til kontoen som logget inn. |
+| `REMINDER_FROM` | all e-post | Faller tilbake på `Alpinrace <no-reply@alpinrace.com>`. Ved Gmail brukes bare visningsnavnet herfra; adressen settes til `GMAIL_USER`, siden Gmail uansett skriver om avsenderen til kontoen som logget inn. |
 | `APP_URL` | alle tre funksjonene | Faller tilbake på `https://alpint-rennkalender.netlify.app`. Brukes i lenkene i e-postene. |
 
 `SUPABASE_URL` og `SUPABASE_SERVICE_ROLE_KEY` settes av plattformen selv og
