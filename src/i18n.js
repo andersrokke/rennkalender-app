@@ -889,7 +889,7 @@ const S = {
     signedInAs: 'Innlogget som', signOutOther: 'Logg ut og bruk en annen konto',
     goCoach: 'Opprett lag', goTeam: 'Bli med', goSolo: 'Kom i gang', goParent: 'Koble til',
     saving: 'Lagrer …', later: 'Resten fyller du ut i profilen når du vil.',
-    fisFind: 'Finn deg selv i FIS-lista', fisFindPh: 'Skriv navnet ditt …', fisChange: 'Bytt', fisNone: 'Ingen treff. Prøv etternavnet alene, eller hopp over og legg inn FIS-koden i profilen senere.', fisWhy: 'Da henter vi resultatene dine med én gang, og du ser hvor du står før du har gjort noe.',
+    fisFind: 'Finn deg selv i FIS-lista', fisFindPh: 'Skriv navnet ditt …', fisChange: 'Bytt', fisNone: 'Ingen treff. Prøv etternavnet alene, eller skriv FIS-koden din som tall.', fisWhy: 'Alt i appen bygger på resultatene dine, så FIS-koden må med. Finner du deg ikke i lista, skriv koden (6–7 siffer).', fisRequired: 'Velg deg selv i FIS-lista, eller skriv FIS-koden din, for å gå videre.', fisUseCode: 'FIS-koden {k} brukes.',
   },
   sv: {
     withGoogle: 'Fortsätt med Google', orEmail: 'eller med e-post',
@@ -930,7 +930,7 @@ const S = {
     signedInAs: 'Inloggad som', signOutOther: 'Logga ut och använd ett annat konto',
     goCoach: 'Skapa lag', goTeam: 'Gå med', goSolo: 'Kom igång', goParent: 'Anslut',
     saving: 'Sparar …', later: 'Resten fyller du i under profilen när du vill.',
-    fisFind: 'Hitta dig själv i FIS-listan', fisFindPh: 'Skriv ditt namn …', fisChange: 'Byt', fisNone: 'Inga träffar. Prova efternamnet ensamt, eller hoppa över och lägg in FIS-koden i profilen senare.', fisWhy: 'Då hämtar vi dina resultat direkt, och du ser var du står innan du gjort något.',
+    fisFind: 'Hitta dig själv i FIS-listan', fisFindPh: 'Skriv ditt namn …', fisChange: 'Byt', fisNone: 'Inga träffar. Prova efternamnet ensamt, eller skriv din FIS-kod som siffror.', fisWhy: 'Allt i appen bygger på dina resultat, så FIS-koden måste med. Hittar du dig inte i listan, skriv koden (6–7 siffror).', fisRequired: 'Välj dig själv i FIS-listan, eller skriv din FIS-kod, för att gå vidare.', fisUseCode: 'FIS-koden {k} används.',
   },
   en: {
     withGoogle: 'Continue with Google', orEmail: 'or with email',
@@ -971,7 +971,7 @@ const S = {
     signedInAs: 'Signed in as', signOutOther: 'Sign out and use another account',
     goCoach: 'Create team', goTeam: 'Join', goSolo: 'Get started', goParent: 'Connect',
     saving: 'Saving …', later: 'You can fill in the rest in your profile later.',
-    fisFind: 'Find yourself in the FIS list', fisFindPh: 'Type your name …', fisChange: 'Change', fisNone: 'No match. Try the surname alone, or skip and add the FIS code in your profile later.', fisWhy: 'Then we fetch your results right away, and you see where you stand before doing anything.',
+    fisFind: 'Find yourself in the FIS list', fisFindPh: 'Type your name …', fisChange: 'Change', fisNone: 'No match. Try the surname alone, or type your FIS code as digits.', fisWhy: 'Everything in the app builds on your results, so the FIS code is required. If you are not in the list, type the code (6–7 digits).', fisRequired: 'Pick yourself in the FIS list, or type your FIS code, to continue.', fisUseCode: 'FIS code {k} will be used.',
   },
 }
 

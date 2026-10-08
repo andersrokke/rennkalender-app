@@ -117,6 +117,7 @@ export default function Onboarding({ profile, onDone }) {
         // Kode fra treneren går foran: den peker på en bestemt gruppe.
         // Uten kode velges skigymnaset, og treneren henter løperen inn derfra.
         const skole = f.get('school')
+        fisFelt()
         if (!code && !skole) throw new Error(L.schoolOrCode)
         const { data: lagId, error } = code
           ? await supabase.rpc('join_team', { code })
@@ -152,7 +153,14 @@ export default function Onboarding({ profile, onDone }) {
 
   const go = { coach: L.goCoach, team: L.goTeam, solo: L.goSolo, parent: L.goParent }[mode]
   // FIS-kode, årgang og kjønn fra treffet løperen valgte; ellers ingenting.
-  const fisFelt = () => valgtFis ? { fis_code: valgtFis.fis_code, birth_year: valgtFis.birth_year || null, gender: valgtFis.gender ? String(valgtFis.gender).trim() : null } : {}
+  // En FIS-kode er obligatorisk for løpere: hele appen bygger på resultatene.
+  // Enten valgt fra lista, eller skrevet som tall for den som ikke står der ennå.
+  const skrevetKode = /^\d{5,8}$/.test(fisSok.trim()) ? fisSok.trim() : null
+  const fisFelt = () => {
+    if (valgtFis) return { fis_code: valgtFis.fis_code, birth_year: valgtFis.birth_year || null, gender: valgtFis.gender ? String(valgtFis.gender).trim() : null }
+    if (skrevetKode) return { fis_code: skrevetKode }
+    throw new Error(L.fisRequired)
+  }
   const FisVelger = () => (
     <>
       <label>{L.fisFind}</label>
@@ -177,7 +185,8 @@ export default function Onboarding({ profile, onDone }) {
               ))}
             </ul>
           )}
-          {fisSok.trim().length >= 3 && !treff.length && <p className="ob-hint">{L.fisNone}</p>}
+          {skrevetKode && !treff.length && <p className="ob-hint">{L.fisUseCode.replace('{k}', skrevetKode)}</p>}
+          {fisSok.trim().length >= 3 && !treff.length && !skrevetKode && <p className="ob-hint">{L.fisNone}</p>}
         </>
       )}
       <p className="ob-hint">{L.fisWhy}</p>
@@ -212,6 +221,8 @@ export default function Onboarding({ profile, onDone }) {
             <label>{L.name}</label>
             <input name="name" required autoComplete="name" defaultValue={clean} placeholder={L.namePh} />
 
+            {(mode === 'team' || mode === 'solo') && <FisVelger />}
+
             {mode === 'coach' && (<>
               <label>{L.teamName}</label>
               <input name="team" required placeholder={L.teamPh} />
@@ -228,8 +239,6 @@ export default function Onboarding({ profile, onDone }) {
                 defaultValue={fraLenke} placeholder={L.codePh} />
             </>)}
 
-            {(mode === 'team' || mode === 'solo') && <FisVelger />}
-
             {mode === 'parent' && (<>
               <label>{L.codeParent}</label>
               <input key="foreldrekode" name="code" autoCapitalize="none" autoCorrect="off" spellCheck="false"
@@ -240,7 +249,7 @@ export default function Onboarding({ profile, onDone }) {
 
             <button className="btn primary ob-go" disabled={busy}>{busy ? L.saving : go}</button>
             {err && <div className="error">{err}</div>}
-            {mode !== 'coach' && mode !== 'parent' && <p className="ob-later">{L.later}</p>}
+
           </form>
         )}
 
