@@ -748,6 +748,13 @@ ft.some(r => r.fis_code === '990001' && r.favoritt && !r.egen && Number(r.sl) ==
   ;(await hvem('Kari')).every(a => a === null) ? ok('et fornavn to løpere deler kobles ikke') : fail('Kari ble koblet til feil løper')
   ;(await hvem('#30')).every(a => a === null) ? ok('løp uten navn rører ikke') : fail('#30 ble koblet')
   ;(await q(`select athlete_id a from timing_aliases where team_id=$1 and source_name='Hugo'`, [lag]))[0]?.a === HUGO ? ok('navnet huskes til neste opplasting') : fail('alias ble ikke lagret')
+  // Neste opplasting: raden kobles i basen selv om skjemaet ikke gjorde det.
+  await q(`insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status) values ($1,$2,null,'Hugo','94',3,28000,'OK')`, [imp, lag])
+  await q(`insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status) values ($1,$2,null,'Ole Magnus','1',3,28100,'OK')`, [imp, lag])
+  await q(`insert into timing_runs(import_id, team_id, athlete_id, source_name, bib, run_no, run_time_ms, status) values ($1,$2,null,'Kari','13',3,28200,'OK')`, [imp, lag])
+  ;(await q(`select athlete_id a from timing_runs where import_id=$1 and run_no=3 and source_name='Hugo'`, [imp]))[0].a === HUGO ? ok('ny rad kobles via husket navn') : fail('ny Hugo-rad ble ikke koblet')
+  ;(await q(`select athlete_id a from timing_runs where import_id=$1 and run_no=3 and source_name='Ole Magnus'`, [imp]))[0].a === OLE ? ok('ny rad kobles via entydig navn i huset') : fail('ny Ole Magnus-rad ble ikke koblet')
+  ;(await q(`select athlete_id a from timing_runs where import_id=$1 and run_no=3 and source_name='Kari'`, [imp]))[0].a === null ? ok('ny rad med tvetydig navn kobles ikke') : fail('Kari ble koblet i basen')
   await q(`delete from timing_imports where id=$1`, [imp])
   await q(`delete from timing_aliases where team_id=$1 and source_name in ('Hugo','TESTESEN Ole Magnus')`, [lag])
   for (const id of [HUGO, OLE, K1, K2]) { await q('delete from profiles where id=$1', [id]); await c.query('delete from auth.users where id=$1', [id]) }
