@@ -4,9 +4,9 @@ import { PROFIL_FELT } from '../profil'
 import { STATUS, fmt, days } from '../util'
 import { useT } from '../i18n'
 import { useTeamAssign, chipState, hasAnswered } from './useTeamAssign'
-import CoachStart from './CoachStart.jsx'
 import HeadCoach from './HeadCoach.jsx'
-import Grupper from './Grupper.jsx'
+import Lagkode from './Lagkode.jsx'
+import { avtale } from '../avtale'
 
 // Coach: per-athlete overview and status editing.
 export default function Athletes({ team }) {
@@ -27,6 +27,28 @@ export default function Athletes({ team }) {
   const [ledige, setLedige] = useState([])
   const lastLedige = () => supabase.rpc('ledige_lopere').then(({ data }) => setLedige(data || []))
   useEffect(() => { lastGrupper(); lastLedige() }, [team.id])
+  // FIS-poeng, siste økt og rennene i løpernes avtaler, til oversikten.
+  const [poeng, setPoeng] = useState({})          // fis_code -> { sl, gs, sg, dh }
+  const [sisteOkt, setSisteOkt] = useState({})    // athlete_id -> dato
+  const [rennAv, setRennAv] = useState({})        // race_id -> race
+  const [nyGruppe, setNyGruppe] = useState('')
+  const [lagerGruppe, setLagerGruppe] = useState(false)
+  const [gruppeFeil, setGruppeFeil] = useState(null)
+
+  async function opprettGruppe(e) {
+    e.preventDefault(); setLagerGruppe(true); setGruppeFeil(null)
+    const { error } = await supabase.rpc('opprett_gruppe', { p_name: nyGruppe.trim() })
+    setLagerGruppe(false)
+    if (error) return setGruppeFeil(error.message)
+    // Man står i den nye gruppa etterpå, så hele appen må lese laget på nytt.
+    location.reload()
+  }
+  async function byttGruppe(id) {
+    if (id === team.id) return
+    const { error } = await supabase.rpc('bytt_gruppe', { p_team: id })
+    if (error) return alert(error.message)
+    location.reload()
+  }
 
   async function hentInn(a) {
     const { error } = await supabase.rpc('flytt_loper', { p_athlete: a.id, p_team: team.id })
@@ -58,13 +80,47 @@ export default function Athletes({ team }) {
       supabase.from('team_races').select('race:races(*)').eq('team_id', team.id),
       supabase.from('athlete_races').select('*').eq('team_id', team.id)
     ])
-    setAthletes((a || []).filter(p => p.role === 'athlete'))
+    const lop = (a || []).filter(p => p.role === 'athlete')
+    setAthletes(lop)
     setTeamRaces((tr || []).map(t => t.race).sort((x, y) => x.start_date.localeCompare(y.start_date)))
     setStatuses(s || [])
+    const koder = lop.map(p => p.fis_code).filter(Boolean)
+    if (koder.length) {
+      const { data: f } = await supabase.from('fis_list_athletes').select('fis_code, sl, gs, sg, dh').in('fis_code', koder)
+      setPoeng(Object.fromEntries((f || []).map(x => [x.fis_code, x])))
+    }
+    if (lop.length) {
+      const { data: o } = await supabase.from('training_sessions').select('athlete_id, date').in('athlete_id', lop.map(p => p.id)).order('date', { ascending: false }).limit(400)
+      const m = {}
+      ;(o || []).forEach(x => { if (!(x.athlete_id in m)) m[x.athlete_id] = x.date })
+      setSisteOkt(m)
+    }
   }
   useEffect(() => { load() }, [team.id])
 
   const rowsFor = aid => byAthlete[aid] || []
+  const rennIder = [...new Set(Object.values(byAthlete).flat().map(r => r.race_id))].sort((a, b) => a - b).join(',')
+  useEffect(() => {
+    if (!rennIder) { setRennAv({}); return }
+    let av = false
+    supabase.from('races').select('id, place, start_date, end_date').in('id', rennIder.split(',').map(Number))
+      .then(({ data }) => { if (!av) setRennAv(Object.fromEntries((data || []).map(r => [r.id, r]))) })
+    return () => { av = true }
+  }, [rennIder])
+  // Oversikten per løper: avtalte renn, hva som venter, og neste renn.
+  const idag = new Date().toISOString().slice(0, 10)
+  const oversikt = aid => {
+    const rader = rowsFor(aid).map(r => ({ ...r, av: avtale(r), race: rennAv[r.race_id] }))
+    const skal = rader.filter(r => ['avtalt', 'pameldt'].includes(r.av))
+    const neste = skal.map(r => r.race).filter(r => r && r.end_date >= idag).sort((a, b) => a.start_date.localeCompare(b.start_date))[0]
+    return {
+      renn: skal.length, dager: skal.reduce((s, r) => s + (r.race ? days(r.race) : 0), 0),
+      venterDeg: rader.filter(r => r.av === 'venterTrener').length, venterLoper: rader.filter(r => r.av === 'venterLoper').length,
+      neste
+    }
+  }
+  const p1 = v => v == null ? '–' : Number(v).toFixed(2).replace('.', ',')
+  const datoKort = d => d ? new Date(d + 'T12:00').toLocaleDateString(t.lang === 'en' ? 'en-GB' : 'nb-NO', { day: 'numeric', month: 'short' }) : '–'
   const assignedSet = aid => new Set(rowsFor(aid).filter(r => r.assigned).map(r => r.race_id))
   function openAthlete(aid) {
     setSel(aid); setDraft(aid ? assignedSet(aid) : null)
@@ -91,10 +147,36 @@ export default function Athletes({ team }) {
     return { n: mine.length, d: mine.reduce((s, r) => s + days(r), 0) }
   }
 
+  const hus = grupper.find(g => g.er_hus)
+  const valgtNavn = a => athletes.find(x => x.id === a)?.full_name
+
   return (
-    <div className="page">
-      <HeadCoach />
-      <Grupper team={team} grupper={grupper} onEndret={lastGrupper} />
+    <div className="page lp">
+      <div className="lp-hode">
+        <div>
+          <h2>{t('athletes')} <span className="muted">({athletes.length})</span></h2>
+          <p className="muted">{hus ? t('lpSubHouse').replace('{hus}', hus.name) : t('lpSub')}</p>
+        </div>
+      </div>
+
+      {/* Gruppene som brikker: trykk for å bytte, og lag en ny i samme rad. */}
+      {grupper.length > 0 && (
+        <div className="lp-grupper">
+          {grupper.map(g => (
+            <button key={g.id} type="button" className={`lp-gruppe${g.id === team.id ? ' on' : ''}`}
+              aria-pressed={g.id === team.id} onClick={() => byttGruppe(g.id)} title={g.eier_navn || ''}>
+              <b>{g.name}</b>
+              <span>{g.er_hus ? t('groupHouse') : g.eier_navn || '–'} · {g.lopere}</span>
+            </button>
+          ))}
+          <form onSubmit={opprettGruppe} className="lp-nygruppe">
+            <input value={nyGruppe} placeholder={t('grNamePh')} aria-label={t('grName')} onChange={e => setNyGruppe(e.target.value)} />
+            <button className="btn small" disabled={lagerGruppe || nyGruppe.trim().length < 2}>{lagerGruppe ? t('grCreating') : t('grCreate')}</button>
+          </form>
+          {gruppeFeil && <p className="error" style={{ margin: 0 }}>{gruppeFeil}</p>}
+        </div>
+      )}
+
       {team.parent_team_id && ledige.length > 0 && (
         <div className="card cs-kort">
           <h2>{t('grWaitingTitle')} <span className="muted">({ledige.length})</span></h2>
@@ -112,37 +194,61 @@ export default function Athletes({ team }) {
           </ul>
         </div>
       )}
-      <CoachStart team={team} antall={athletes.length} />
 
       <div className="card">
-        <h2>Løpere</h2>
-        {/* Rullbar ramme: seks kolonner pluss to knapper er bredere enn en
-            telefon, og uten rammen henger halve raden utenfor kortet. */}
-        <div className="ad-scroll">
-        <table><thead><tr><th>Navn</th><th>Årgang</th><th>FIS-kode</th><th>Renn</th><th>Renndager</th><th></th></tr></thead>
-          <tbody>{athletes.map(a => { const s = summary(a.id); return (
-            <tr key={a.id}><td>{a.full_name}</td><td>{a.birth_year || '–'}</td><td>{a.fis_code || '–'}</td><td>{s.n}</td><td>{s.d}</td>
-              <td>
-                <div className="row" style={{ gap: 6, flexWrap: 'nowrap' }}>
-                  <button className="btn small" onClick={() => openAthlete(sel === a.id ? null : a.id)}>{sel === a.id ? 'Lukk' : 'Planlegg'}</button>
-                  {grupper.length > 1 && (
-                    <select className="flytt" value="" aria-label={t('grMoveTo')} onChange={e => flytt(a, e.target.value)}>
-                      <option value="">{t('grMoveTo')}</option>
-                      {grupper.filter(g => g.id !== team.id).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
-                  )}
-                  <button className="btn small danger" onClick={() => fjern(a)}>Fjern</button>
-                </div>
-              </td></tr>) })}
-          </tbody></table>
-        </div>
+        {athletes.length === 0 ? (
+          <>
+            <h2>{t('lpNoneTitle')}</h2>
+            <p className="muted">{t('lpNoneSub')}</p>
+            <Lagkode team={team} />
+          </>
+        ) : (
+          <div className="ad-scroll">
+            <table className="ad-table lp-tabell">
+              <thead><tr>
+                <th>{t('athleteCol')}</th><th>{t('mxYear')}</th><th className="tall">SL</th><th className="tall">GS</th>
+                <th className="tall">{t('racesN')}</th><th>{t('lpWaiting')}</th><th>{t('lpNext')}</th><th>{t('lpLastSession')}</th><th></th>
+              </tr></thead>
+              <tbody>{athletes.map(a => {
+                const o = oversikt(a.id), pp = poeng[a.fis_code] || {}
+                return (
+                  <tr key={a.id} className={sel === a.id ? 'on' : ''}>
+                    <td><b>{a.full_name}</b>{a.fis_code ? <span className="muted lp-fis"> FIS {a.fis_code}</span> : <span className="tag warn lp-fis">{t('lpNoFis')}</span>}</td>
+                    <td>{a.birth_year || '–'}</td>
+                    <td className="tall">{p1(pp.sl)}</td><td className="tall">{p1(pp.gs)}</td>
+                    <td className="tall">{o.renn}<span className="muted"> · {o.dager} {t('raceDaysN')}</span></td>
+                    <td>
+                      {o.venterDeg > 0 && <span className="tag av venterTrener">{o.venterDeg} {t('lpWaitYou')}</span>}
+                      {o.venterLoper > 0 && <span className="tag av venterLoper">{o.venterLoper} {t('lpWaitAthlete')}</span>}
+                      {!o.venterDeg && !o.venterLoper && <span className="muted">–</span>}
+                    </td>
+                    <td className="nobr">{o.neste ? <>{datoKort(o.neste.start_date)} <span className="muted">{o.neste.place}</span></> : <span className="muted">–</span>}</td>
+                    <td className="nobr">{sisteOkt[a.id] ? datoKort(sisteOkt[a.id]) : <span className="muted">{t('lpNoSession')}</span>}</td>
+                    <td>
+                      <div className="ad-handlinger">
+                        <button className="btn small" onClick={() => openAthlete(sel === a.id ? null : a.id)}>{sel === a.id ? t('close') : t('lpPlan')}</button>
+                        {grupper.length > 1 && (
+                          <select className="flytt" value="" aria-label={t('grMoveTo')} onChange={e => flytt(a, e.target.value)}>
+                            <option value="">{t('grMoveTo')}</option>
+                            {grupper.filter(g => g.id !== team.id).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                          </select>
+                        )}
+                        <button className="btn small danger" onClick={() => fjern(a)}>{t('remove')}</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}</tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {sel && (
         <div className="card">
-          <h2>{athletes.find(a => a.id === sel)?.full_name} – sesongplan</h2>
-          <p className="muted">Sett status per renn. Løperen ser dette i «Min sesong» og kan svare med ønske/kan ikke.</p>
-          {teamRaces.length === 0 && <p className="muted">Laget har ingen renn i planen ennå.</p>}
+          <h2>{valgtNavn(sel)} – {t('lpPlanTitle')}</h2>
+          <p className="muted">{t('lpPlanSub')}</p>
+          {teamRaces.length === 0 && <p className="muted">{t('coachEmpty')}</p>}
           <div className="assign-picks" style={{ marginBottom: 8 }}>
             <button className="btn small link" onClick={() => setDraft(new Set(teamRaces.filter(r => chipState(rowsFor(sel).find(x => x.race_id === r.id)) !== 'unavailable').map(r => r.id)))}>{t('pickAll')}</button>
             <button className="btn small link" onClick={() => setDraft(new Set())}>{t('pickNone')}</button>
@@ -182,6 +288,15 @@ export default function Athletes({ team }) {
               </div>
             ) : null
           })()}
+        </div>
+      )}
+
+      <HeadCoach />
+      {athletes.length > 0 && (
+        <div className="card">
+          <h2>{t('lpInviteTitle')}</h2>
+          <p className="muted">{t('lpInviteSub')}</p>
+          <Lagkode team={team} />
         </div>
       )}
     </div>
