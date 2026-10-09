@@ -18,6 +18,10 @@ const FORE = ['ice', 'salted', 'hard', 'grippy', 'soft', 'slush', 'powder', 'art
 const VAER = ['sun', 'cloudy', 'flat_light', 'snow', 'fog', 'rain', 'wind', 'indoor']
 const PERIODER = [['30', 30], ['90', 90], ['sesong', null], ['alt', 3650]]
 const SORTERING = ['dato', 'vurdering', 'runs', 'temp', 'gren']
+// Vurderingen i tre bånd, så det er lett å drille ned: 1-3 dårlig, 4-7 ok,
+// 8-10 veldig bra. Samme grenser som fargene i skjemaet.
+export const BAND = ['daarlig', 'ok', 'bra']
+export const band = r => r == null ? null : r <= 3 ? 'daarlig' : r <= 7 ? 'ok' : 'bra'
 
 const iso = d => d.toISOString().slice(0, 10)
 // Sesongen følger FIS: 1. juli til 30. juni.
@@ -41,6 +45,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
   const [grener, setGrener] = useState([])
   const [fore, setFore] = useState([])
   const [vaer, setVaer] = useState([])
+  const [bandValg, setBandValg] = useState([])
   const [tempFra, setTempFra] = useState('')
   const [tempTil, setTempTil] = useState('')
   const [sted, setSted] = useState('')
@@ -71,10 +76,11 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
       (!grener.length || grener.includes(r.discipline)) &&
       (!fore.length || fore.includes(r.snow)) &&
       (!vaer.length || vaer.includes(r.weather)) &&
+      (!bandValg.length || bandValg.includes(band(r.rating))) &&
       (fra == null || (r.temp_c != null && r.temp_c >= fra)) &&
       (til == null || (r.temp_c != null && r.temp_c <= til)) &&
       (!sted || r.slope?.resort === sted || r.venue === sted))
-  }, [rader, grener, fore, vaer, tempFra, tempTil, sted])
+  }, [rader, grener, fore, vaer, bandValg, tempFra, tempTil, sted])
 
   const steder = useMemo(() => {
     if (!rader) return []
@@ -136,6 +142,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
   const funkerGren = useMemo(() => snittAv('discipline', GRENER), [vurderte])
   const funkerSted = useMemo(() => snittAv(r => r.slope?.resort || r.venue).slice(0, 6), [vurderte])
   const beste = useMemo(() => [...vurderte].sort((a, b) => b.rating - a.rating || b.date.localeCompare(a.date)).slice(0, 5), [vurderte])
+  const perBand = useMemo(() => BAND.map(k => ({ k, n: vurderte.filter(r => band(r.rating) === k).length })).filter(x => x.n), [vurderte])
 
   const uker = useMemo(() => {
     const sum = {}
@@ -211,6 +218,8 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
         <Flervalg valg={FORE} prefix="snow_" valgt={fore} sett={setFore} t={t} />
         <label>{t('tlWeather')}</label>
         <Flervalg valg={VAER} prefix="wx_" valgt={vaer} sett={setVaer} t={t} />
+        <label>{t('tsBandLabel')}</label>
+        <Flervalg valg={BAND} prefix="band_" valgt={bandValg} sett={setBandValg} t={t} />
 
         <div className="tl-grid">
           <div>
@@ -270,6 +279,14 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
             <div className="card">
               <h2>{t('tsBestTitle')}</h2>
               <p className="muted">{t('tsBestSub').replace('{n}', vurderte.length)}</p>
+              <div className="ts-band">
+                {perBand.map(x => (
+                  <button key={x.k} type="button" className={`ts-band-knapp ${x.k}${bandValg.includes(x.k) ? ' on' : ''}`}
+                    onClick={() => setBandValg(v => v.includes(x.k) ? v.filter(y => y !== x.k) : [...v, x.k])}>
+                    <b>{x.n}</b><span>{t('band_' + x.k)}</span><small>{t('bandSpan_' + x.k)}</small>
+                  </button>
+                ))}
+              </div>
               <ul className="ts-beste">
                 {beste.map(r => (
                   <li key={r.id}>
