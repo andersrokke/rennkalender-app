@@ -92,7 +92,7 @@ for (const p of LOPERE) for (let i = 0; i < 45; i++) {
     id: ++sid, athlete_id: p.id, team_id: 'ntg', date: iso(dager(planlagt ? 1 + i : -rnd(120))),
     discipline: gren, runs: gren === 'COND' ? null : 4 + rnd(16), gates: gren === 'COND' ? null : 18 + rnd(40),
     snow: velg(FORE), weather: s.indoor ? 'indoor' : velg(VAER), temp_c: s.indoor ? -3 : -12 + rnd(14),
-    minutes: 60 + rnd(120), rpe: 3 + rnd(7), note: rnd(6) === 0 ? 'Bra flyt i dag' : null, venue: null,
+    minutes: 60 + rnd(120), rpe: 3 + rnd(7), rating: rnd(4) === 0 ? null : 3 + rnd(8), note: rnd(6) === 0 ? 'Bra flyt i dag' : null, venue: null,
     slope_id: s.id, slope: s, start_time: planlagt ? '08:00:00' : null, end_time: planlagt ? '10:00:00' : null,
     planned: planlagt, created_by: planlagt ? 'oscar' : p.id
   })

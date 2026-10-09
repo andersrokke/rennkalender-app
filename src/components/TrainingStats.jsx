@@ -17,7 +17,7 @@ const GRENER = ['SL', 'GS', 'SG', 'DH', 'FREE', 'COND']
 const FORE = ['ice', 'salted', 'hard', 'grippy', 'soft', 'slush', 'powder', 'artificial']
 const VAER = ['sun', 'cloudy', 'flat_light', 'snow', 'fog', 'rain', 'wind', 'indoor']
 const PERIODER = [['30', 30], ['90', 90], ['sesong', null], ['alt', 3650]]
-const SORTERING = ['dato', 'runs', 'temp', 'gren']
+const SORTERING = ['dato', 'vurdering', 'runs', 'temp', 'gren']
 
 const iso = d => d.toISOString().slice(0, 10)
 // Sesongen følger FIS: 1. juli til 30. juni.
@@ -55,7 +55,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
     const fra = periode === 'sesong' ? sesongstart()
       : dagerSiden(PERIODER.find(p => p[0] === periode)[1])
     supabase.from('training_sessions')
-      .select('id, athlete_id, date, discipline, runs, gates, snow, weather, temp_c, minutes, rpe, note, venue, slope:slopes(resort, name, difficulty)')
+      .select('id, athlete_id, date, discipline, runs, gates, snow, weather, temp_c, minutes, rpe, rating, note, venue, slope:slopes(resort, name, difficulty)')
       .in('athlete_id', ider).eq('planned', false).gte('date', fra)
       .order('date', { ascending: false }).limit(2000)
       .then(({ data }) => setRader(data || []))
@@ -95,7 +95,8 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
       porter: ski.reduce((a, r) => a + (r.gates || 0), 0),
       timer: Math.round(valgt.reduce((a, r) => a + (r.minutes || 0), 0) / 6) / 10,
       temp: snitt(valgt, r => r.temp_c),
-      rpe: snitt(valgt, r => r.rpe)
+      rpe: snitt(valgt, r => r.rpe),
+      vurdering: snitt(valgt, r => r.rating)
     }
   }, [valgt])
 
@@ -117,6 +118,25 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
   const perFore = useMemo(() => fordeling('snow', FORE), [valgt])
   const perSted = useMemo(() => fordeling(r => r.slope?.resort || r.venue).slice(0, 6), [valgt])
 
+  // Hva som funker: snittvurdering per føre, vær, gren og sted, der det finnes
+  // minst to vurderte økter. Og de beste øktene, så man finner dem igjen.
+  const vurderte = useMemo(() => valgt.filter(r => r.rating != null), [valgt])
+  const snittAv = (nokkel, verdier) => {
+    const sum = {}, ant = {}
+    vurderte.forEach(r => {
+      const k = typeof nokkel === 'function' ? nokkel(r) : r[nokkel]
+      if (!k) return
+      sum[k] = (sum[k] || 0) + r.rating; ant[k] = (ant[k] || 0) + 1
+    })
+    return (verdier ? verdier.filter(v => ant[v]) : Object.keys(ant)).filter(k => ant[k] >= 2)
+      .map(k => ({ k, n: Math.round(sum[k] / ant[k] * 10) / 10, antall: ant[k] })).sort((a, b) => b.n - a.n)
+  }
+  const funkerFore = useMemo(() => snittAv('snow', FORE), [vurderte])
+  const funkerVaer = useMemo(() => snittAv('weather'), [vurderte])
+  const funkerGren = useMemo(() => snittAv('discipline', GRENER), [vurderte])
+  const funkerSted = useMemo(() => snittAv(r => r.slope?.resort || r.venue).slice(0, 6), [vurderte])
+  const beste = useMemo(() => [...vurderte].sort((a, b) => b.rating - a.rating || b.date.localeCompare(a.date)).slice(0, 5), [vurderte])
+
   const uker = useMemo(() => {
     const sum = {}
     valgt.filter(r => r.discipline !== 'COND').forEach(r => {
@@ -129,6 +149,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
   const sortert = useMemo(() => {
     const v = [...valgt]
     const nullSist = (a, b) => (a == null) - (b == null)
+    if (sorter === 'vurdering') v.sort((a, b) => nullSist(a.rating, b.rating) || (b.rating || 0) - (a.rating || 0) || b.date.localeCompare(a.date))
     if (sorter === 'runs') v.sort((a, b) => nullSist(a.runs, b.runs) || (b.runs || 0) - (a.runs || 0))
     if (sorter === 'temp') v.sort((a, b) => nullSist(a.temp_c, b.temp_c) || a.temp_c - b.temp_c)
     if (sorter === 'gren') v.sort((a, b) => GRENER.indexOf(a.discipline) - GRENER.indexOf(b.discipline)
@@ -228,6 +249,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
           <Kpi tall={tall.porter || '–'} tekst={t('tsGates')} />
           <Kpi tall={tall.temp == null ? '–' : tall.temp + '°'} tekst={t('tsTemp')} />
           <Kpi tall={en(tall.rpe)} tekst={t('tsRpe')} />
+          <Kpi tall={en(tall.vurdering)} tekst={t('tsRating')} />
         </div>
       </div>
 
@@ -243,6 +265,37 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
               <Fordeling tittel={t('tlResort')} rader={perSted} t={t} />
             </div>
           </div>
+
+          {vurderte.length > 0 && (
+            <div className="card">
+              <h2>{t('tsBestTitle')}</h2>
+              <p className="muted">{t('tsBestSub').replace('{n}', vurderte.length)}</p>
+              <ul className="ts-beste">
+                {beste.map(r => (
+                  <li key={r.id}>
+                    <b className={`ts-vurd t${r.rating}`}>{r.rating}</b>
+                    <div className="ts-beste-hva">
+                      <b>{fmtDato(r.date)}{gruppe ? ` · ${navn[r.athlete_id] || '–'}` : ''} · {t('disc_' + r.discipline)}{r.slope ? ` · ${r.slope.resort} · ${r.slope.name}` : r.venue ? ` · ${r.venue}` : ''}</b>
+                      <span className="muted">{[r.snow && t('snow_' + r.snow), r.weather && t('wx_' + r.weather), r.temp_c != null && `${r.temp_c}°`, r.runs && `${r.runs} runs`, r.gates && `${r.gates} ${t('tlGates').toLowerCase()}`].filter(Boolean).join(' · ')}</span>
+                      {r.note && <span className="ts-notat">«{r.note}»</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {(funkerFore.length + funkerVaer.length + funkerGren.length + funkerSted.length) > 0 && (
+                <>
+                  <h3 className="ts-funker-h">{t('tsWorksTitle')}</h3>
+                  <p className="muted">{t('tsWorksSub')}</p>
+                  <div className="ts-kolonner">
+                    <Fordeling tittel={t('tlSnow')} rader={funkerFore} prefix="snow_" t={t} maks={10} />
+                    <Fordeling tittel={t('tlWeather')} rader={funkerVaer} prefix="wx_" t={t} maks={10} />
+                    <Fordeling tittel={t('tlDiscipline')} rader={funkerGren} prefix="disc_" t={t} maks={10} />
+                    <Fordeling tittel={t('tlResort')} rader={funkerSted} t={t} maks={10} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {uker.length > 1 && (
             <div className="card">
@@ -317,6 +370,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
                     <th>{t('tlWeather')}</th>
                     <th className="n">°C</th>
                     <th className="n">{t('tlRpe')}</th>
+                    <th className="n">{t('tsRatingCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -331,6 +385,7 @@ export default function TrainingStats({ athleteId, mates = [], isCoach, nonce = 
                       <td>{r.weather ? t('wx_' + r.weather) : '–'}</td>
                       <td className="n">{en(r.temp_c)}</td>
                       <td className="n">{en(r.rpe)}</td>
+                      <td className="n">{r.rating != null ? <b className={`ts-vurd t${r.rating}`}>{r.rating}</b> : '–'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -362,8 +417,8 @@ function Flervalg({ valg, prefix, valgt, sett, t }) {
   )
 }
 
-function Fordeling({ tittel, rader, prefix, t }) {
-  const topp = Math.max(...rader.map(r => r.n), 1)
+function Fordeling({ tittel, rader, prefix, t, maks = null }) {
+  const topp = maks || Math.max(...rader.map(r => r.n), 1)
   return (
     <div className="ts-fordeling">
       <h3>{tittel}</h3>
@@ -371,7 +426,7 @@ function Fordeling({ tittel, rader, prefix, t }) {
         <div className="ts-rad" key={r.k}>
           <span className="ts-navn">{prefix ? t(prefix + r.k) : r.k}</span>
           <span className="ts-bar"><i style={{ width: `${Math.round((r.n / topp) * 100)}%` }} /></span>
-          <span className="ts-n">{r.n}</span>
+          <span className="ts-n">{r.n}{r.antall != null && <small className="muted"> ({r.antall})</small>}</span>
         </div>
       ))}
     </div>

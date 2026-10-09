@@ -29,7 +29,7 @@ const DIFFICULTIES = ['novice', 'easy', 'intermediate', 'advanced', 'expert', 'f
 const today = () => new Date().toISOString().slice(0, 10)
 const blank = () => ({
   date: today(), dager: [], resort: '', slope_id: '', venue: '', discipline: 'GS', runs: '',
-  gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', note: ''
+  gates: '', snow: '', weather: '', temp_c: '', minutes: '', rpe: '', rating: '', note: ''
 })
 // Dagen etter, som ISO-dato.
 const dagenEtter = d => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10) }
@@ -162,7 +162,7 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null, 
           : (form.venue.trim() || null),
       runs: num(form.runs), gates: num(form.gates),
       snow: form.snow || null, weather: form.weather || null,
-      temp_c: num(form.temp_c), minutes: num(form.minutes), rpe: num(form.rpe),
+      temp_c: num(form.temp_c), minutes: num(form.minutes), rpe: num(form.rpe), rating: num(form.rating),
       note: form.note.trim() || null,
       created_by: profile.id
     })))
@@ -328,6 +328,18 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null, 
             <input id="tl-rpe" type="number" min="1" max="10" value={form.rpe}
               onChange={e => set({ rpe: e.target.value })} />
           </div>
+        </div>
+
+        {/* Hvordan var økta: ti knapper, ikke et tallfelt. Det er det løperen
+            senere leter etter - de gode øktene og hva de hadde felles. */}
+        <label>{t('tlRating')}</label>
+        <div className="tl-vurdering" role="radiogroup" aria-label={t('tlRating')}>
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(v => (
+            <button key={v} type="button" role="radio" aria-checked={String(form.rating) === String(v)}
+              className={`tl-trinn${String(form.rating) === String(v) ? ' on' : ''} t${v}`}
+              onClick={() => set({ rating: String(form.rating) === String(v) ? '' : String(v) })}>{v}</button>
+          ))}
+          <span className="muted tl-vurdering-hint">{form.rating ? t('tlRating_' + (form.rating <= 3 ? 'lav' : form.rating <= 6 ? 'middels' : form.rating <= 8 ? 'bra' : 'topp')) : t('tlRatingHint')}</span>
         </div>
 
         <label htmlFor="tl-note">{t('tlNote')}</label>
