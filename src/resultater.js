@@ -29,6 +29,9 @@ export function berik(rader) {
     // DNS er «startet ikke». Det er verken en start eller en utkjøring, så
     // raden vises i lista, men holdes utenfor tallene.
     dns: /^DNS/i.test(String(r.position ?? '').trim()),
+    // Treningsomganger i fart (kategori TRA) står i FIS-lista med plassering,
+    // men er ikke renn. De vises i lista, men telles ikke som start.
+    trening: String(r.category ?? '').trim().toUpperCase() === 'TRA',
     poeng: r.fis_points == null || r.fis_points === '' ? null : Number(r.fis_points)
   }))
 }
@@ -65,7 +68,7 @@ const minst = xs => xs.length ? Math.min(...xs) : null
 
 // Nøkkeltall for et utvalg. Lavere FIS-poeng er bedre, så «beste» er minst.
 export function nokkeltall(alle) {
-  const rader = alle.filter(r => !r.dns)
+  const rader = alle.filter(r => !r.dns && !r.trening)
   const ferdig = rader.filter(r => r.plass != null)
   const poeng = ferdig.map(r => r.poeng).filter(p => p != null)
   return {
@@ -121,7 +124,7 @@ const MND_KORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep',
 export function perManed(rader) {
   const m = new Map()
   rader.forEach(r => {
-    if (r.dns) return
+    if (r.dns || r.trening) return
     const k = r.race_date.slice(0, 7)
     const x = m.get(k) || { nokkel: k, sesong: r.sesong, starter: 0, fullfort: 0, ute: 0,
       navn: `${MND_KORT[+k.slice(5) - 1]} ${k.slice(2, 4)}` }
@@ -135,7 +138,7 @@ export function perManed(rader) {
 
 // Graf 1: hvert fullførte renn med poeng, eldste først, én nøkkel per gren.
 export function poengOverTid(rader) {
-  return rader.filter(r => r.poeng != null && r.plass != null)
+  return rader.filter(r => r.poeng != null && r.plass != null && !r.trening)
     .sort((a, b) => a.race_date.localeCompare(b.race_date))
     .map(r => ({ t: Date.parse(r.race_date + 'T12:00:00Z'), dato: r.race_date, sted: r.place, gren: r.gren,
       plass: r.plass, [r.gren]: r.poeng, ['plass_' + r.gren]: r.plass }))

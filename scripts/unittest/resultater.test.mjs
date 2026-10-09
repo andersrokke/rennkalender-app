@@ -92,6 +92,15 @@ sjekk('lagtabell sortert på beste poeng: lavest først, uten poeng sist', sorte
 sjekk('lagtabell synkende prosent: uten starter fortsatt sist', sorterLag(lt, 'prosent', 'ned').at(-1).navn === 'Åse' && sorterLag(lt, 'prosent', 'ned')[0].navn === 'Ida')
 sjekk('lagtabell med grenfilter', lagTabell(LAG, PK, { gren: ['GS'] })[1].starter === 0)
 
+// Treningsomganger (TRA) telles ikke som start, men står i lista.
+{
+  const T = berik([{ race_date: '2025-01-21', place: 'Hafjell', discipline: 'Downhill', category: 'TRA', position: '35', fis_points: null },
+    { race_date: '2025-01-23', place: 'Hafjell', discipline: 'Downhill', category: 'FIS', position: '12', fis_points: '80.5' },
+    { race_date: '2025-01-24', place: 'Hafjell', discipline: 'Downhill', category: 'FIS', position: 'DNF1', fis_points: null }])
+  const n = nokkeltall(T)
+  sjekk('treningsomgang telles ikke som start', T[0].trening === true && n.starter === 2 && n.fullfort === 1 && n.prosent === 50)
+  sjekk('treningsomgang er med i lista', T.length === 3 && perManed(T)[0].starter === 2)
+}
 const sg = sesongGraf(R)
 const sk = sesongKort(sg, ['SL', 'GS', 'DH'], 'beste')
 sjekk('sesongkort: ett per gren med data, DH uten data er ute', sk.map(k => k.gren).join() === 'SL,GS')

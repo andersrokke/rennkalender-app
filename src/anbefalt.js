@@ -54,7 +54,7 @@ export function godeSteder(resultater, renn, { idag, kjonn = null } = {}) {
     const grener = grenerIRenn(r.events)
     const her = resultater.filter(x => sammeSted(x.place, r.place) && (!grener.length || grener.includes(x.gren)))
     // «Startet ikke» er ikke en start på stedet.
-    const startet = her.filter(x => !x.dns)
+    const startet = her.filter(x => !x.dns && !x.trening)
     if (!startet.length) { utenHistorikk++; return }
     const ferdig = startet.filter(x => x.plass != null)
     const medPoeng = ferdig.filter(x => x.poeng != null)

@@ -45,7 +45,7 @@ export function tempgruppe(v) {
 export function vaerGrupper(rader, gruppeAv, rekkefolge, felt = 'vaer') {
   const m = new Map()
   for (const r of rader || []) {
-    if (r.dns) continue
+    if (r.dns || r.trening) continue
     const g = gruppeAv(r[felt])
     if (!g) continue
     const x = m.get(g) || { gruppe: g, starter: 0, fullfort: 0, poeng: [] }

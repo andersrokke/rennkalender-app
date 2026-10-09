@@ -89,7 +89,7 @@ export default function ResultHistory({ fisCode, name, nonce = 0, grenUtenfra = 
   const utvalg = useMemo(() => filtrer(alle, { sesong, gren, kategori }), [alle, sesong, gren, kategori])
   const n = useMemo(() => nokkeltall(utvalg), [utvalg])
   const liste = useMemo(() => sorter(bareFullfort ? utvalg.filter(r => r.plass != null) : utvalg, kol, retning), [utvalg, bareFullfort, kol, retning])
-  const medVaerN = utvalg.filter(r => r.vaer && !r.dns).length
+  const medVaerN = utvalg.filter(r => r.vaer && !r.dns && !r.trening).length
   const perTemp = useMemo(() => vaerGrupper(utvalg, tempgruppe, TEMPGRUPPER), [utvalg])
   const perType = useMemo(() => vaerGrupper(utvalg, vaertype, VAERTYPER), [utvalg])
   const perFore = useMemo(() => vaerGrupper(utvalg, f => f?.fore, FORE, 'fore'), [utvalg])
