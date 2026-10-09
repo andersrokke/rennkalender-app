@@ -1658,16 +1658,14 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 .tl-trinn:hover{border-color:var(--ink)}
 .tl-trinn.on{color:#fff;border-color:transparent}
 .tl-trinn.on.t1,.tl-trinn.on.t2,.tl-trinn.on.t3{background:var(--danger)}
-.tl-trinn.on.t4,.tl-trinn.on.t5,.tl-trinn.on.t6{background:#B7791F}
-.tl-trinn.on.t7,.tl-trinn.on.t8{background:var(--av-ok)}
-.tl-trinn.on.t9,.tl-trinn.on.t10{background:var(--accent)}
+.tl-trinn.on.t4,.tl-trinn.on.t5,.tl-trinn.on.t6,.tl-trinn.on.t7{background:#B7791F}
+.tl-trinn.on.t8,.tl-trinn.on.t9,.tl-trinn.on.t10{background:var(--av-ok)}
 .tl-vurdering-hint{flex-basis:100%;font-size:13px}
 @media (min-width:700px){.tl-vurdering-hint{flex-basis:auto;margin-left:8px}}
 .ts-vurd{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:8px;font-variant-numeric:tabular-nums;color:#fff;background:var(--mute)}
 .ts-vurd.t1,.ts-vurd.t2,.ts-vurd.t3{background:var(--danger)}
-.ts-vurd.t4,.ts-vurd.t5,.ts-vurd.t6{background:#B7791F}
-.ts-vurd.t7,.ts-vurd.t8{background:var(--av-ok)}
-.ts-vurd.t9,.ts-vurd.t10{background:var(--accent)}
+.ts-vurd.t4,.ts-vurd.t5,.ts-vurd.t6,.ts-vurd.t7{background:#B7791F}
+.ts-vurd.t8,.ts-vurd.t9,.ts-vurd.t10{background:var(--av-ok)}
 .ts-beste{list-style:none;margin:8px 0 0;padding:0}
 .ts-beste li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
 .ts-beste li:first-child{border-top:0}
@@ -1675,3 +1673,14 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 .ts-beste-hva span{font-size:13.5px}
 .ts-notat{font-style:italic;color:var(--ink-2)}
 .ts-funker-h{margin:18px 0 2px;font-size:15px}
+
+/* Vurderingen i tre bånd, klikkbare som filter */
+.ts-band{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+.ts-band-knapp{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:10px 14px;min-width:120px;border-radius:12px;border:1px solid var(--line);background:var(--snow);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.ts-band-knapp b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.ts-band-knapp span{font-weight:650;font-size:13.5px}
+.ts-band-knapp small{font-size:12px;color:var(--mute)}
+.ts-band-knapp.daarlig b{color:var(--danger)}
+.ts-band-knapp.ok b{color:#B7791F}
+.ts-band-knapp.bra b{color:var(--av-ok)}
+.ts-band-knapp.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}

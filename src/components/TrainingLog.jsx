@@ -339,7 +339,7 @@ export default function TrainingLog({ profile, team, isCoach, tidtaking = null, 
               className={`tl-trinn${String(form.rating) === String(v) ? ' on' : ''} t${v}`}
               onClick={() => set({ rating: String(form.rating) === String(v) ? '' : String(v) })}>{v}</button>
           ))}
-          <span className="muted tl-vurdering-hint">{form.rating ? t('tlRating_' + (form.rating <= 3 ? 'lav' : form.rating <= 6 ? 'middels' : form.rating <= 8 ? 'bra' : 'topp')) : t('tlRatingHint')}</span>
+          <span className="muted tl-vurdering-hint">{form.rating ? `${t('band_' + (form.rating <= 3 ? 'daarlig' : form.rating <= 7 ? 'ok' : 'bra'))} (${t('bandSpan_' + (form.rating <= 3 ? 'daarlig' : form.rating <= 7 ? 'ok' : 'bra'))})` : t('tlRatingHint')}</span>
         </div>
 
         <label htmlFor="tl-note">{t('tlNote')}</label>
