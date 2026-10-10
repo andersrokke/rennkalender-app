@@ -75,6 +75,18 @@ export default function App() {
   const [grupper, setGrupper] = useState([])
   // Gruppa valgt under «Løpere» i menyen: filteret på Løpere-siden.
   const [lopereFilter, setLopereFilter] = useState('alle')
+  // Velgeren øverst finnes bare når det er noe å velge mellom: grupper med
+  // løpere. Et tomt hus ved siden av én gruppe er ikke et valg. Står treneren
+  // i et tomt hus mens løperne ligger i den ene gruppa, flyttes hun dit selv.
+  const valgbare = grupper.filter(g => g.lopere > 0)
+  useEffect(() => {
+    if (!profile || profile.role !== 'coach' || !team || grupper.length < 2) return
+    if (team.lopere === undefined) { /* lag lastes separat; teller fra grupper */ }
+    const her = grupper.find(g => g.id === team.id)
+    if (her && her.er_hus && her.lopere === 0 && valgbare.length === 1 && valgbare[0].id !== team.id) {
+      supabase.rpc('bytt_gruppe', { p_team: valgbare[0].id }).then(({ error }) => { if (!error) reload() })
+    }
+  }, [grupper, team?.id, profile?.role])
 
   const loadProfile = useCallback(async uid => {
     const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', uid).single()
@@ -222,14 +234,14 @@ export default function App() {
       <div className="app-shell">
       <header className={`topbar ${menyApen ? 'apen' : ''}`}>
         <h1 className="hjem-lenke" role="link" tabIndex={0} title={d.hjemTab} onClick={() => gaTil(hjemFane(vis))}
-          onKeyDown={e => { if (e.key === 'Enter') gaTil(hjemFane(vis)) }}><span className="merke" aria-hidden="true" />{d.appTitle}{visTeam && !isParent && grupper.length < 2 && <small>{visTeam.name}</small>}</h1>
-        {visTeam && isCoach && grupper.length > 1 && (
+          onKeyDown={e => { if (e.key === 'Enter') gaTil(hjemFane(vis)) }}><span className="merke" aria-hidden="true" />{d.appTitle}{visTeam && !isParent && valgbare.length < 2 && <small>{visTeam.name}</small>}</h1>
+        {visTeam && isCoach && valgbare.length > 1 && (
           <select className="gruppevelger" value={visTeam.id} aria-label={d.groupPick}
             onChange={async e => {
               const { error } = await supabase.rpc('bytt_gruppe', { p_team: e.target.value })
               if (error) alert(error.message); else reload()
             }}>
-            {grupper.map(g => <option key={g.id} value={g.id}>{g.er_hus ? `${g.name} · ${d.groupHouse}` : g.name}</option>)}
+            {[...valgbare, ...grupper.filter(g => g.id === visTeam.id && !valgbare.some(v => v.id === g.id))].map(g => <option key={g.id} value={g.id}>{g.er_hus ? `${g.name} · ${d.groupHouse}` : g.name}</option>)}
           </select>
         )}
         <button type="button" className="meny-knapp" aria-expanded={menyApen} aria-controls="hovedmeny" onClick={() => setMenyApen(v => !v)}>
