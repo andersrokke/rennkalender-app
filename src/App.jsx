@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { Fragment, useEffect, useState, useCallback } from 'react'
 import { LangContext, I18N, detectLang, setLang as saveLang } from './i18n'
 import { applyTheme, applyLang, setSheet } from './theme'
 import { tabForNav, navForState, rolleFlagg, fanerFor, startFane, hjemFane, menyGrupper } from './nav'
@@ -73,6 +73,8 @@ export default function App() {
   const [menyApen, setMenyApen] = useState(false)
   // Lagene treneren er trener for. Er det flere, vises en velger i toppen.
   const [grupper, setGrupper] = useState([])
+  // Gruppa valgt under «Løpere» i menyen: filteret på Løpere-siden.
+  const [lopereFilter, setLopereFilter] = useState('alle')
 
   const loadProfile = useCallback(async uid => {
     const { data: p } = await supabase.from('profiles').select(PROFIL_FELT).eq('id', uid).single()
@@ -239,9 +241,23 @@ export default function App() {
           <div className="meny-gruppe" key={g.k || 'hjem'}>
             {g.k && <span className="meny-gruppenavn">{d['mg_' + g.k]}</span>}
             {g.faner.map(k => (
-              <button key={k} className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => gaTil(k)}>
-                <Ikon k={k} /><span>{ETIKETT[k]}</span>
-              </button>
+              <Fragment key={k}>
+                <button className={active === k ? 'on' : ''} aria-current={active === k ? 'page' : undefined} onClick={() => { if (k === 'athletes') setLopereFilter('alle'); gaTil(k) }}>
+                  <Ikon k={k} /><span>{ETIKETT[k]}</span>
+                </button>
+                {/* Gruppene i huset ligger rett under «Løpere». Hovedtreneren ser alle,
+                    en gruppetrener bare sine egne. */}
+                {k === 'athletes' && !som && grupper.filter(x => !x.er_hus).length > 0 && (
+                  <div className="meny-under">
+                    {grupper.filter(x => !x.er_hus).map(x => (
+                      <button key={x.id} className={active === 'athletes' && lopereFilter === x.id ? 'on' : ''}
+                        onClick={() => { setLopereFilter(x.id); gaTil('athletes') }}>
+                        <span>{x.name}</span><small>{x.lopere}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </Fragment>
             ))}
           </div>
         ))}</nav>
@@ -283,7 +299,7 @@ export default function App() {
       {active === 'home' && (visTeam ? <CoachHome profile={vis} team={visTeam} onGo={gaTil} /> : <NoTeam profile={vis} onDone={reload} />)}
       {active === 'season' && (visTeam ? <CoachSeason profile={vis} team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
       {active === 'matrix' && (visTeam ? <SeasonMatrix team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
-      {active === 'athletes' && (visTeam ? <Athletes profile={vis} team={visTeam} /> : <NoTeam profile={vis} onDone={reload} />)}
+      {active === 'athletes' && (visTeam ? <Athletes profile={vis} team={visTeam} filter={lopereFilter} onFilter={setLopereFilter} onGrupper={() => supabase.rpc('mine_grupper').then(({ data }) => setGrupper(data || []))} /> : <NoTeam profile={vis} onDone={reload} />)}
       {/* Egen fane, oeverst: loggen foeres ofte, og laa foer tre skjermlengder
           nede i «Min utvikling». En foresatt ser oekter, men foerer ingen. */}
       {active === 'training' && <div className="page"><TrainingLog profile={vis} team={visTeam} isCoach={isCoach} readOnly={!!som}

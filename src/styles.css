@@ -1698,3 +1698,11 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 .lp-gruppeliste li:first-child{border-top:0}
 .lp-gruppeliste li > span.muted{font-size:13px}
 .lp-gruppeknapper{margin-left:auto;display:flex;gap:6px}
+
+/* --- Gruppene under «Løpere» i menyen --- */
+.meny-under{display:flex;flex-direction:column;gap:1px;margin:0 0 4px 26px;padding-left:10px;border-left:2px solid var(--line)}
+.meny-under button{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;border:0;background:transparent;color:var(--mute);font:inherit;font-size:13px;border-radius:6px;text-align:left;cursor:pointer;width:100%}
+.meny-under button:hover{background:var(--panel-2);color:var(--ink)}
+.meny-under button.on{color:var(--accent);font-weight:600;background:var(--accent-soft)}
+.meny-under small{font-size:11.5px;color:var(--mute);font-variant-numeric:tabular-nums}
+.lp-tabell th .rh-sort{font:inherit}

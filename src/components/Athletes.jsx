@@ -11,11 +11,15 @@ import { avtale } from '../avtale'
 // flere, flytt dem samlet, lag og døp grupper. Gruppene øverst er filtre, ikke
 // noe man må «stå» i; velgeren i toppen av appen bytter fortsatt gruppe for
 // sesongskjermene.
-export default function Athletes({ team }) {
+export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilter = null, onGrupper = null }) {
   const t = useT()
   const [grupper, setGrupper] = useState([])
   const [lopere, setLopere] = useState([])
-  const [filter, setFilter] = useState('alle')          // alle | uten | <team id>
+  const [filter, setFilterLokalt] = useState(filterUtenfra)   // alle | uten | <team id>
+  useEffect(() => { setFilterLokalt(filterUtenfra) }, [filterUtenfra])
+  const setFilter = f => { setFilterLokalt(f); onFilter?.(f) }
+  const [sortKol, setSortKol] = useState('navn')
+  const [sortOpp, setSortOpp] = useState(true)
   const [valgte, setValgte] = useState(new Set())
   const [flyttTil, setFlyttTil] = useState('')
   const [busy, setBusy] = useState(false)
@@ -59,7 +63,7 @@ export default function Athletes({ team }) {
   const hus = grupper.find(g => g.er_hus)
   const bareGrupper = grupper.filter(g => !g.er_hus)
   const gruppeNavn = id => grupper.find(g => g.id === id)?.name || '–'
-  const vist = useMemo(() => lopere.filter(a => filter === 'alle' || (filter === 'uten' ? a.team_id === hus?.id : a.team_id === filter)), [lopere, filter, hus])
+  const vistUsortert = useMemo(() => lopere.filter(a => filter === 'alle' || (filter === 'uten' ? a.team_id === hus?.id : a.team_id === filter)), [lopere, filter, hus])
   const utenGruppe = lopere.filter(a => a.team_id === hus?.id).length
 
   const kall = async (fn, args, etter) => {
@@ -67,7 +71,7 @@ export default function Athletes({ team }) {
     const { error } = await supabase.rpc(fn, args)
     setBusy(false)
     if (error) { setFeil(error.message); return false }
-    etter?.(); await load(); await reload()
+    etter?.(); await load(); await reload(); onGrupper?.()
     return true
   }
   const flyttValgte = () => flyttTil && kall('flytt_lopere', { p_athletes: [...valgte], p_team: flyttTil }, () => { setValgte(new Set()); setFlyttTil('') })
@@ -100,6 +104,35 @@ export default function Athletes({ team }) {
     return { renn: skal.length, dager: skal.reduce((s, r) => s + (r.race ? days(r.race) : 0), 0),
       venterDeg: rader.filter(r => r.av === 'venterTrener').length, venterLoper: rader.filter(r => r.av === 'venterLoper').length, neste }
   }
+  // Sortering på alle kolonnene, tomme verdier sist.
+  const sortVerdi = (a, k) => {
+    const o = () => oversikt(a.id), pp = poeng[a.fis_code] || {}
+    switch (k) {
+      case 'gruppe': return gruppeNavn(a.team_id)
+      case 'aar': return a.birth_year ?? null
+      case 'sl': return pp.sl == null ? null : Number(pp.sl)
+      case 'gs': return pp.gs == null ? null : Number(pp.gs)
+      case 'renn': return o().renn
+      case 'venter': return o().venterDeg + o().venterLoper
+      case 'neste': return o().neste?.start_date ?? null
+      case 'okt': return sisteOkt[a.id] ?? null
+      default: return a.full_name || ''
+    }
+  }
+  const vist = useMemo(() => [...vistUsortert].sort((a, b) => {
+    const x = sortVerdi(a, sortKol), y = sortVerdi(b, sortKol)
+    if (x == null && y == null) return 0
+    if (x == null) return 1
+    if (y == null) return -1
+    const r = typeof x === 'string' ? x.localeCompare(y, 'nb') : x - y
+    return sortOpp ? r : -r
+  }), [vistUsortert, sortKol, sortOpp, poeng, sisteOkt, byAthlete, rennAv])
+  const sorterPa = k => { if (sortKol === k) setSortOpp(v => !v); else { setSortKol(k); setSortOpp(k !== 'sl' && k !== 'gs' && k !== 'renn' && k !== 'venter' && k !== 'okt') } }
+  const Th = ({ k, children, cls = '' }) => (
+    <th className={cls} aria-sort={sortKol === k ? (sortOpp ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" className="rh-sort" onClick={() => sorterPa(k)}>{children}<span aria-hidden="true">{sortKol === k ? (sortOpp ? ' ▲' : ' ▼') : ''}</span></button>
+    </th>
+  )
   const p1 = v => v == null ? '–' : Number(v).toFixed(2).replace('.', ',')
   const datoKort = d => d ? new Date(d + 'T12:00').toLocaleDateString(t.lang === 'en' ? 'en-GB' : 'nb-NO', { day: 'numeric', month: 'short' }) : '–'
 
@@ -180,8 +213,8 @@ export default function Athletes({ team }) {
             <table className="ad-table lp-tabell">
               <thead><tr>
                 <th><input type="checkbox" aria-label={t('pickAll')} checked={alleVistValgt} onChange={() => setValgte(alleVistValgt ? new Set() : new Set(vist.map(a => a.id)))} /></th>
-                <th>{t('athleteCol')}</th><th>{t('lpGroupCol')}</th><th>{t('mxYear')}</th><th className="tall">SL</th><th className="tall">GS</th>
-                <th className="tall">{t('racesN')}</th><th>{t('lpWaiting')}</th><th>{t('lpNext')}</th><th>{t('lpLastSession')}</th><th></th>
+                <Th k="navn">{t('athleteCol')}</Th><Th k="gruppe">{t('lpGroupCol')}</Th><Th k="aar">{t('mxYear')}</Th><Th k="sl" cls="tall">SL</Th><Th k="gs" cls="tall">GS</Th>
+                <Th k="renn" cls="tall">{t('racesN')}</Th><Th k="venter">{t('lpWaiting')}</Th><Th k="neste">{t('lpNext')}</Th><Th k="okt">{t('lpLastSession')}</Th><th></th>
               </tr></thead>
               <tbody>{vist.map(a => {
                 const o = oversikt(a.id), pp = poeng[a.fis_code] || {}
