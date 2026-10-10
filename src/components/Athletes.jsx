@@ -76,7 +76,7 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
   }
   const flyttValgte = () => flyttTil && kall('flytt_lopere', { p_athletes: [...valgte], p_team: flyttTil }, () => { setValgte(new Set()); setFlyttTil('') })
   const flyttEn = (a, til) => til && kall('flytt_lopere', { p_athletes: [a.id], p_team: til })
-  const opprett = async e => { e.preventDefault(); if (await kall('opprett_gruppe', { p_name: nyGruppe.trim() })) { setNyGruppe(''); location.reload() } }
+  const opprett = async e => { e.preventDefault(); if (await kall('opprett_gruppe', { p_name: nyGruppe.trim() })) setNyGruppe('') }
   const lagreNavn = () => redigerer && kall('gi_gruppenavn', { p_team: redigerer.id, p_name: redigerer.navn.trim() }, () => setRedigerer(null))
   const slett = g => confirm(t('grDeleteConfirm').replace('{n}', g.name)) && kall('slett_gruppe', { p_team: g.id }, () => { if (filter === g.id) setFilter('alle') })
   async function fjern(a) {

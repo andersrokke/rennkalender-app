@@ -476,8 +476,9 @@ nyeKoder.length === 1 && nyeKoder.every(k => /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789
 const u16 = (await as(C1, `select public.opprett_gruppe('Teknikk U16') as id`)).rows[0].id
 const u16rad = await q('select parent_team_id, owner_id from teams where id=$1', [u16])
 const c1na = await q('select team_id from profiles where id=$1', [C1])
-u16rad[0].parent_team_id === P && u16rad[0].owner_id === C1 && c1na[0].team_id === u16
-  ? ok('en gruppetrener opprettet en gruppe til under huset, og står i den') : fail(`opprett_gruppe: ${JSON.stringify([u16rad[0], c1na[0]])}`)
+u16rad[0].parent_team_id === P && u16rad[0].owner_id === C1 && c1na[0].team_id === G1
+  ? ok('en gruppetrener opprettet en gruppe til under huset, og blir stående der hun sto') : fail(`opprett_gruppe: ${JSON.stringify([u16rad[0], c1na[0]])}`)
+try { await as(C1, `select public.opprett_gruppe('teknikk u16')`); fail('to grupper med samme navn') } catch { ok('to grupper i huset kan ikke hete det samme') }
 await as(C1, 'select public.bytt_gruppe($1)', [G1])
 ;(await q('select team_id from profiles where id=$1', [C1]))[0].team_id === G1
   ? ok('treneren byttet tilbake til sin første gruppe') : fail('bytt_gruppe virket ikke')
