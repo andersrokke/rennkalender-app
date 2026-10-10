@@ -84,7 +84,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
     await kall('fjern_fra_lag', { p_athlete: a.id })
   }
   const vippValgt = id => setValgte(v => { const n = new Set(v); n.has(id) ? n.delete(id) : n.add(id); return n })
-  const alleVistValgt = vist.length > 0 && vist.every(a => valgte.has(a.id))
 
   // Oversikt per løper: avtalte renn, hva som venter, neste renn.
   const rowsFor = aid => byAthlete[aid] || []
@@ -127,6 +126,7 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
     const r = typeof x === 'string' ? x.localeCompare(y, 'nb') : x - y
     return sortOpp ? r : -r
   }), [vistUsortert, sortKol, sortOpp, poeng, sisteOkt, byAthlete, rennAv])
+  const alleVistValgt = vist.length > 0 && vist.every(a => valgte.has(a.id))
   const sorterPa = k => { if (sortKol === k) setSortOpp(v => !v); else { setSortKol(k); setSortOpp(k !== 'sl' && k !== 'gs' && k !== 'renn' && k !== 'venter' && k !== 'okt') } }
   const Th = ({ k, children, cls = '' }) => (
     <th className={cls} aria-sort={sortKol === k ? (sortOpp ? 'ascending' : 'descending') : 'none'}>

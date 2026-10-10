@@ -5,7 +5,7 @@
 // Bruker forhåndsvisningen med testdata (scripts/preview), en Vite-server på
 // en ledig port, og Chrome i headless-modus. Chrome skriver konsollen til
 // stderr med --enable-logging, så vi slipper et eget nettleserbibliotek.
-import { spawn, execFileSync } from 'node:child_process'
+import { spawn, spawnSync, execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import net from 'node:net'
 
@@ -26,30 +26,24 @@ for (let i = 0; i < 40; i++) {
 // [navn, adresse, bredde, tekst som må finnes]
 const SIDER = [
   ['trener hjem', '?app=oscar', 1440, 'Slik virker det'],
-  ['trener løpere', '?app=oscar#athletes', 1440, 'Løpere'],
+  ['trener løpere', '?app=oscar#athletes', 1440, 'Alle løperne i'],
   ['trener sesongoppsett', '?app=oscar#matrix', 1440, 'Venter på deg'],
-  ['trener treningslogg', '?app=oscar#training', 1440, 'Tidtaking'],
-  ['løper hjem', '?app=lukas', 1440, 'Neste renn'],
-  ['løper min sesong', '?app=lukas#mine', 1440, 'Min sesong'],
-  ['løper utvikling', '?app=lukas#dev', 1440, 'Min utvikling'],
-  ['løper mobil', '?app=lukas', 390, 'Meny'],
-  ['trener mobil', '?app=oscar', 390, 'Meny'],
+  ['trener treningslogg', '?app=oscar#training', 1440, 'Før opp økta'],
+  ['løper hjem', '?app=lukas', 1440, 'Sesongen din'],
+  ['løper min sesong', '?app=lukas#mine', 1440, 'renn i sesongen din'],
+  ['løper utvikling', '?app=lukas#dev', 1440, 'FIS-poeng per disiplin'],
+  ['løper mobil', '?app=lukas', 390, 'Sesongen din'],
+  ['trener mobil', '?app=oscar', 390, 'Slik virker det'],
   ['alle skjermer', '', 1440, 'Alle skjermer']
 ]
 
 let feil = 0
 for (const [navn, adr, bredde, tekst] of SIDER) {
   const url = `http://localhost:${port}/preview.html${adr}`
-  let dom = '', logg = ''
-  try {
-    const r = execFileSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--enable-logging=stderr', '--v=0',
-      `--window-size=${bredde},1200`, '--virtual-time-budget=8000', '--dump-dom', url], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 })
-    dom = r
-  } catch (e) { dom = String(e.stdout || ''); logg = String(e.stderr || '') }
-  // Chrome legger konsollen i stderr også når alt går bra; hent den uansett.
-  if (!logg) {
-    try { logg = execFileSync(CHROME, ['--headless=new', '--disable-gpu', '--enable-logging=stderr', '--v=0', `--window-size=${bredde},1200`, '--virtual-time-budget=8000', url], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 }).toString() } catch (e) { logg = String(e.stderr || '') }
-  }
+  // spawnSync gir både DOM (stdout) og Chromes konsoll (stderr) i samme kjøring.
+  const r = spawnSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--enable-logging=stderr', '--v=0',
+    `--window-size=${bredde},1200`, '--virtual-time-budget=8000', '--dump-dom', url], { encoding: 'utf8', maxBuffer: 64e6 })
+  const dom = String(r.stdout || ''), logg = String(r.stderr || '')
   const konsollFeil = logg.split('\n').filter(l => /CONSOLE/.test(l) && /Uncaught|TypeError|ReferenceError|is not defined|Minified React error|The above error/.test(l))
   const tom = dom.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length < 200
   const mangler = !dom.includes(tekst)
