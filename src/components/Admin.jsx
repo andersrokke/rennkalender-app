@@ -309,7 +309,8 @@ function Brukere({ rader, meg, t, onEndret, onSeSom }) {
                       {u.foresatte && <div>{t('adGuardians')}: {u.foresatte}</div>}
                       {u.barn && <div>{t('adParentOf')}: {u.barn}</div>}
                       {u.eier_av && <div>{t('adOwns')}: {u.eier_av}</div>}
-                      {!u.foresatte && !u.barn && !u.eier_av && '–'}
+                      {u.innsyn && <div>{t('adAccess')}: {u.innsyn}</div>}
+                      {!u.foresatte && !u.barn && !u.eier_av && !u.innsyn && '–'}
                     </td>
                     <td>{siden(u.last_sign_in_at, t)}</td>
                     <td>
