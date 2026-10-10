@@ -161,7 +161,7 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
       <div className="lp-hode">
         <div>
           <h2>{t('athletes')} <span className="muted">({lopere.length})</span></h2>
-          <p className="muted">{hus ? t('lpSubHus').replace('{hus}', hus.name) : t('lpSub')}</p>
+          <p className="muted">{hus ? (bareGrupper.length ? t('lpSubHus') : t('lpSubHusAlene')).replace('{hus}', hus.name) : t('lpSub')}</p>
         </div>
       </div>
 
@@ -170,7 +170,7 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
         <button type="button" className={`lp-gruppe${filter === 'alle' ? ' on' : ''}`} onClick={() => setFilter('alle')}>
           <b>{t('mxAll')}</b><span>{lopere.length}</span>
         </button>
-        {utenGruppe > 0 && (
+        {utenGruppe > 0 && bareGrupper.length > 0 && (
           <button type="button" className={`lp-gruppe uten${filter === 'uten' ? ' on' : ''}`} onClick={() => setFilter('uten')}>
             <b>{t('adNoGroup')}</b><span>{utenGruppe}</span>
           </button>
@@ -181,14 +181,14 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
             <span>{g.eier_navn || '–'} · {g.lopere}</span>
           </button>
         ))}
-        <form onSubmit={opprett} className="lp-nygruppe">
+        <form onSubmit={opprett} className="lp-nygruppe" title={t('lpNewGroupHint')}>
           <input value={nyGruppe} placeholder={t('grNamePh')} aria-label={t('grName')} onChange={e => setNyGruppe(e.target.value)} />
           <button className="btn small" disabled={busy || nyGruppe.trim().length < 2}>{t('grCreate')}</button>
         </form>
       </div>
       {feil && <p className="error" style={{ margin: 0 }}>{feil}</p>}
 
-      {valgte.size > 0 && (
+      {valgte.size > 0 && bareGrupper.length > 0 && (
         <div className="lp-flytt">
           <b>{t('lpSelected').replace('{n}', valgte.size)}</b>
           <select value={flyttTil} onChange={e => setFlyttTil(e.target.value)} aria-label={t('grMoveTo')}>
@@ -212,22 +212,22 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
           <div className="ad-scroll">
             <table className="ad-table lp-tabell">
               <thead><tr>
-                <th><input type="checkbox" aria-label={t('pickAll')} checked={alleVistValgt} onChange={() => setValgte(alleVistValgt ? new Set() : new Set(vist.map(a => a.id)))} /></th>
-                <Th k="navn">{t('athleteCol')}</Th><Th k="gruppe">{t('lpGroupCol')}</Th><Th k="aar">{t('mxYear')}</Th><Th k="sl" cls="tall">SL</Th><Th k="gs" cls="tall">GS</Th>
+                <th>{bareGrupper.length > 0 && <input type="checkbox" aria-label={t('pickAll')} checked={alleVistValgt} onChange={() => setValgte(alleVistValgt ? new Set() : new Set(vist.map(a => a.id)))} />}</th>
+                <Th k="navn">{t('athleteCol')}</Th>{bareGrupper.length > 0 && <Th k="gruppe">{t('lpGroupCol')}</Th>}<Th k="aar">{t('mxYear')}</Th><Th k="sl" cls="tall">SL</Th><Th k="gs" cls="tall">GS</Th>
                 <Th k="renn" cls="tall">{t('racesN')}</Th><Th k="venter">{t('lpWaiting')}</Th><Th k="neste">{t('lpNext')}</Th><Th k="okt">{t('lpLastSession')}</Th><th></th>
               </tr></thead>
               <tbody>{vist.map(a => {
                 const o = oversikt(a.id), pp = poeng[a.fis_code] || {}
                 return (
                   <tr key={a.id} className={sel === a.id ? 'on' : valgte.has(a.id) ? 'valgt' : ''}>
-                    <td><input type="checkbox" checked={valgte.has(a.id)} onChange={() => vippValgt(a.id)} aria-label={a.full_name} /></td>
+                    <td>{bareGrupper.length > 0 && <input type="checkbox" checked={valgte.has(a.id)} onChange={() => vippValgt(a.id)} aria-label={a.full_name} />}</td>
                     <td><b>{a.full_name}</b>{a.fis_code ? <span className="muted lp-fis"> FIS {a.fis_code}</span> : <span className="tag warn lp-fis">{t('lpNoFis')}</span>}</td>
-                    <td>
+                    {bareGrupper.length > 0 && <td>
                       <select className="flytt" value={a.team_id} disabled={busy} aria-label={t('grMoveTo')} onChange={e => flyttEn(a, e.target.value)}>
                         {hus && <option value={hus.id}>{t('adNoGroup')}</option>}
                         {bareGrupper.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                       </select>
-                    </td>
+                    </td>}
                     <td>{a.birth_year || '–'}</td>
                     <td className="tall">{p1(pp.sl)}</td><td className="tall">{p1(pp.gs)}</td>
                     <td className="tall">{o.renn}<span className="muted"> · {o.dager} {t('raceDaysN')}</span></td>
