@@ -1684,3 +1684,17 @@ table.tm td em{font-style:normal;color:var(--mute);font-weight:500;font-size:12p
 .ts-band-knapp.ok b{color:#B7791F}
 .ts-band-knapp.bra b{color:var(--av-ok)}
 .ts-band-knapp.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+
+/* --- Løpere: grupper som filter, flytt flere --- */
+.lp-gruppe.uten{border-style:dashed}
+.lp-her{font-style:normal;font-size:11px;color:var(--accent);font-weight:600}
+.lp-flytt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent)}
+.lp-flytt select{width:auto;min-width:180px}
+.lp-tabell tr.valgt td{background:var(--accent-soft)}
+.lp-tabell input[type=checkbox]{width:16px;height:16px;margin:0}
+.lp-tabell select.flytt{width:auto;min-width:130px;padding:4px 26px 4px 8px;height:auto;font-size:13px}
+.lp-gruppeliste{list-style:none;margin:8px 0 0;padding:0}
+.lp-gruppeliste li{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.lp-gruppeliste li:first-child{border-top:0}
+.lp-gruppeliste li > span.muted{font-size:13px}
+.lp-gruppeknapper{margin-left:auto;display:flex;gap:6px}

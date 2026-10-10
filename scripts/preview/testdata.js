@@ -181,6 +181,8 @@ export function svarPa(url, o) {
       { id: 'g2', name: 'Teknikk', owner_id: 'kari', owner_name: 'Kari Lie', owner_email: 'kari@ntg.no', invite_code: 'K7RF2M', lopere: 1, renn: 2, parent_team_id: 'ntg', parent_name: 'NTG Lillehammer', is_school: false, created_at: '2026-10-01' }
     ]
     if (fn === 'skigymnas') return ['NTG Bærum', 'NTG Geilo', 'NTG Lillehammer', 'Wang Toppidrett'].map((name, i) => ({ id: 's' + i, name }))
+    if (fn === 'hus_grupper') return [{ id: 'ntg', name: 'NTG Lillehammer', er_hus: true, eier_id: 'oscar', eier_navn: 'Oscar Andersson', lopere: 1, min: true }, { id: 'g2', name: 'Teknikk', er_hus: false, eier_id: 'kari', eier_navn: 'Kari Lie', lopere: 3, min: true, invite_code: 'ABC123' }]
+    if (fn === 'hus_lopere') return LOPERE.map((p, i) => ({ id: p.id, full_name: p.full_name, birth_year: p.birth_year, gender: p.gender, fis_code: p.fis_code, team_id: i === 0 ? 'ntg' : 'g2' }))
     if (fn === 'ledige_lopere') return [{ id: 'v1', full_name: 'Nora Lie', birth_year: 2009, fis_code: '6535009' }, { id: 'v2', full_name: 'Emil Dahl', birth_year: 2008, fis_code: null }]
     if (fn === 'mine_grupper') return [{ id: 'ntg', name: 'NTG Lillehammer', parent_team_id: null, er_hus: true, eier_er_meg: true, eier_navn: 'Oscar Andersson', lopere: 4 }, { id: 'g2', name: 'Teknikk', parent_team_id: 'ntg', er_hus: false, eier_er_meg: false, eier_navn: 'Kari Lie', lopere: 6 }]
     if (fn === 'head_overview' || fn === 'predicted_start') return null

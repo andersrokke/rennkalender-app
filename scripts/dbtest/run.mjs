@@ -306,6 +306,35 @@ tatt === U14 && (await q('select owner_id from teams where id=$1', [U14]))[0].ow
 ;(await q(`select count(*)::int n from teams where parent_team_id=$1 and lower(name)='u14'`, [P]))[0].n === 1 ? ok('det ble ikke to U14') : fail('to grupper med samme navn')
 
 
+// --- grupper i huset: se alle, flytt flere, døp og slett ---
+{
+  const TL = 'eeeeeeee-0000-0000-0000-000000000099'
+  await c.query(`insert into auth.users(id,email) values ($1,'tl99@hus.test')`, [TL])
+  await q(`insert into profiles(id, full_name, role, team_id) values ($1,'Test Husløper','athlete',null) on conflict (id) do update set role='athlete'`, [TL])
+  await q(`update profiles set team_id=$2 where id=$1`, [TL, G1])
+  const alle = (await as(H, 'select * from public.hus_lopere()')).rows
+  const gr = (await as(H, 'select * from public.hus_grupper()')).rows
+  gr.some(g => g.er_hus) && gr.length >= 3 ? ok('hovedtreneren ser huset og alle gruppene i det') : fail(`hus_grupper: ${gr.length}`)
+  alle.length > 0 ? ok(`hovedtreneren ser alle løperne i huset (${alle.length})`) : fail('hus_lopere tomt')
+  const iG1 = alle.filter(a => a.team_id === G1).map(a => a.id)
+  const fra = alle.find(a => a.team_id === G1)
+  if (fra) {
+    const n = (await as(H, 'select public.flytt_lopere($1,$2) as n', [[fra.id], G2])).rows[0].n
+    n === 1 && (await q('select team_id t from profiles where id=$1', [fra.id]))[0].t === G2 ? ok('hovedtreneren flytter en løper til en annen gruppe') : fail('flytt_lopere virket ikke')
+    await as(H, 'select public.flytt_lopere($1,$2)', [[fra.id], G1])
+  }
+  try { await as(A, 'select public.flytt_lopere($1,$2)', [iG1, G2]); fail('en løper flyttet løpere') } catch { ok('bare trenere i huset flytter løpere') }
+  const ny = (await as(H, `select public.opprett_gruppe('Midlertidig') as id`)).rows[0].id
+  await as(H, 'select public.bytt_gruppe($1)', [P])
+  await as(H, `select public.gi_gruppenavn($1, 'VG1')`, [ny])
+  ;(await q('select name from teams where id=$1', [ny]))[0].name === 'VG1' ? ok('gruppa får nytt navn') : fail('nytt navn ble ikke lagret')
+  try { await as(C1, `select public.gi_gruppenavn($1, 'Kapret')`, [ny]); fail('en annen trener døpte gruppa') } catch { ok('bare eier eller hovedtrener gir nytt navn') }
+  await as(H, 'select public.slett_gruppe($1)', [ny])
+  ;(await q('select count(*)::int n from teams where id=$1', [ny]))[0].n === 0 ? ok('tom gruppe slettes') : fail('gruppa ble ikke slettet')
+  try { await as(H, 'select public.slett_gruppe($1)', [G1]); fail('slettet gruppe med løpere') } catch { ok('en gruppe med løpere slettes ikke') }
+  await q('delete from profiles where id=$1', [TL]); await c.query('delete from auth.users where id=$1', [TL])
+}
+
 // --- hovedtreneren inviterer selv ---
 const iv = await as(H, `select public.head_invite_coach('trener4@ntg.no','Velkommen') as id`)
 iv.rows[0].id ? ok('hovedtreneren fikk invitert en trener selv') : fail('invitasjon feilet')
