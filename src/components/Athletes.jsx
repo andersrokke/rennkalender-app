@@ -20,8 +20,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
   const setFilter = f => { setFilterLokalt(f); onFilter?.(f) }
   const [sortKol, setSortKol] = useState('navn')
   const [sortOpp, setSortOpp] = useState(true)
-  const [valgte, setValgte] = useState(new Set())
-  const [flyttTil, setFlyttTil] = useState('')
   const [busy, setBusy] = useState(false)
   const [feil, setFeil] = useState(null)
   const [nyGruppe, setNyGruppe] = useState('')
@@ -74,7 +72,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
     etter?.(); await load(); await reload(); onGrupper?.()
     return true
   }
-  const flyttValgte = () => flyttTil && kall('flytt_lopere', { p_athletes: [...valgte], p_team: flyttTil }, () => { setValgte(new Set()); setFlyttTil('') })
   const flyttEn = (a, til) => til && kall('flytt_lopere', { p_athletes: [a.id], p_team: til })
   const opprett = async e => { e.preventDefault(); if (await kall('opprett_gruppe', { p_name: nyGruppe.trim() })) setNyGruppe('') }
   const lagreNavn = () => redigerer && kall('gi_gruppenavn', { p_team: redigerer.id, p_name: redigerer.navn.trim() }, () => setRedigerer(null))
@@ -83,7 +80,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
     if (!confirm(t('lpRemoveConfirm').replace('{n}', a.full_name || ''))) return
     await kall('fjern_fra_lag', { p_athlete: a.id })
   }
-  const vippValgt = id => setValgte(v => { const n = new Set(v); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   // Oversikt per løper: avtalte renn, hva som venter, neste renn.
   const rowsFor = aid => byAthlete[aid] || []
@@ -126,7 +122,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
     const r = typeof x === 'string' ? x.localeCompare(y, 'nb') : x - y
     return sortOpp ? r : -r
   }), [vistUsortert, sortKol, sortOpp, poeng, sisteOkt, byAthlete, rennAv])
-  const alleVistValgt = vist.length > 0 && vist.every(a => valgte.has(a.id))
   const sorterPa = k => { if (sortKol === k) setSortOpp(v => !v); else { setSortKol(k); setSortOpp(k !== 'sl' && k !== 'gs' && k !== 'renn' && k !== 'venter' && k !== 'okt') } }
   const Th = ({ k, children, cls = '' }) => (
     <th className={cls} aria-sort={sortKol === k ? (sortOpp ? 'ascending' : 'descending') : 'none'}>
@@ -188,19 +183,6 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
       </div>
       {feil && <p className="error" style={{ margin: 0 }}>{feil}</p>}
 
-      {valgte.size === 0 && bareGrupper.length > 0 && lopere.length > 0 && <p className="muted lp-hint">{t('lpTickHint')}</p>}
-      {valgte.size > 0 && bareGrupper.length > 0 && (
-        <div className="lp-flytt">
-          <b>{t('lpSelected').replace('{n}', valgte.size)}</b>
-          <select value={flyttTil} onChange={e => setFlyttTil(e.target.value)} aria-label={t('grMoveTo')}>
-            <option value="">{t('grMoveTo')}</option>
-            {bareGrupper.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            {hus && <option value={hus.id}>{t('adNoGroup')}</option>}
-          </select>
-          <button type="button" className="btn small primary" disabled={!flyttTil || busy} onClick={flyttValgte}>{t('lpMove')}</button>
-          <button type="button" className="btn small" onClick={() => setValgte(new Set())}>{t('cancel')}</button>
-        </div>
-      )}
 
       <div className="card">
         {lopere.length === 0 ? (
@@ -213,15 +195,13 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
           <div className="ad-scroll">
             <table className="ad-table lp-tabell">
               <thead><tr>
-                <th>{bareGrupper.length > 0 && <input type="checkbox" aria-label={t('pickAll')} checked={alleVistValgt} onChange={() => setValgte(alleVistValgt ? new Set() : new Set(vist.map(a => a.id)))} />}</th>
                 <Th k="navn">{t('athleteCol')}</Th>{bareGrupper.length > 0 && <Th k="gruppe">{t('lpGroupCol')}</Th>}<Th k="aar">{t('mxYear')}</Th><Th k="sl" cls="tall">SL</Th><Th k="gs" cls="tall">GS</Th>
                 <Th k="renn" cls="tall">{t('racesN')}</Th><Th k="venter">{t('lpWaiting')}</Th><Th k="neste">{t('lpNext')}</Th><Th k="okt">{t('lpLastSession')}</Th><th></th>
               </tr></thead>
               <tbody>{vist.map(a => {
                 const o = oversikt(a.id), pp = poeng[a.fis_code] || {}
                 return (
-                  <tr key={a.id} className={sel === a.id ? 'on' : valgte.has(a.id) ? 'valgt' : ''}>
-                    <td>{bareGrupper.length > 0 && <input type="checkbox" checked={valgte.has(a.id)} onChange={() => vippValgt(a.id)} aria-label={a.full_name} />}</td>
+                  <tr key={a.id} className={sel === a.id ? 'on' : ''}>
                     <td><b>{a.full_name}</b>{a.fis_code ? <span className="muted lp-fis"> FIS {a.fis_code}</span> : <span className="tag warn lp-fis">{t('lpNoFis')}</span>}</td>
                     {bareGrupper.length > 0 && <td>
                       <select className="flytt" value={a.team_id} disabled={busy} aria-label={t('grMoveTo')} onChange={e => flyttEn(a, e.target.value)}>
