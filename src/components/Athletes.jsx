@@ -188,6 +188,7 @@ export default function Athletes({ team, filter: filterUtenfra = 'alle', onFilte
       </div>
       {feil && <p className="error" style={{ margin: 0 }}>{feil}</p>}
 
+      {valgte.size === 0 && bareGrupper.length > 0 && lopere.length > 0 && <p className="muted lp-hint">{t('lpTickHint')}</p>}
       {valgte.size > 0 && bareGrupper.length > 0 && (
         <div className="lp-flytt">
           <b>{t('lpSelected').replace('{n}', valgte.size)}</b>
